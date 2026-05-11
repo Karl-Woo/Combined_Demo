@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Clover Insight Center — Tablet</title>
+<link rel="stylesheet" href="styles.css">
+<!-- Lottie player for the customer-review send flow loader (vendored locally) -->
+<script src="asset/vendor/lottie.min.js"></script>
+</head>
+<body class="intro" data-view="art-walk">
+  <div class="stage">
+    <div class="ipad">
+      <img class="bezel" src="asset/Bezel.png" alt="" />
+
+      <div class="screen">
+       <div class="screen-inner">
+        <!-- Status Bar (iPad) -->
+        <div class="statusbar">
+          <div class="sb-left">
+            <span class="sb-time">9:41</span>
+            <span class="sb-date">Mon Jun 10</span>
+          </div>
+          <div class="sb-right">
+            <svg class="sb-signal" viewBox="0 0 17 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="0" y="7" width="3" height="4" rx="0.5" fill="black"/>
+              <rect x="4.5" y="5" width="3" height="6" rx="0.5" fill="black"/>
+              <rect x="9" y="2.5" width="3" height="8.5" rx="0.5" fill="black"/>
+              <rect x="13.5" y="0" width="3" height="11" rx="0.5" fill="black"/>
+            </svg>
+            <svg class="sb-wifi" viewBox="0 0 15 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M7.5 9.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm-3.2-2.8a4.5 4.5 0 0 1 6.4 0l1-1a6 6 0 0 0-8.4 0l1 1Zm-2.4-2.4a8 8 0 0 1 11.2 0l1-1a9.5 9.5 0 0 0-13.2 0l1 1Z" fill="black"/>
+            </svg>
+            <span class="sb-pct">100%</span>
+            <svg class="sb-batt" viewBox="0 0 27 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="0.5" y="0.5" width="22" height="11" rx="2.5" stroke="black" fill="none"/>
+              <rect x="2" y="2" width="19" height="8" rx="1.5" fill="black"/>
+              <rect x="23.5" y="4" width="2" height="4" rx="1" fill="black"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="frame">
+          <!-- Left Nav -->
+          <aside class="navbar">
+            <div class="navtop">
+              <div class="navitem active">
+                <span class="navicon navicon--dashboard" aria-hidden="true"></span>
+                <span>Home</span>
+              </div>
+              <div class="navitem">
+                <span class="navicon navicon--add-circle" aria-hidden="true"></span>
+                <span>Sale</span>
+              </div>
+              <div class="navitem">
+                <span class="navicon navicon--receipt" aria-hidden="true"></span>
+                <span>Orders</span>
+              </div>
+              <div class="navitem">
+                <span class="navicon navicon--menu" aria-hidden="true"></span>
+                <span>More</span>
+              </div>
+            </div>
+            <div class="navbottom">
+              <div class="navitem">
+                <span class="navicon navicon--lock" aria-hidden="true"></span>
+                <span>M.P</span>
+              </div>
+            </div>
+          </aside>
+
+          <!-- Right side -->
+          <main class="content">
+            <!-- Top App Bar -->
+            <header class="topbar">
+              <h1 class="topbar-title">Your morning briefing</h1>
+              <div class="topbar-actions">
+                <span class="store-name">Upper Crust Bakery</span>
+                <button class="iconbtn" aria-label="Switch">
+                  <img src="asset/Switch.svg" alt="" />
+                </button>
+                <button class="iconbtn notif" aria-label="Notifications">
+                  <img src="asset/Notification.svg" alt="" />
+                </button>
+              </div>
+            </header>
+
+            <!-- Main Body -->
+            <div class="body">
+              <!-- LEFT COLUMN -->
+              <section class="left-col">
+                <!-- KPIs -->
+                <div class="card kpis">
+                  <div class="kpi-row">
+                    <div class="metric">
+                      <p class="metric-label">Net sales</p>
+                      <p class="metric-value">$1,823</p>
+                      <div class="delta">
+                        <img src="asset/arrow-up.svg" alt="" />
+                        <span class="delta-up">1.2%</span>
+                      </div>
+                      <p class="metric-sub">from 83 orders</p>
+                    </div>
+                    <div class="vdivider"></div>
+                    <div class="metric">
+                      <p class="metric-label">Items sold</p>
+                      <p class="metric-value">183</p>
+                      <div class="delta">
+                        <img src="asset/arrow-down.svg" alt="" />
+                        <span class="delta-down">$2.10</span>
+                      </div>
+                      <p class="metric-sub">2.2 per order</p>
+                    </div>
+                    <div class="vdivider"></div>
+                    <div class="metric">
+                      <p class="metric-label">Repeats</p>
+                      <p class="metric-value">15.7%</p>
+                      <div class="delta">
+                        <img src="asset/arrow-up.svg" alt="" />
+                        <span class="delta-up">0.7%</span>
+                      </div>
+                      <p class="metric-sub">2 new repeats</p>
+                    </div>
+                  </div>
+                  <div class="streak">
+                    <p>You&rsquo;re on a roll. Run a promotion to keep the momentum going.</p>
+                    <div class="streak-right">
+                      <img src="asset/fire.svg" alt="" />
+                      <span>16 days</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Briefing card -->
+                <div class="briefing">
+                  <div class="briefing-left">
+                    <div class="briefing-iconbox">
+                      <img src="asset/checklist.svg" alt="" />
+                    </div>
+                    <div class="briefing-text">
+                      <p class="briefing-title">Art Walk - 10 am - You are ready</p>
+                      <p class="briefing-sub">Enjoy additional sales during the event.</p>
+                    </div>
+                  </div>
+                  <div class="briefing-right">Automation completed</div>
+                </div>
+
+                <!-- Recommended actions -->
+                <div class="rec-section">
+                  <div class="rec-header">
+                    <h2>Recommended actions</h2>
+                  </div>
+                  <p class="rec-subtitle">Congratulations! You&rsquo;ve finished all today&rsquo;s recommended actions.</p>
+                  <div class="rec-grid">
+                    <div class="rec-card">
+                      <div class="rec-top">
+                        <div class="rec-iconbox"><img src="asset/write.svg" alt="" /></div>
+                        <span class="rec-tag">Customer</span>
+                      </div>
+                      <p class="rec-title">Reply needed on customer review</p>
+                      <p class="rec-desc">We have draft a response ready.</p>
+                    </div>
+                    <div class="rec-card">
+                      <div class="rec-top">
+                        <div class="rec-iconbox"><img src="asset/store.svg" alt="" /></div>
+                        <span class="rec-tag">Promotions</span>
+                      </div>
+                      <p class="rec-title">Your competitors are selling more</p>
+                      <p class="rec-desc">Launch a campaign to grow your sales.</p>
+                    </div>
+                    <div class="rec-card">
+                      <div class="rec-top">
+                        <div class="rec-iconbox"><img src="asset/cheer.svg" alt="" /></div>
+                        <span class="rec-tag">Rewards</span>
+                      </div>
+                      <p class="rec-title">Your wallet share is declining</p>
+                      <p class="rec-desc">Win customers back with a campaign.</p>
+                    </div>
+                    <div class="rec-card">
+                      <div class="rec-top">
+                        <div class="rec-iconbox"><img src="asset/trendup.svg" alt="" /></div>
+                        <span class="rec-tag">Growth</span>
+                      </div>
+                      <p class="rec-title">Fund your next growth phase</p>
+                      <p class="rec-desc">Capital for your next expansion.</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- RIGHT COLUMN: AI Assistant — content swaps in place
+                   (Good morning fades out, chat suggestions pop up). -->
+              <aside class="right-col">
+                <div class="right-col-content">
+                  <div class="ai-hero">
+                    <img src="asset/star.svg" alt="" class="ai-star" />
+                    <p class="ai-greet">Good morning, Maya!</p>
+                  </div>
+                  <div class="chat-thread">
+                    <div class="chat-bubbles chat-bubbles--art-walk">
+                      <div class="chat-bubble">When should I expect the most traffic?</div>
+                      <div class="chat-bubble">What is the potential income today?</div>
+                    </div>
+                    <div class="chat-bubbles chat-bubbles--review">
+                      <div class="chat-bubble">How does my rating vs competitors?</div>
+                      <div class="chat-bubble">How to increase my rating on Google?</div>
+                    </div>
+                    <div class="chat-bubbles chat-bubbles--promotions">
+                      <div class="chat-bubble">Tell me other top ticket items to sell.</div>
+                      <div class="chat-bubble">What&rsquo;s the most popular item in my store?</div>
+                    </div>
+                    <div class="chat-bubbles chat-bubbles--rewards">
+                      <div class="chat-bubble">Why are my repeat customers leaving?</div>
+                      <div class="chat-bubble">What&rsquo;s the sales estimate if I run a promo?</div>
+                    </div>
+                    <div class="chat-bubbles chat-bubbles--capital">
+                      <div class="chat-bubble">How do I pay back my cash advance?</div>
+                      <div class="chat-bubble">How do I apply for Clover Capital?</div>
+                    </div>
+                    <div class="chat-bubbles chat-bubbles--home">
+                      <div class="chat-bubble" data-action="sales-report">Show me my sales report for this week.</div>
+                      <div class="chat-bubble" data-action="staff-schedule">Show me my staff schedule for today.</div>
+                      <div class="chat-thinking" aria-hidden="true">
+                        <span class="chat-thinking-label">Thinking</span>
+                        <i></i><i></i><i></i>
+                      </div>
+                      <div class="chat-response" aria-live="polite">
+                        <p class="chat-response-text">Here&rsquo;s your sales report for this week. You&rsquo;ve brought in <span class="chat-response-amount">$3,626.72</span> so far which is 1.8% higher than the same time last week.</p>
+                        <div class="report-card">
+                          <div class="report-metrics">
+                            <div class="report-metric">
+                              <p class="report-metric-label">Net sales</p>
+                              <p class="report-metric-value">$3,626.72</p>
+                              <div class="report-metric-delta">
+                                <img src="asset/arrow-up.svg" alt="" />
+                                <span>1.8%</span>
+                              </div>
+                              <p class="report-metric-sub">from 165 orders</p>
+                            </div>
+                            <div class="report-metric-divider" aria-hidden="true"></div>
+                            <div class="report-metric">
+                              <p class="report-metric-label">Items sold</p>
+                              <p class="report-metric-value">368</p>
+                              <div class="report-metric-delta">
+                                <img src="asset/arrow-up.svg" alt="" />
+                                <span>7</span>
+                              </div>
+                              <p class="report-metric-sub">2.23 per order</p>
+                            </div>
+                          </div>
+                          <div class="report-chart" aria-hidden="true">
+                            <img class="report-chart-area" src="asset/sales-chart-area.svg" alt="" />
+                            <img class="report-chart-line" src="asset/sales-chart-line.svg" alt="" />
+                            <div class="report-chart-axis">
+                              <span>Sun</span>
+                              <span>Mon</span>
+                              <span>Tue</span>
+                              <span>Wed</span>
+                            </div>
+                          </div>
+                          <button class="report-cta" type="button">
+                            <span>View full report</span>
+                            <img src="asset/link-arrow.svg" alt="" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="ai-input-wrap">
+                  <div class="ai-input" role="button" tabindex="0">
+                    <span class="ai-input-text">Ask me anything</span>
+                    <button class="ai-input-send" type="button" aria-label="Send">
+                      <img src="asset/arrow-upblue.svg" alt="" />
+                    </button>
+                  </div>
+                </div>
+              </aside>
+            </div>
+          </main>
+
+          <!-- ============ INSIGHT VIEW (expands when Art Walk card is tapped) ============ -->
+          <section class="insight-view" aria-hidden="true">
+            <header class="topbar topbar-insight">
+              <button class="back-btn" aria-label="Back">
+                <img src="asset/back.svg" alt="" />
+              </button>
+              <h1 class="topbar-title">Art Walk - 10 am - You are ready</h1>
+            </header>
+
+            <div class="insight-body">
+              <!-- Loading state: shown when the user clicks Send on the review.
+                   Lottie loader transitions from sparkle stars to a check; text
+                   swaps from "Sending messages..." → "Task complete" on the
+                   complete event. -->
+              <div class="task-loading" aria-hidden="true">
+                <div class="task-loading-anim" aria-hidden="true"></div>
+                <p class="task-loading-text">Sending messages...</p>
+              </div>
+              <div class="insight-left">
+
+                <!-- ====== ART WALK content ====== -->
+                <div class="insight-content insight-content--art-walk">
+                  <div class="insight-label">
+                    <img src="asset/search.svg" alt="" class="insight-search-ico" />
+                    <span>Insights</span>
+                  </div>
+                  <p class="insight-desc">Art Walk event starts at 10 am. You are prepared for extra customers.</p>
+
+                  <div class="insight-card">
+                    <div class="insight-card-head">
+                      <div class="briefing-iconbox">
+                        <img src="asset/checklist.svg" alt="" />
+                      </div>
+                      <div class="insight-card-text">
+                        <p class="insight-card-title">Art Walk Starts at 10 am</p>
+                        <p class="insight-card-sub">local event, 0.3 miles</p>
+                      </div>
+                    </div>
+
+                    <div class="insight-card-body">
+                      <div class="chart">
+                        <div class="chart-legend">
+                          <span class="legend-item"><span class="legend-dot" style="background:#69D0DD"></span>Today</span>
+                          <span class="legend-item"><span class="legend-dot" style="background:#14818D"></span>Typical day</span>
+                        </div>
+                        <div class="chart-bars">
+                          <div class="bar"><i class="b-dark" style="height:43px"></i></div>
+                          <div class="bar"><i class="b-dark" style="height:65px"></i></div>
+                          <div class="bar"><i class="b-light" style="height:91px"></i><i class="b-dark" style="height:72px"></i></div>
+                          <div class="bar"><i class="b-light" style="height:100px"></i><i class="b-dark" style="height:64px"></i></div>
+                          <div class="bar"><i class="b-light" style="height:84px"></i><i class="b-dark" style="height:48px"></i></div>
+                          <div class="bar"><i class="b-light" style="height:69px"></i><i class="b-dark" style="height:33px"></i></div>
+                          <div class="bar"><i class="b-light" style="height:72px"></i><i class="b-dark" style="height:48px"></i></div>
+                          <div class="bar"><i class="b-light" style="height:76px"></i><i class="b-dark" style="height:61px"></i></div>
+                          <div class="bar"><i class="b-light" style="height:82px"></i><i class="b-dark" style="height:71px"></i></div>
+                          <div class="bar"><i class="b-dark" style="height:61px"></i></div>
+                        </div>
+                        <div class="chart-axis">
+                          <span>8a</span><span>10a</span><span>12p</span><span>14p</span><span>16p</span><span>18p</span>
+                        </div>
+                        <p class="chart-caption">Expected traffic</p>
+                      </div>
+
+                      <div class="rec-complete">
+                        <div class="rec-complete-head">
+                          <span class="rec-status-dot"></span>
+                          <span>Recommendations complete</span>
+                        </div>
+                        <ul class="rec-items">
+                          <li><span>Staffing adjusted</span><span class="check-ico" aria-hidden="true"></span></li>
+                          <li><span>Inventory reordered</span><span class="check-ico" aria-hidden="true"></span></li>
+                          <li><span>Take-out boxes restocked</span><span class="check-ico" aria-hidden="true"></span></li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ====== REVIEW content ====== -->
+                <div class="insight-content insight-content--review">
+                  <section class="review-section">
+                    <div class="insight-label">
+                      <img src="asset/search.svg" alt="" class="insight-search-ico" />
+                      <span>Insights</span>
+                    </div>
+                    <p class="insight-desc">We received a customer review that requires your attention.</p>
+
+                    <div class="review-card">
+                      <div class="review-header">
+                        <div class="review-stars">
+                          <img src="asset/star-filled.svg" alt="" />
+                          <img src="asset/star-filled.svg" alt="" />
+                          <img src="asset/star-filled.svg" alt="" />
+                          <img src="asset/star-nonfilled.svg" alt="" />
+                          <img src="asset/star-nonfilled.svg" alt="" />
+                        </div>
+                        <div class="review-source">
+                          <span>Powered by</span>
+                          <img src="asset/google.svg" alt="Google" class="google-logo" />
+                        </div>
+                      </div>
+                      <div class="review-body">
+                        <p class="review-quote">&ldquo;Loved the food. Waited too long for my order.&rdquo;</p>
+                        <div class="review-meta">
+                          <span class="reviewer-name">Kevin M.</span>
+                          <span class="review-time">6:51 pm</span>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section class="review-section recommendation-section">
+                    <div class="insight-label">
+                      <img src="asset/star.svg" alt="" class="insight-ai-ico" />
+                      <span>Recommendation</span>
+                    </div>
+                    <p class="insight-desc">We identified the main concern for this user is wait time. Here&rsquo;s a draft response:</p>
+
+                    <div class="response-card">
+                      <div class="response-header">
+                        <img src="asset/Message Icon.svg" alt="" class="response-msg-ico" />
+                        <span>Suggested response</span>
+                      </div>
+                      <div class="response-body">
+                        <p>Hi Kevin, thanks for visiting. I&rsquo;m sorry about the wait&mdash;it&rsquo;s not our usual standard. We&rsquo;re working with the team to speed things up and hope to give you a better, faster experience next time.</p>
+                      </div>
+                      <div class="response-actions">
+                        <button class="btn-edit" type="button">Edit</button>
+                        <button class="btn-send" type="button">Send</button>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+
+                <!-- ====== PROMOTIONS content ====== -->
+                <div class="insight-content insight-content--promotions">
+                  <section class="promo-section">
+                    <div class="insight-label">
+                      <img src="asset/search.svg" alt="" class="insight-search-ico" />
+                      <span>Insight</span>
+                    </div>
+                    <p class="insight-desc">We noticed there&rsquo;s a gap between your average ticket size and the top performers in your area.</p>
+
+                    <div class="ticket-card">
+                      <div class="ticket-bars">
+                        <div class="ticket-row">
+                          <div class="ticket-row-info">
+                            <span class="ticket-name">Upper Crust Bakery</span>
+                            <div class="ticket-bar"><i class="ticket-bar-fill ticket-bar-fill--us" style="width: 425px"></i></div>
+                          </div>
+                          <span class="ticket-value">$11.40</span>
+                        </div>
+                        <div class="ticket-row">
+                          <div class="ticket-row-info">
+                            <span class="ticket-name">Top 25%</span>
+                            <div class="ticket-bar"><i class="ticket-bar-fill ticket-bar-fill--top" style="width: 567px"></i></div>
+                          </div>
+                          <span class="ticket-value">$15.30</span>
+                        </div>
+                      </div>
+                      <p class="ticket-caption">Ticket gap</p>
+
+                      <div class="trending-block">
+                        <div class="trending-head">
+                          <div class="trending-left">
+                            <span class="trending-dot"></span>
+                            <span>Trending now</span>
+                          </div>
+                          <div class="review-source trending-source">
+                            <span>Powered by</span>
+                            <img src="asset/google.svg" alt="Google" class="google-logo" />
+                          </div>
+                        </div>
+                        <p class="trending-text">Almond croissants &uarr; 62% search volume this week. You carry this item. It is not featured or bundled.</p>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section class="promo-section">
+                    <div class="insight-label">
+                      <img src="asset/star.svg" alt="" class="insight-ai-ico" />
+                      <span>Recommendation</span>
+                    </div>
+                    <p class="insight-desc">Run an online campaign to promote your top trending items.</p>
+
+                    <div class="campaign-card">
+                      <div class="campaign-hero">
+                        <img src="asset/brand/hero-pairing.png" alt="" class="campaign-hero-img" />
+                        <div class="campaign-hero-overlay">
+                          <div class="campaign-hero-text">
+                            <p class="campaign-hero-title">Almond croissant + any hot coffee</p>
+                            <p class="campaign-hero-sub">&ldquo;Pastry Pairing&rdquo; promo</p>
+                          </div>
+                          <div class="campaign-badge">$1 off</div>
+                        </div>
+                      </div>
+
+                      <div class="campaign-body">
+                        <div class="campaign-metrics">
+                          <div class="campaign-metric">
+                            <p class="campaign-metric-label">Ticket price gain</p>
+                            <p class="campaign-metric-value">+$1.80</p>
+                            <p class="campaign-metric-sub">per order</p>
+                          </div>
+                          <div class="campaign-metric-divider" aria-hidden="true"></div>
+                          <div class="campaign-metric">
+                            <p class="campaign-metric-label">Potential revenue</p>
+                            <p class="campaign-metric-value">+$4,200</p>
+                            <p class="campaign-metric-sub">per month</p>
+                          </div>
+                        </div>
+
+                        <div class="campaign-channels">
+                          <div class="channels-head">
+                            <span class="channels-dot"></span>
+                            <span>Channels</span>
+                          </div>
+                          <div class="channels-grid">
+                            <div class="channel-card">
+                              <img src="asset/brand/instagram.png" alt="" class="channel-icon" />
+                              <div class="channel-text">
+                                <div class="channel-name-row">
+                                  <p class="channel-name">Instagram</p>
+                                  <img src="asset/success.svg" alt="" class="channel-check" />
+                                </div>
+                                <p class="channel-status">Caption drafted</p>
+                              </div>
+                              <ul class="channel-stats">
+                                <li><span class="channel-stat-label">Total budget</span><span class="channel-stat-value">$100</span></li>
+                                <li><span class="channel-stat-label">Duration</span><span class="channel-stat-value">14 days</span></li>
+                                <li><span class="channel-stat-label">Estimated reach</span><span class="channel-stat-value">2k-3.5k</span></li>
+                              </ul>
+                            </div>
+                            <div class="channel-card">
+                              <img src="asset/brand/tiktok.png" alt="" class="channel-icon channel-icon--rounded" />
+                              <div class="channel-text">
+                                <div class="channel-name-row">
+                                  <p class="channel-name">TikTok</p>
+                                  <img src="asset/success.svg" alt="" class="channel-check" />
+                                </div>
+                                <p class="channel-status">Short-form hook drafted</p>
+                              </div>
+                              <ul class="channel-stats">
+                                <li><span class="channel-stat-label">Total budget</span><span class="channel-stat-value">$50</span></li>
+                                <li><span class="channel-stat-label">Duration</span><span class="channel-stat-value">7 days</span></li>
+                                <li><span class="channel-stat-label">Estimated reach</span><span class="channel-stat-value">800-1k</span></li>
+                              </ul>
+                            </div>
+                            <div class="channel-card">
+                              <img src="asset/brand/google-ads.png" alt="" class="channel-icon" />
+                              <div class="channel-text">
+                                <div class="channel-name-row">
+                                  <p class="channel-name">Google Ads</p>
+                                  <img src="asset/success.svg" alt="" class="channel-check" />
+                                </div>
+                                <p class="channel-status">Smart local ads prepared</p>
+                              </div>
+                              <ul class="channel-stats">
+                                <li><span class="channel-stat-label">Total budget</span><span class="channel-stat-value">$200</span></li>
+                                <li><span class="channel-stat-label">Duration</span><span class="channel-stat-value">14 days</span></li>
+                                <li><span class="channel-stat-label">Estimated reach</span><span class="channel-stat-value">5k-8k</span></li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="campaign-actions">
+                          <button class="btn-edit" type="button">Preview ads</button>
+                          <button class="btn-save btn-launch-campaign" type="button">Launch</button>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+
+                <!-- ====== REWARDS content ====== -->
+                <div class="insight-content insight-content--rewards">
+                  <section class="rewards-section">
+                    <div class="insight-label">
+                      <img src="asset/search.svg" alt="" class="insight-search-ico" />
+                      <span>Insights</span>
+                    </div>
+                    <p class="insight-desc">We&rsquo;ve detected that you are losing wallet share in your neighborhood.</p>
+
+                    <div class="wallet-card">
+                      <div class="wallet-metrics">
+                        <div class="wallet-metric">
+                          <p class="wallet-metric-label">3-month avg.</p>
+                          <p class="wallet-metric-value">23.3%</p>
+                          <div class="wallet-metric-delta wallet-metric-delta--placeholder" aria-hidden="true"></div>
+                        </div>
+                        <div class="wallet-metric-divider" aria-hidden="true"></div>
+                        <div class="wallet-metric">
+                          <p class="wallet-metric-label">This month</p>
+                          <p class="wallet-metric-value">19.9%</p>
+                          <div class="wallet-metric-delta">
+                            <img src="asset/arrow-down.svg" alt="" />
+                            <span class="wallet-delta-down">-3.4%</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="wallet-chart">
+                        <div class="wallet-chart-area">
+                          <div class="wallet-yaxis">
+                            <span>25%</span>
+                            <span>0%</span>
+                          </div>
+                          <div class="wallet-plot">
+                            <div class="wallet-curve">
+                              <img src="asset/brand/wallet-curve.svg" alt="" />
+                            </div>
+                            <div class="wallet-bar wallet-bar--3m">
+                              <i class="wallet-bar-fill wallet-bar-fill--teal" style="height: 100%"></i>
+                            </div>
+                            <div class="wallet-bar wallet-bar--may">
+                              <i class="wallet-bar-fill wallet-bar-fill--gray" style="height: 40%"></i>
+                              <i class="wallet-bar-fill wallet-bar-fill--teal" style="height: 60%"></i>
+                            </div>
+                            <div class="wallet-xaxis">
+                              <span class="wallet-xaxis-3m">3-month</span>
+                              <span class="wallet-xaxis-may">May</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="wallet-legend">
+                          <div class="wallet-legend-item">
+                            <span class="wallet-legend-dot wallet-legend-dot--teal"></span>
+                            <span>Upper Crust Bakery</span>
+                          </div>
+                          <div class="wallet-legend-item">
+                            <span class="wallet-legend-dot wallet-legend-dot--gray"></span>
+                            <span>Other Stores</span>
+                          </div>
+                        </div>
+                      </div>
+                      <p class="wallet-caption">Wallet share of nearby bakeries</p>
+
+                      <div class="wallet-callout">
+                        <p class="wallet-callout-text">Regular customers are visiting your competitors more often this month.</p>
+                        <div class="wallet-callout-source">
+                          <span class="wallet-sensor-dot"></span>
+                          <span>Fiserv Sensor</span>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section class="rewards-section">
+                    <div class="insight-label">
+                      <img src="asset/star.svg" alt="" class="insight-ai-ico" />
+                      <span>Recommendation</span>
+                    </div>
+                    <p class="insight-desc">Patterns suggest we can re-engage this group with a targeted nudge. Here is what I&rsquo;ve prepared:</p>
+
+                    <div class="reward-card">
+                      <div class="reward-promo">
+                        <div class="reward-promo-head">
+                          <img src="asset/megaphone.svg" alt="" class="reward-megaphone" />
+                          <span class="reward-promo-label">Promotion</span>
+                          <div class="review-source reward-promo-source">
+                            <span>Powered by</span>
+                            <img src="asset/google.svg" alt="Google" class="google-logo" />
+                          </div>
+                        </div>
+
+                        <div class="reward-promo-title">
+                          <p class="reward-promo-headline">20% off of your next order</p>
+                          <p class="reward-promo-sub">no minimum order amount.</p>
+                        </div>
+
+                        <div class="reward-promo-blocks">
+                          <div class="reward-block">
+                            <p class="reward-block-title">Smart delivery</p>
+                            <div class="reward-channels">
+                              <span class="reward-channel"><img src="asset/email.svg" alt="" /></span>
+                              <span class="reward-channel"><img src="asset/sms.svg" alt="" /></span>
+                              <span class="reward-channel"><img src="asset/apps.svg" alt="" /></span>
+                            </div>
+                            <p class="reward-block-desc">Clover will automatically target each customer with the best channel based on their past engagement.</p>
+                          </div>
+
+                          <div class="reward-block reward-block--message">
+                            <p class="reward-block-title">Message</p>
+                            <div class="reward-message">
+                              <div class="reward-message-head">
+                                <img src="asset/brand/rewards-avatar.png" alt="" class="reward-message-avatar" />
+                                <div class="reward-message-meta">
+                                  <p class="reward-message-name">Upper Crust Bakery</p>
+                                  <p class="reward-message-subject">We miss you and here&rsquo;s a gift!</p>
+                                </div>
+                              </div>
+                              <p class="reward-message-body">Hi! It&rsquo;s been a little while since your last visit. Here&rsquo;s a 20% discount for your next visit - no minimum amount. Hope to see you soon!</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="reward-summary">
+                        <ul class="reward-points">
+                          <li>
+                            <img src="asset/successblue.svg" alt="" class="reward-point-ico" />
+                            <p><span class="reward-point-title">Balanced for profit</span><span class="reward-point-desc">Optimized for the best return vs. your margin.</span></p>
+                          </li>
+                          <li>
+                            <img src="asset/successblue.svg" alt="" class="reward-point-ico" />
+                            <p><span class="reward-point-title">Expected win</span><span class="reward-point-desc">34% regulars return (~50 regulars).</span></p>
+                          </li>
+                          <li>
+                            <img src="asset/successblue.svg" alt="" class="reward-point-ico" />
+                            <p><span class="reward-point-title">Revenue opportunity</span><span class="reward-point-desc">+$9,800 projected over 90 days.</span></p>
+                          </li>
+                          <li>
+                            <img src="asset/successblue.svg" alt="" class="reward-point-ico" />
+                            <p><span class="reward-point-title">Relationships created</span><span class="reward-point-desc">Up to 40% of repeat customers return again within a month.</span></p>
+                          </li>
+                        </ul>
+
+                        <div class="reward-actions">
+                          <button class="btn-edit" type="button">Edit plan</button>
+                          <button class="btn-save btn-send-promotion" type="button">Send promotion</button>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+
+                <!-- ====== CAPITAL content ====== -->
+                <div class="insight-content insight-content--capital">
+                  <section class="capital-section">
+                    <div class="insight-label">
+                      <img src="asset/search.svg" alt="" class="insight-search-ico" />
+                      <span>Insights</span>
+                    </div>
+                    <p class="insight-desc">You are scaling fast but data shows customers are turning away during your busiest hours because the wait is too long.</p>
+
+                    <div class="capital-insight-card">
+                      <div class="capital-source">
+                        <span class="capital-source-dot"></span>
+                        <span>Fiserv Sensor</span>
+                      </div>
+                      <div class="capital-rows">
+                        <div class="capital-row">
+                          <img src="asset/online-ordering.svg" alt="" class="capital-row-ico" />
+                          <p>Kitchen at max capacity 4 of last 5 Saturdays.</p>
+                        </div>
+                        <div class="capital-row">
+                          <img src="asset/Road-Sign-Hairpin-Turn-Left Streamline Ultimate.svg" alt="" class="capital-row-ico" />
+                          <p>A drop-off in walk-ins during your Friday rush.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section class="capital-section">
+                    <div class="insight-label">
+                      <img src="asset/star.svg" alt="" class="insight-ai-ico" />
+                      <span>Recommendation</span>
+                    </div>
+                    <p class="insight-desc">Order more kitchen equipment to speed up your operation with funds from Clover Capital.</p>
+
+                    <div class="capital-card">
+                      <div class="capital-offer">
+                        <div class="capital-offer-head">
+                          <img src="asset/capital.svg" alt="" class="capital-offer-ico" />
+                          <span class="capital-offer-label">Clover Capital</span>
+                          <span class="capital-offer-prequal">Pre-qualified</span>
+                        </div>
+
+                        <div class="capital-offer-amount">
+                          <p class="capital-offer-headline">$45,000</p>
+                          <p class="capital-offer-sub">Next-day funding</p>
+                        </div>
+
+                        <div class="capital-perks">
+                          <div class="capital-perk">
+                            <img src="asset/successwhite.svg" alt="" class="capital-perk-ico" />
+                            <span>Fixed fee</span>
+                          </div>
+                          <div class="capital-perk">
+                            <img src="asset/successwhite.svg" alt="" class="capital-perk-ico" />
+                            <span>No late payment penalty</span>
+                          </div>
+                          <div class="capital-perk">
+                            <img src="asset/successwhite.svg" alt="" class="capital-perk-ico" />
+                            <span>Automatic payback</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="capital-summary">
+                        <div class="capital-metrics">
+                          <div class="capital-metric">
+                            <p class="capital-metric-label">Pay as you grow</p>
+                            <p class="capital-metric-value">5%</p>
+                            <p class="capital-metric-sub">of your future sales</p>
+                          </div>
+                          <div class="capital-metric-divider" aria-hidden="true"></div>
+                          <div class="capital-metric">
+                            <p class="capital-metric-label">Potential revenue</p>
+                            <p class="capital-metric-value">+$2,400</p>
+                            <p class="capital-metric-sub">Per month</p>
+                          </div>
+                        </div>
+
+                        <div class="capital-actions">
+                          <button class="btn-options" type="button">Save for later</button>
+                          <button class="btn-secure btn-select-funding" type="button">Select funding amount</button>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+
+                <!-- ====== CAPITAL FUNDING content (after Select funding amount) ====== -->
+                <div class="insight-content insight-content--capital-funding">
+                  <p class="funding-heading">Grow with funds from your own sales</p>
+                  <p class="funding-desc">Draw from a cash advance with a fixed, one time fee, no interest, and no penalties. Automatically pay back your advance when you make sales.</p>
+
+                  <div class="funding-card">
+                    <div class="funding-card-head">
+                      <img src="asset/capital.svg" alt="" class="funding-card-ico" />
+                      <span class="funding-card-title">Select funding amount</span>
+                      <span class="funding-card-prequal">Pre-qualified</span>
+                    </div>
+
+                    <div class="funding-card-body">
+                      <p class="funding-amount" data-prefix="">45,000</p>
+
+                      <div class="funding-slider">
+                        <div class="funding-ticks" aria-hidden="true"></div>
+                        <input
+                          type="range"
+                          class="funding-range"
+                          min="500"
+                          max="45000"
+                          step="100"
+                          value="45000"
+                          aria-label="Funding amount"
+                        />
+                      </div>
+
+                      <div class="funding-metrics">
+                        <div class="funding-metric">
+                          <p class="funding-metric-label">Daily sales paid back</p>
+                          <p class="funding-metric-value">5%</p>
+                        </div>
+                        <div class="funding-metric-divider" aria-hidden="true"></div>
+                        <div class="funding-metric">
+                          <p class="funding-metric-label">Fixed one-time fee</p>
+                          <p class="funding-metric-value">$300</p>
+                        </div>
+                      </div>
+
+                      <div class="funding-actions">
+                        <button class="btn-options" type="button">Learn more</button>
+                        <button class="btn-secure btn-apply-now" type="button">Apply now</button>
+                      </div>
+
+                      <a class="funding-terms" href="#" onclick="event.preventDefault()">Terms and conditions</a>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          </section>
+        </div>
+       </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    /* ---------- iPad screen scaler ---------- */
+    (function () {
+      const screen = document.querySelector('.screen');
+      const inner = document.querySelector('.screen-inner');
+      if (!screen || !inner) return;
+      const DESIGN_W = 1280;
+      const DESIGN_H = 834;
+      function fit() {
+        const sw = screen.clientWidth;
+        const sh = screen.clientHeight;
+        const scale = Math.min(sw / DESIGN_W, sh / DESIGN_H);
+        inner.style.transform = 'scale(' + scale + ')';
+        const offsetX = (sw - DESIGN_W * scale) / 2;
+        const offsetY = (sh - DESIGN_H * scale) / 2;
+        inner.style.left = offsetX + 'px';
+        inner.style.top = offsetY + 'px';
+      }
+      const ro = new ResizeObserver(fit);
+      ro.observe(screen);
+      window.addEventListener('resize', fit);
+      fit();
+    })();
+
+    /* ---------- Intro number count-up ----------
+       For each .metric-value, animate from 0 to its target value during
+       the KPI card's reveal. Honors prefers-reduced-motion.
+    */
+    (function () {
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const els = document.querySelectorAll('.metric-value');
+      const COUNT_DELAY = 1450;
+      const COUNT_DURATION = 1100;
+      const ease = (t) => 1 - Math.pow(1 - t, 3); // easeOutCubic
+
+      els.forEach((el) => {
+        const original = el.textContent.trim();
+        const match = original.match(/^([^\d-]*)(-?\d[\d,]*\.?\d*)(.*)$/);
+        if (!match) return;
+        const [, prefix, numStr, suffix] = match;
+        const target = parseFloat(numStr.replace(/,/g, ''));
+        const isInt = !numStr.includes('.');
+        const fmt = (v) => {
+          const fixed = isInt ? Math.round(v) : v.toFixed(1);
+          const withCommas = isInt
+            ? fixed.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+            : fixed;
+          return prefix + withCommas + suffix;
+        };
+
+        if (reduce) { el.textContent = fmt(target); return; }
+
+        el.textContent = fmt(0);
+        const start = performance.now() + COUNT_DELAY;
+        function tick(now) {
+          if (now < start) { requestAnimationFrame(tick); return; }
+          const t = Math.min(1, (now - start) / COUNT_DURATION);
+          el.textContent = fmt(target * ease(t));
+          if (t < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      });
+
+      // Remove the intro class once the longest animation has finished,
+      // so re-renders / hover states don't replay or get throttled.
+      const TOTAL_INTRO = 4500;
+      setTimeout(() => document.body.classList.remove('intro'), TOTAL_INTRO);
+    })();
+
+    /* ---------- Open / close the Insight view ----------
+       Two entry points (Art Walk briefing + Reply-needed Customer card)
+       both expand into the same insight panel; the body's data-view
+       attribute decides which left content + suggestion bubbles show.
+    */
+    (function () {
+      const briefing      = document.querySelector('.briefing');
+      const recCards      = document.querySelectorAll('.rec-card');
+      const customerCard  = recCards[0]; // first card = Customer
+      const promotionsCard = recCards[1]; // second card = Promotions
+      const rewardsCard   = recCards[2]; // third card = Rewards
+      const capitalCard   = recCards[3]; // fourth card = Capital / Growth
+      const insight       = document.querySelector('.insight-view');
+      const insightLeft   = insight && insight.querySelector('.insight-left');
+      const backBtn       = insight && insight.querySelector('.back-btn');
+      const titleEl       = insight && insight.querySelector('.topbar-insight .topbar-title');
+      const navTopItems   = document.querySelectorAll('.navtop .navitem');
+      if (!insight || !backBtn || !titleEl) return;
+
+      // Highlight the navbar item by index in .navtop. Capital-funding is the
+      // only view that shifts the active state off Home (it lives under More).
+      function setNavActive(idx) {
+        navTopItems.forEach((el, i) => el.classList.toggle('active', i === idx));
+      }
+
+      function open(view, title) {
+        document.body.setAttribute('data-view', view);
+        titleEl.textContent = title;
+        document.body.classList.add('insight-open');
+        // Clear the dashboard "Ask Clarity" state — its bubbles only apply
+        // on the home page, and the per-view chat bubbles take over below.
+        document.body.classList.remove(
+          'clarity-open',
+          'clarity-bubble-clicked',
+          'clarity-thinking',
+          'clarity-show-report'
+        );
+        insight.classList.add('open');
+        insight.setAttribute('aria-hidden', 'false');
+        // Capital funding lives in the More section of the app; every other
+        // view keeps the default Home highlight.
+        setNavActive(view === 'capital-funding' ? 3 : 0);
+        // Reset scroll on the left column whenever a view opens
+        if (insightLeft) insightLeft.scrollTop = 0;
+      }
+      function close() {
+        document.body.classList.remove('insight-open');
+        insight.classList.remove('open');
+        insight.setAttribute('aria-hidden', 'true');
+        setNavActive(0);
+      }
+
+      if (briefing) {
+        briefing.addEventListener('click', () => open('art-walk', 'Art Walk - 10 am - You are ready'));
+      }
+      if (customerCard) {
+        customerCard.addEventListener('click', () => {
+          // Once the card is in its completed state, clicking is a no-op
+          if (customerCard.classList.contains('rec-card--completed')) return;
+          open('review', 'Reply on customer review');
+          if (window.__reviewTypewriter) window.__reviewTypewriter.replay();
+        });
+      }
+      if (promotionsCard) {
+        promotionsCard.addEventListener('click', () => {
+          if (promotionsCard.classList.contains('rec-card--completed')) return;
+          open('promotions', 'Your competitors are selling more');
+        });
+      }
+      if (rewardsCard) {
+        rewardsCard.addEventListener('click', () => {
+          if (rewardsCard.classList.contains('rec-card--completed')) return;
+          open('rewards', 'Your wallet share is declining');
+        });
+      }
+      if (capitalCard) {
+        capitalCard.addEventListener('click', () => {
+          if (capitalCard.classList.contains('rec-card--completed')) return;
+          open('capital', 'Fund your next growth phase');
+        });
+      }
+
+      // "Select funding amount" inside the capital recommendation swaps the
+      // current insight view to the Clover Capital funding page (sub-view of
+      // More). Title + nav highlight update; chat suggestions reuse capital.
+      const selectFundingBtn = document.querySelector('.btn-select-funding');
+      if (selectFundingBtn) {
+        selectFundingBtn.addEventListener('click', () => {
+          open('capital-funding', 'Clover Capital');
+        });
+      }
+
+      backBtn.addEventListener('click', () => {
+        // Capital-funding is a sub-view of the capital recommendation; back
+        // returns to that page rather than closing the insight entirely.
+        if (document.body.getAttribute('data-view') === 'capital-funding') {
+          open('capital', 'Fund your next growth phase');
+          return;
+        }
+        close();
+        if (window.__reviewTypewriter) window.__reviewTypewriter.cancel();
+      });
+
+      // "Ask Clarity about..." on the home dashboard — tapping the input
+      // pops in two starter suggestions using the same bubble animation
+      // used inside insight views. Only applies when no insight is open;
+      // opening any insight clears the state automatically (see open()).
+      const aiInputEl = document.querySelector('.ai-input');
+      function resetClaritySubStates() {
+        document.body.classList.remove(
+          'clarity-bubble-clicked',
+          'clarity-thinking',
+          'clarity-show-report'
+        );
+      }
+      if (aiInputEl) {
+        aiInputEl.addEventListener('click', () => {
+          if (insight.classList.contains('open')) return;
+          // Toggle the input-open state. When closing, also tear down any
+          // sub-states so a re-open shows fresh suggestions, not the report.
+          if (document.body.classList.contains('clarity-open')) {
+            document.body.classList.remove('clarity-open');
+            resetClaritySubStates();
+          } else {
+            resetClaritySubStates();
+            document.body.classList.add('clarity-open');
+          }
+        });
+      }
+
+      // Tapping the "sales report" suggestion: bubble locks into a muted
+      // "submitted" state, the staff-schedule suggestion fades out, and
+      // after a ~1s thinking beat the AI response (text + report card)
+      // materializes underneath.
+      const salesReportBubble = document.querySelector('.chat-bubble[data-action="sales-report"]');
+      const THINK_DELAY_MS  = 280;   // wait for the bubble morph to settle
+      const THINK_HOLD_MS   = 1000;  // "thinking..." duration
+      if (salesReportBubble) {
+        salesReportBubble.addEventListener('click', () => {
+          // Only meaningful while the suggestions are visible and not
+          // already triggered.
+          if (!document.body.classList.contains('clarity-open')) return;
+          if (document.body.classList.contains('clarity-bubble-clicked')) return;
+          document.body.classList.add('clarity-bubble-clicked');
+          setTimeout(() => {
+            document.body.classList.add('clarity-thinking');
+            setTimeout(() => {
+              document.body.classList.remove('clarity-thinking');
+              document.body.classList.add('clarity-show-report');
+            }, THINK_HOLD_MS);
+          }, THINK_DELAY_MS);
+        });
+      }
+
+      // Esc as a convenience — mirrors the back button behavior
+      window.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape' || !insight.classList.contains('open')) return;
+        if (document.body.getAttribute('data-view') === 'capital-funding') {
+          open('capital', 'Fund your next growth phase');
+        } else {
+          close();
+        }
+      });
+
+      // Populate the funding slider's tick ruler. 56 ticks — every 5th is
+      // a "major" (taller, slightly thicker) mark to match the design.
+      const ticksHost = document.querySelector('.funding-ticks');
+      if (ticksHost && !ticksHost.children.length) {
+        const TICK_COUNT = 56;
+        const frag = document.createDocumentFragment();
+        for (let i = 0; i < TICK_COUNT; i++) {
+          const t = document.createElement('i');
+          t.className = (i % 5 === 0) ? 'funding-tick funding-tick--major' : 'funding-tick';
+          frag.appendChild(t);
+        }
+        ticksHost.appendChild(frag);
+      }
+
+      // Wire the funding range slider to the amount display + green-fill
+      // gradient. Range is $500–$45,000; default is the right end so the
+      // user sees the maximum offer first.
+      const fundingRange  = document.querySelector('.funding-range');
+      const fundingAmount = document.querySelector('.funding-amount');
+      if (fundingRange && fundingAmount) {
+        const fmt = (n) => n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        function syncFunding() {
+          const v   = Number(fundingRange.value);
+          const min = Number(fundingRange.min);
+          const max = Number(fundingRange.max);
+          const pct = ((v - min) / (max - min)) * 100;
+          fundingRange.style.setProperty('--progress', pct + '%');
+          fundingAmount.textContent = fmt(v);
+        }
+        fundingRange.addEventListener('input', syncFunding);
+        syncFunding();
+      }
+    })();
+
+    /* ---------- Typewriter effect on the Suggested Response ----------
+       Plays each time the review insight opens — kicks off after the
+       slowed cascade finishes and the response card fades in
+       (~2200ms). Reserves the response-body's height before clearing
+       so the layout doesn't shift while characters fill in.
+    */
+    (function () {
+      const responseBody = document.querySelector('.response-body');
+      const responsePara = responseBody && responseBody.querySelector('p');
+      if (!responseBody || !responsePara) return;
+      const FULL_TEXT = responsePara.textContent;
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      // Lock the body's height to the final rendered height so typing
+      // doesn't push other elements around.
+      requestAnimationFrame(() => {
+        const h = responseBody.offsetHeight;
+        if (h) responseBody.style.minHeight = h + 'px';
+      });
+
+      let timer = null;
+
+      function cancel() {
+        if (timer) { clearTimeout(timer); timer = null; }
+      }
+      function complete() {
+        cancel();
+        responsePara.textContent = FULL_TEXT;
+      }
+      function replay() {
+        cancel();
+        if (reduce) { responsePara.textContent = FULL_TEXT; return; }
+
+        // Start hidden; begin typing once the response card has settled.
+        responsePara.textContent = '';
+        const PER_CHAR = 14;        // ms — feels like fast typing without dragging
+        const KICKOFF = 2250;        // ms — after the slowed cascade lands
+        let i = 0;
+        function tick() {
+          if (i >= FULL_TEXT.length) { timer = null; return; }
+          // Variable pacing — slightly slower after punctuation for rhythm
+          const ch = FULL_TEXT[i];
+          responsePara.textContent += ch;
+          i++;
+          let delay = PER_CHAR;
+          if (ch === '.' || ch === ',' || ch === '—') delay = PER_CHAR * 5;
+          timer = setTimeout(tick, delay);
+        }
+        timer = setTimeout(tick, KICKOFF);
+      }
+
+      window.__reviewTypewriter = { replay, cancel, complete };
+    })();
+
+    /* ---------- Send → loading → task-complete → home flow ----------
+       Two send buttons share this flow:
+         • .btn-send (customer-review Suggested Response) →
+             "Sending messages..." → customer card moves to completed.
+         • .btn-send-promotion (rewards win-back Send promotion) →
+             "Sending promotion..." → rewards card moves to completed.
+       The user sees:
+         1. Loader overlay with the appropriate text
+         2. Lottie "Stars to Check" animation plays (lottie-web, JSON)
+         3. On complete → text swaps to "Task complete"
+         4. After 1s → insight view closes back to homepage
+         5. Triggering rec-card mutates to its completed state, FLIP-
+            animates from its old slot to the last grid position
+            while the other cards smoothly slide up to fill the gap.
+    */
+    (function () {
+      const reviewSendBtn     = document.querySelector('.btn-send');
+      const rewardsSendBtn    = document.querySelector('.btn-send-promotion');
+      const promotionsSendBtn = document.querySelector('.btn-launch-campaign');
+      const capitalApplyBtn   = document.querySelector('.btn-apply-now');
+      const insightView  = document.querySelector('.insight-view');
+      const overlay      = document.querySelector('.task-loading');
+      const overlayText  = document.querySelector('.task-loading-text');
+      const lottieHost   = document.querySelector('.task-loading-anim');
+      const recCardsAll  = document.querySelectorAll('.rec-card');
+      const customerCardEl   = recCardsAll[0];
+      const promotionsCardEl = recCardsAll[1];
+      const rewardsCardEl    = recCardsAll[2];
+      const capitalCardEl    = recCardsAll[3];
+      const navTopItemsAll   = document.querySelectorAll('.navtop .navitem');
+      const recGrid      = document.querySelector('.rec-grid');
+      const recSection   = document.querySelector('.rec-section');
+      if (!insightView || !overlay || !overlayText || !lottieHost || !recGrid) return;
+
+      // Toggle the "all-completed" subtitle on the rec-section once every
+      // recommended-action card has reached its completed state.
+      function checkAllCompleted() {
+        if (!recSection) return;
+        const total = recCardsAll.length;
+        const done  = recGrid.querySelectorAll('.rec-card--completed').length;
+        recSection.classList.toggle('all-completed', total > 0 && done === total);
+      }
+
+      // Lazily create the lottie instance the first time Send is pressed
+      // so script-load order doesn't matter.
+      let anim = null;
+      function ensureAnim() {
+        if (anim || typeof lottie === 'undefined') return anim;
+        anim = lottie.loadAnimation({
+          container: lottieHost,
+          renderer: 'svg',
+          loop: false,
+          autoplay: false,
+          path: 'asset/loading.json'
+        });
+        anim.setSpeed(1);              // native 6s timing — synced with text/fade beats
+        return anim;
+      }
+
+      // Beats — measured from the moment Send is pressed:
+      //   3.5s → text swaps to "Task complete" (visible ≥ 1.5s before fade)
+      //   5s   → page begins fading back to homepage
+      const TEXT_SWAP_MS = 3500;
+      const FADE_OUT_MS  = 5000;
+
+      // Close after a send flow. The loading overlay must keep covering
+      // the insight-left through the insight-view's 380ms fade so the
+      // previous insight content (review draft / promo card) doesn't
+      // flash back into view for one frame as the view dismisses.
+      // The .insight-view fade transition is 380ms — we hold the
+      // overlay slightly longer (420ms) to be safe.
+      const CLOSE_FADE_MS = 420;
+      function closeInsight() {
+        document.body.classList.remove('insight-open');
+        insightView.classList.remove('open');
+        insightView.setAttribute('aria-hidden', 'true');
+        // Reset the left-nav highlight to Home — capital-funding flips it
+        // to More, so a send flow that completes from there must restore it.
+        navTopItemsAll.forEach((el, i) => el.classList.toggle('active', i === 0));
+        setTimeout(() => {
+          insightView.classList.remove('task-loading-active');
+        }, CLOSE_FADE_MS);
+      }
+
+      // FLIP shuffle — captures old positions, mutates the DOM, then
+      // animates each moved card from its old slot back to its new slot.
+      // Uses a soft expressive easing + a small stagger so cards don't
+      // all start at once (the moving customer card leads, the others
+      // fill in just behind it).
+      function flipShuffle(mutate) {
+        const cards = Array.from(recGrid.children);
+        const oldRects = new Map(cards.map(c => [c, c.getBoundingClientRect()]));
+        mutate();
+        const newCards = Array.from(recGrid.children);
+        const moved = newCards
+          .map((card) => {
+            const oldRect = oldRects.get(card);
+            if (!oldRect) return null;
+            const newRect = card.getBoundingClientRect();
+            const dx = oldRect.left - newRect.left;
+            const dy = oldRect.top  - newRect.top;
+            if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return null;
+            return { card, dx, dy };
+          })
+          .filter(Boolean);
+
+        // Order: the customer card (lead) first, then the rest by visual
+        // distance so the cascade flows naturally toward the gap.
+        moved.sort((a, b) => {
+          if (a.card === customerCardEl) return -1;
+          if (b.card === customerCardEl) return 1;
+          return Math.hypot(b.dx, b.dy) - Math.hypot(a.dx, a.dy);
+        });
+
+        moved.forEach(({ card, dx, dy }, idx) => {
+          // Pre-frame: snap back to old slot with no transition
+          card.style.transition = 'none';
+          card.style.transform  = `translate(${dx}px, ${dy}px)`;
+          card.style.zIndex     = (card === customerCardEl) ? '2' : '1';
+          card.style.willChange = 'transform';
+          // Force layout flush
+          // eslint-disable-next-line no-unused-expressions
+          card.getBoundingClientRect();
+
+          const stagger = idx * 70;          // ms — small ripple between cards
+          const duration = (card === customerCardEl) ? 720 : 620;
+          // cubic-bezier(0.16, 1, 0.3, 1) — "expressive" ease-out, gentle
+          // initial pickup with a long, organic settle into the slot
+          const easing = 'cubic-bezier(0.16, 1, 0.3, 1)';
+
+          requestAnimationFrame(() => {
+            card.style.transition = `transform ${duration}ms ${easing} ${stagger}ms`;
+            card.style.transform  = '';
+          });
+
+          const cleanup = (e) => {
+            if (e.propertyName !== 'transform') return;
+            card.style.transition = '';
+            card.style.transform  = '';
+            card.style.zIndex     = '';
+            card.style.willChange = '';
+            card.removeEventListener('transitionend', cleanup);
+          };
+          card.addEventListener('transitionend', cleanup);
+        });
+      }
+
+      function markCustomerComplete() {
+        if (customerCardEl.classList.contains('rec-card--completed')) return;
+        flipShuffle(() => {
+          customerCardEl.classList.add('rec-card--completed');
+          const titleEl = customerCardEl.querySelector('.rec-title');
+          const descEl  = customerCardEl.querySelector('.rec-desc');
+          if (titleEl) {
+            titleEl.innerHTML =
+              'Replied on customer review <img src="asset/success.svg" alt="" class="rec-title-check" />';
+          }
+          if (descEl) descEl.textContent = 'View your comments';
+          recGrid.appendChild(customerCardEl);
+        });
+        checkAllCompleted();
+      }
+
+      // Promotions card mutates to an "Activated a campaign" tile: muted
+      // background (shared completed style), the iconbox swaps the storefront
+      // glyph for the carnival-shop glyph, and the title gains a green check.
+      function markPromotionsComplete() {
+        if (!promotionsCardEl) return;
+        if (promotionsCardEl.classList.contains('rec-card--completed')) return;
+        flipShuffle(() => {
+          promotionsCardEl.classList.add('rec-card--completed');
+          const iconImg = promotionsCardEl.querySelector('.rec-iconbox img');
+          const titleEl = promotionsCardEl.querySelector('.rec-title');
+          const descEl  = promotionsCardEl.querySelector('.rec-desc');
+          if (iconImg) iconImg.src = 'asset/storefront.svg';
+          if (titleEl) {
+            titleEl.innerHTML =
+              'Activated a campaign <img src="asset/success.svg" alt="" class="rec-title-check" />';
+          }
+          if (descEl) descEl.textContent = 'View your campaign status';
+          recGrid.appendChild(promotionsCardEl);
+        });
+        checkAllCompleted();
+      }
+
+      // Capital card mutates to a "Submitted Clover Capital application"
+      // tile: muted background, performance-increase glyph, green check.
+      function markCapitalComplete() {
+        if (!capitalCardEl) return;
+        if (capitalCardEl.classList.contains('rec-card--completed')) return;
+        flipShuffle(() => {
+          capitalCardEl.classList.add('rec-card--completed');
+          const iconImg = capitalCardEl.querySelector('.rec-iconbox img');
+          const titleEl = capitalCardEl.querySelector('.rec-title');
+          const descEl  = capitalCardEl.querySelector('.rec-desc');
+          if (iconImg) iconImg.src = 'asset/performance-increase.svg';
+          if (titleEl) {
+            titleEl.innerHTML =
+              'Submitted Clover Capital application <img src="asset/success.svg" alt="" class="rec-title-check" />';
+          }
+          if (descEl) descEl.textContent = 'Prepare for you next expansion';
+          recGrid.appendChild(capitalCardEl);
+        });
+        checkAllCompleted();
+      }
+
+      // Rewards card mutates to a "Scheduled win-back promo" tile: muted
+      // background (shared completed style), the iconbox swaps the cheer
+      // glyph for the high-five glyph, and the title gains a green check.
+      function markRewardsComplete() {
+        if (!rewardsCardEl) return;
+        if (rewardsCardEl.classList.contains('rec-card--completed')) return;
+        flipShuffle(() => {
+          rewardsCardEl.classList.add('rec-card--completed');
+          const iconImg = rewardsCardEl.querySelector('.rec-iconbox img');
+          const titleEl = rewardsCardEl.querySelector('.rec-title');
+          const descEl  = rewardsCardEl.querySelector('.rec-desc');
+          if (iconImg) iconImg.src = 'asset/highfive.svg';
+          if (titleEl) {
+            titleEl.innerHTML =
+              'Scheduled win-back promo <img src="asset/success.svg" alt="" class="rec-title-check" />';
+          }
+          if (descEl) descEl.textContent = 'See your message schedules';
+          recGrid.appendChild(rewardsCardEl);
+        });
+        checkAllCompleted();
+      }
+
+      // Generic send-flow runner. Each call wires one button to the
+      // shared loading overlay + close + card mutation sequence with
+      // its own loading copy and completion handler.
+      function wireSendFlow(button, loadingText, onComplete) {
+        if (!button) return;
+        let inFlight = false;
+        button.addEventListener('click', () => {
+          if (inFlight) return;
+          inFlight = true;
+
+          if (window.__reviewTypewriter) window.__reviewTypewriter.cancel();
+
+          // Reset text and show loader.
+          overlayText.textContent = loadingText;
+          overlayText.classList.remove('is-swapping');
+          insightView.classList.add('task-loading-active');
+
+          // Play the lottie from frame 0
+          const a = ensureAnim();
+          if (a) {
+            a.goToAndStop(0, true);
+            a.play();
+          }
+
+          // Beat 1 — at 4s, swap text to "Task complete"
+          const swapTimer = setTimeout(() => {
+            overlayText.classList.add('is-swapping');
+            setTimeout(() => {
+              overlayText.textContent = 'Task complete';
+              overlayText.classList.remove('is-swapping');
+            }, 220);
+          }, TEXT_SWAP_MS);
+
+          // Beat 2 — at 5s, close the insight view (fades back to home).
+          // The card mutation + FLIP runs right as the close kicks in so
+          // the shuffle is visible while the page reveals.
+          const closeTimer = setTimeout(() => {
+            closeInsight();
+            setTimeout(onComplete, 240);
+            inFlight = false;
+          }, FADE_OUT_MS);
+
+          // Defensive: if the user navigates away mid-flight, cancel timers
+          button.__cancelSendFlow = () => {
+            clearTimeout(swapTimer);
+            clearTimeout(closeTimer);
+            inFlight = false;
+          };
+        });
+      }
+
+      wireSendFlow(reviewSendBtn,     'Sending messages...',       markCustomerComplete);
+      wireSendFlow(rewardsSendBtn,    'Sending promotion...',      markRewardsComplete);
+      wireSendFlow(promotionsSendBtn, 'launching the campaign...', markPromotionsComplete);
+      wireSendFlow(capitalApplyBtn,   'Submitting application...', markCapitalComplete);
+    })();
+
+    /* ---------- Cursor-tracked spotlight on Recommended cards ----------
+       Sets --mx / --my as % of each card's bounding box on mousemove.
+       The CSS hover gradients use these to position a radial spotlight
+       on both the inner surface and the border, so the highlight
+       originates from wherever the cursor is.
+    */
+    (function () {
+      const cards = document.querySelectorAll('.rec-card');
+      cards.forEach((card) => {
+        card.addEventListener('mousemove', (e) => {
+          const r = card.getBoundingClientRect();
+          const x = ((e.clientX - r.left) / r.width)  * 100;
+          const y = ((e.clientY - r.top)  / r.height) * 100;
+          card.style.setProperty('--mx', x + '%');
+          card.style.setProperty('--my', y + '%');
+        });
+        card.addEventListener('mouseleave', () => {
+          // Reset off-card so the spotlight fades out cleanly
+          card.style.setProperty('--mx', '50%');
+          card.style.setProperty('--my', '-40%');
+        });
+      });
+    })();
+
+    /* ---------- Tap-circle cursor ----------
+       Hides native cursor and follows the pointer with a circular
+       "fingertip" puck. Mouse-down shrinks/brightens the puck and
+       spawns a ripple to convey a touch interaction.
+    */
+    (function () {
+      const cursor = document.createElement('div');
+      cursor.className = 'tap-cursor';
+      document.body.appendChild(cursor);
+
+      let firstMove = true;
+
+      function setPos(x, y) {
+        cursor.style.left = x + 'px';
+        cursor.style.top  = y + 'px';
+      }
+
+      window.addEventListener('mousemove', (e) => {
+        setPos(e.clientX, e.clientY);
+        if (firstMove) {
+          cursor.classList.add('visible');
+          firstMove = false;
+        }
+      }, { passive: true });
+
+      window.addEventListener('mouseleave', () => cursor.classList.remove('visible'));
+      window.addEventListener('mouseenter', () => cursor.classList.add('visible'));
+
+      window.addEventListener('mousedown', (e) => {
+        cursor.classList.add('tapping');
+        // ripple
+        const ripple = document.createElement('div');
+        ripple.className = 'tap-ripple';
+        ripple.style.left = e.clientX + 'px';
+        ripple.style.top  = e.clientY + 'px';
+        document.body.appendChild(ripple);
+        ripple.addEventListener('animationend', () => ripple.remove());
+      });
+
+      window.addEventListener('mouseup', () => {
+        cursor.classList.remove('tapping');
+      });
+
+      // Subtle hover state when over interactive elements (no OS hand cursor)
+      const INTERACTIVE = '.briefing, .rec-card, .navitem, .iconbtn, .back-btn, .chat-bubble, .ai-input';
+      document.querySelectorAll(INTERACTIVE).forEach((el) => {
+        el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+        el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+      });
+    })();
+  </script>
+</body>
+</html>

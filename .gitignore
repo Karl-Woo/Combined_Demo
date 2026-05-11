@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+
+# Editor / OS junk
+*.swp
+.idea/
+.vscode/
+
+# Local-only Claude settings (preserve launch.json but skip per-machine overrides)
+.claude/settings.local.json
+.claude/worktrees/
+
+# Build artifacts from the bundled Onboard demo's own dev workflow.
+# The pre-built `dist/` is tracked because the wrapper iframes it
+# directly; node_modules and the .vite cache are not.
+demos/agent-boarding/node_modules/
+demos/agent-boarding/.vite/

@@ -1,0 +1,335 @@
+/*
+ * Figma Make exports reference fonts using the pattern `font-['Family:Style']`,
+ * e.g. `font-['Graphik:Medium']` or `font-['PP_Formula:Condensed_Black']`.
+ * Each Family:Style combination must be registered as its own @font-face so the
+ * quoted family name resolves. We also register the plain family names
+ * ("Graphik" / "PP Formula") with the standard font-weight axis, so code that
+ * uses conventional CSS works too.
+ *
+ * Paths are relative to this file (src/styles/fonts.css → src/assets/fonts/...).
+ */
+
+/* =========================================================================
+ * Altform — Figma-style family names (aliased to Graphik files)
+ * The Figma design uses "Altform" as the font name for what are actually
+ * Graphik weights. These @font-face entries make those classes resolve.
+ * ========================================================================= */
+
+@font-face {
+  font-family: "Altform:Regular";
+  src: url('../assets/fonts/Graphik/Graphik-Regular.otf') format('opentype');
+  font-display: swap;
+}
+@font-face {
+  font-family: "Altform:Medium";
+  src: url('../assets/fonts/Graphik/Graphik-Medium.otf') format('opentype');
+  font-display: swap;
+}
+@font-face {
+  font-family: "Altform:SemiBold";
+  src: url('../assets/fonts/Graphik/Graphik-Semibold.otf') format('opentype');
+  font-display: swap;
+}
+@font-face {
+  font-family: "Altform:Bold";
+  src: url('../assets/fonts/Graphik/Graphik-Bold.otf') format('opentype');
+  font-display: swap;
+}
+
+/* =========================================================================
+ * Graphik — Figma-style family names (one @font-face per variant)
+ * ========================================================================= */
+
+@font-face {
+  font-family: "Graphik:Thin";
+  src: url('../assets/fonts/Graphik/Graphik-Thin.otf') format('opentype');
+  font-display: swap;
+}
+@font-face {
+  font-family: "Graphik:Extralight";
+  src: url('../assets/fonts/Graphik/Graphik-Extralight.otf') format('opentype');
+  font-display: swap;
+}
+@font-face {
+  font-family: "Graphik:Light";
+  src: url('../assets/fonts/Graphik/Graphik-Light.otf') format('opentype');
+  font-display: swap;
+}
+@font-face {
+  font-family: "Graphik:Regular";
+  src: url('../assets/fonts/Graphik/Graphik-Regular.otf') format('opentype');
+  font-display: swap;
+}
+@font-face {
+  font-family: "Graphik:Medium";
+  src: url('../assets/fonts/Graphik/Graphik-Medium.otf') format('opentype');
+  font-display: swap;
+}
+@font-face {
+  font-family: "Graphik:Semibold";
+  src: url('../assets/fonts/Graphik/Graphik-Semibold.otf') format('opentype');
+  font-display: swap;
+}
+@font-face {
+  font-family: "Graphik:Bold";
+  src: url('../assets/fonts/Graphik/Graphik-Bold.otf') format('opentype');
+  font-display: swap;
+}
+@font-face {
+  font-family: "Graphik:Black";
+  src: url('../assets/fonts/Graphik/Graphik-Black.otf') format('opentype');
+  font-display: swap;
+}
+@font-face {
+  font-family: "Graphik:Super";
+  src: url('../assets/fonts/Graphik/Graphik-Super.otf') format('opentype');
+  font-display: swap;
+}
+
+/* =========================================================================
+ * PP Formula — Figma-style family names
+ * ========================================================================= */
+
+/*
+ * NOTE: Tailwind's `font-['PP_Formula:Condensed_Black']` arbitrary-value syntax
+ * converts underscores to spaces, so the computed font-family is
+ * "PP Formula:Condensed Black". These @font-face names must match exactly.
+ */
+@font-face {
+  font-family: "PP Formula:Condensed Black";
+  src: url('../assets/fonts/PP Formula/PPFormula-CondensedBlack.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: "PP Formula:Condensed Regular";
+  src: url('../assets/fonts/PP Formula/PPFormula-CondensedRegular.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: "PP Formula:Extended Bold";
+  src: url('../assets/fonts/PP Formula/PPFormula-ExtendedBold.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: "PP Formula:Extended Light";
+  src: url('../assets/fonts/PP Formula/PPFormula-ExtendedLight.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: "PP Formula:Extended Medium";
+  src: url('../assets/fonts/PP Formula/PPFormula-ExtendedMedium.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: "PP Formula:Extrabold";
+  src: url('../assets/fonts/PP Formula/PPFormula-Extrabold.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: "PP Formula:Light";
+  src: url('../assets/fonts/PP Formula/PPFormula-Light.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: "PP Formula:Medium";
+  src: url('../assets/fonts/PP Formula/PPFormula-Medium.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: "PP Formula:Narrow Bold";
+  src: url('../assets/fonts/PP Formula/PPFormula-NarrowBold.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: "PP Formula:Narrow Regular";
+  src: url('../assets/fonts/PP Formula/PPFormula-NarrowRegular.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: "PP Formula:Narrow Semibold";
+  src: url('../assets/fonts/PP Formula/PPFormula-NarrowSemibold.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: "PP Formula:Regular";
+  src: url('../assets/fonts/PP Formula/PPFormula-Regular.ttf') format('truetype');
+  font-display: swap;
+}
+
+/* =========================================================================
+ * Graphik — plain family name with weight axis (for conventional usage)
+ * ========================================================================= */
+
+@font-face {
+  font-family: Graphik;
+  src: url('../assets/fonts/Graphik/Graphik-Thin.otf') format('opentype');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: Graphik;
+  src: url('../assets/fonts/Graphik/Graphik-ThinItalic.otf') format('opentype');
+  font-weight: 100;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: Graphik;
+  src: url('../assets/fonts/Graphik/Graphik-Extralight.otf') format('opentype');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: Graphik;
+  src: url('../assets/fonts/Graphik/Graphik-ExtralightItalic.otf') format('opentype');
+  font-weight: 200;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: Graphik;
+  src: url('../assets/fonts/Graphik/Graphik-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: Graphik;
+  src: url('../assets/fonts/Graphik/Graphik-LightItalic.otf') format('opentype');
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: Graphik;
+  src: url('../assets/fonts/Graphik/Graphik-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: Graphik;
+  src: url('../assets/fonts/Graphik/Graphik-RegularItalic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: Graphik;
+  src: url('../assets/fonts/Graphik/Graphik-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: Graphik;
+  src: url('../assets/fonts/Graphik/Graphik-MediumItalic.otf') format('opentype');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: Graphik;
+  src: url('../assets/fonts/Graphik/Graphik-Semibold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: Graphik;
+  src: url('../assets/fonts/Graphik/Graphik-SemiboldItalic.otf') format('opentype');
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: Graphik;
+  src: url('../assets/fonts/Graphik/Graphik-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: Graphik;
+  src: url('../assets/fonts/Graphik/Graphik-BoldItalic.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: Graphik;
+  src: url('../assets/fonts/Graphik/Graphik-Black.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: Graphik;
+  src: url('../assets/fonts/Graphik/Graphik-BlackItalic.otf') format('opentype');
+  font-weight: 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* =========================================================================
+ * PP Formula — plain family name with weight axis
+ * ========================================================================= */
+
+@font-face {
+  font-family: "PP Formula";
+  src: url('../assets/fonts/PP Formula/PPFormula-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "PP Formula";
+  src: url('../assets/fonts/PP Formula/PPFormula-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "PP Formula";
+  src: url('../assets/fonts/PP Formula/PPFormula-RegularItalic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "PP Formula";
+  src: url('../assets/fonts/PP Formula/PPFormula-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "PP Formula";
+  src: url('../assets/fonts/PP Formula/PPFormula-MediumItalic.ttf') format('truetype');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "PP Formula";
+  src: url('../assets/fonts/PP Formula/PPFormula-ExtendedBold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "PP Formula";
+  src: url('../assets/fonts/PP Formula/PPFormula-Extrabold.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "PP Formula";
+  src: url('../assets/fonts/PP Formula/PPFormula-CondensedBlack.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}

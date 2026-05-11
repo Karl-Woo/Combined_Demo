@@ -1,0 +1,3619 @@
+/* ===========================================================
+   Clover Insight Center — Tablet Demo
+   Dashboard pixel-perfect from Figma (1280x834 incl. status bar)
+   wrapped in iPad bezel. Inner content scales to bezel size.
+   =========================================================== */
+
+@font-face {
+  font-family: 'Graphik';
+  src: url('asset/fonts/Graphik/Graphik-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Graphik';
+  src: url('asset/fonts/Graphik/Graphik-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Graphik';
+  src: url('asset/fonts/Graphik/Graphik-Semibold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Graphik';
+  src: url('asset/fonts/Graphik/Graphik-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #e9ecef;
+  font-family: 'Graphik', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #000;
+  cursor: none;                 /* hide native cursor — tap circle replaces it */
+}
+
+/* Force every element to use cursor: none — the custom tap cursor
+   replaces the OS pointer everywhere, including over <button> elements */
+*, *::before, *::after,
+button, a, input, textarea, select,
+.briefing, .rec-card, .navitem, .iconbtn, .back-btn, .chat-bubble, .ai-input {
+  cursor: none !important;
+}
+
+/* ===========================================================
+   Intro animation — tech showcase reveal (slowed + frame-first)
+   1. iPad fades + scales in
+   2. Vertical & horizontal nav lines draw out (the "frame")
+   3. Screen "power-on" gradient sweep
+   4. Topbar, nav, KPIs, briefing, actions, AI panel cascade
+   5. KPI numbers count up (driven by JS)
+   6. AI star pulses once at the end
+   =========================================================== */
+
+@keyframes fx-scale-in {
+  0%   { opacity: 0; transform: scale(0.96); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes fx-fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fx-fade-down {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fx-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes fx-line-y {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+@keyframes fx-line-x {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+@keyframes fx-star-pulse {
+  0%   { transform: scale(1);    filter: drop-shadow(0 0 0   rgba(0, 239, 132, 0)); }
+  50%  { transform: scale(1.14); filter: drop-shadow(0 0 14px rgba(0, 239, 132, 0.55)); }
+  100% { transform: scale(1);    filter: drop-shadow(0 0 0   rgba(0, 239, 132, 0)); }
+}
+
+/* iPad enters first */
+body.intro .ipad {
+  animation: fx-scale-in 1000ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+/* === Frame lines — the L-shape navigation rails draw FIRST ===
+   During intro, hide the real borders and replace them with
+   pseudo-elements that scale from 0→1 along their axis.
+*/
+body.intro .navbar {
+  position: relative;
+  border-right-color: transparent;
+}
+body.intro .topbar {
+  position: relative;
+  border-bottom-color: transparent;
+}
+body.intro .navbar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 1px;
+  height: 100%;
+  background: #E5E5E5;
+  transform-origin: top center;
+  animation: fx-line-y 900ms cubic-bezier(0.22, 0.61, 0.36, 1) 600ms both;
+  z-index: 3;
+}
+body.intro .topbar::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: #E5E5E5;
+  transform-origin: left center;
+  animation: fx-line-x 900ms cubic-bezier(0.22, 0.61, 0.36, 1) 600ms both;
+  z-index: 3;
+}
+
+/* Content cascade — kicks off the moment the L-frame finishes drawing
+   so there's no empty white gap between the frame and the content. */
+body.intro .topbar-title,
+body.intro .topbar-actions {
+  animation: fx-fade-down 600ms cubic-bezier(0.22, 0.61, 0.36, 1) 1200ms both;
+}
+body.intro .navtop .navitem:nth-child(1) { animation: fx-fade-down 500ms cubic-bezier(0.22, 0.61, 0.36, 1) 1250ms both; }
+body.intro .navtop .navitem:nth-child(2) { animation: fx-fade-down 500ms cubic-bezier(0.22, 0.61, 0.36, 1) 1330ms both; }
+body.intro .navtop .navitem:nth-child(3) { animation: fx-fade-down 500ms cubic-bezier(0.22, 0.61, 0.36, 1) 1410ms both; }
+body.intro .navtop .navitem:nth-child(4) { animation: fx-fade-down 500ms cubic-bezier(0.22, 0.61, 0.36, 1) 1490ms both; }
+body.intro .navbottom .navitem           { animation: fx-fade-down 500ms cubic-bezier(0.22, 0.61, 0.36, 1) 1570ms both; }
+
+body.intro .kpis {
+  animation: fx-fade-up 700ms cubic-bezier(0.22, 0.61, 0.36, 1) 1350ms both;
+}
+body.intro .briefing {
+  animation: fx-fade-up 700ms cubic-bezier(0.22, 0.61, 0.36, 1) 1650ms both;
+}
+body.intro .rec-section .rec-header {
+  animation: fx-fade-in 500ms ease-out 1900ms both;
+}
+body.intro .rec-card:nth-child(1) { animation: fx-fade-up 600ms cubic-bezier(0.22, 0.61, 0.36, 1) 1980ms both; }
+body.intro .rec-card:nth-child(2) { animation: fx-fade-up 600ms cubic-bezier(0.22, 0.61, 0.36, 1) 2080ms both; }
+body.intro .rec-card:nth-child(3) { animation: fx-fade-up 600ms cubic-bezier(0.22, 0.61, 0.36, 1) 2180ms both; }
+body.intro .rec-card:nth-child(4) { animation: fx-fade-up 600ms cubic-bezier(0.22, 0.61, 0.36, 1) 2280ms both; }
+
+body.intro .right-col {
+  animation: fx-fade-up 700ms cubic-bezier(0.22, 0.61, 0.36, 1) 2100ms both;
+}
+body.intro .ai-star {
+  animation: fx-star-pulse 1400ms ease-in-out 2900ms both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.intro,
+  body.intro * {
+    animation: none !important;
+  }
+}
+
+/* ---------- Touch tap-circle cursor ---------- */
+.tap-cursor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 30px;
+  height: 30px;
+  margin-left: -15px;
+  margin-top: -15px;
+  border-radius: 50%;
+  /* white frosted-glass puck with a white ring */
+  background: rgba(255, 255, 255, 0.4);
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  /* deeper cool-gray drop shadow keeps the puck findable on white surfaces */
+  box-shadow:
+    0 4px 14px rgba(30, 35, 45, 0.22),
+    0 1px 3px rgba(30, 35, 45, 0.12);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+  pointer-events: none;
+  z-index: 99999;
+  transform: translate3d(0, 0, 0) scale(1);
+  transition: transform 120ms ease, background-color 120ms ease, border-color 120ms ease, opacity 120ms ease;
+  will-change: transform, left, top;
+  opacity: 0;                   /* fades in on first move */
+}
+.tap-cursor.visible { opacity: 1; }
+
+/* Mouse-down state: shrink + brighten the puck */
+.tap-cursor.tapping {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 1);
+  transform: translate3d(0, 0, 0) scale(0.7);
+}
+
+/* Hover over interactive elements — subtle scale-down + slightly stronger fill.
+   Replaces the browser's hand cursor while still signaling "tappable". */
+.tap-cursor.hover {
+  background: rgba(255, 255, 255, 0.55);
+  border-color: rgba(255, 255, 255, 0.95);
+  transform: translate3d(0, 0, 0) scale(0.85);
+}
+/* When tapping wins out over hover (mousedown on interactive) */
+.tap-cursor.hover.tapping {
+  transform: translate3d(0, 0, 0) scale(0.65);
+}
+
+/* Ripple element appended on click */
+.tap-ripple {
+  position: fixed;
+  width: 30px;
+  height: 30px;
+  margin-left: -15px;
+  margin-top: -15px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 2px 8px rgba(30, 35, 45, 0.18);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  pointer-events: none;
+  z-index: 99998;
+  animation: tap-ripple 520ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+@keyframes tap-ripple {
+  0%   { transform: scale(0.6); opacity: 1; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+/* ---------- Stage / iPad container ---------- */
+.stage {
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* The iPad has the bezel image as the container.
+   Bezel.png natural size ≈ 1990x1404. We render at fixed
+   width and use the screen overlay sized to match the inner
+   screen area precisely.
+
+   Width is the smallest of: design max, available viewport width,
+   or the width derived from available viewport height via aspect
+   ratio. The height-derived term ensures the iPad scales down to
+   fit when the viewport is shorter than it is wide — keeping the
+   whole device visible in the first screen without scroll. */
+.ipad {
+  position: relative;
+  width: min(1480px, calc(100vw - 64px), calc((100vh - 64px) * 1990 / 1404));
+  aspect-ratio: 1990 / 1404;
+  filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.18));
+}
+
+.bezel {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  z-index: 2;
+}
+
+/* Screen sits inside the bezel.
+   Inner viewing area on the iPad bezel is roughly
+   ~3.6% inset from each side. */
+.screen {
+  position: absolute;
+  top: 4.0%;
+  left: 3.55%;
+  right: 3.55%;
+  bottom: 4.0%;
+  background: #ffffff;
+  overflow: hidden;
+  border-radius: 22px;
+  z-index: 1;
+}
+
+/* Fixed-size internal canvas. JS scales it via transform so every
+   element (text, icons, padding) shrinks/grows uniformly with the
+   iPad as the viewport changes. */
+.screen-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1280px;
+  height: 834px;
+  transform-origin: 0 0;
+  background: #ffffff;
+  font-size: 14px;
+  line-height: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- Status Bar (iPad) ---------- */
+.statusbar {
+  height: 24px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 26px;
+  background: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro', 'Segoe UI', Roboto, sans-serif;
+  font-size: 12px;
+  font-weight: 510;
+  color: #000;
+}
+.sb-left { display: flex; gap: 8px; align-items: center; }
+.sb-right { display: flex; gap: 4px; align-items: center; }
+.sb-pct { font-weight: 510; }
+.sb-signal { width: 17px; height: 11px; }
+.sb-wifi   { width: 15px; height: 11px; }
+.sb-batt   { width: 27px; height: 12px; }
+
+/* ---------- Frame: nav + content ---------- */
+.frame {
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 0;
+  position: relative;          /* anchors the absolute insight overlay */
+}
+
+/* ---------- Left Navbar ---------- */
+.navbar {
+  width: 100px;
+  height: 100%;             /* divider line stretches full screen height */
+  background: #ffffff;
+  border-right: 1px solid #E5E5E5;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 0 0 auto;
+  align-self: stretch;
+}
+.navtop, .navbottom { display: flex; flex-direction: column; }
+
+.navitem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px;
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: #606060;
+  border-left: 4px solid transparent;
+  cursor: default;
+}
+.navitem.active {
+  color: #228800;
+  border-left-color: #228800;
+}
+/* Mask-based icons so the stroke color follows the active state. The
+   per-icon modifier supplies the silhouette via mask-image; background-
+   color controls the rendered color (gray when inactive, green active). */
+.navicon {
+  width: 24px;
+  height: 24px;
+  display: block;
+  background-color: #5A5A5A;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+}
+.navitem.active .navicon { background-color: #228800; }
+.navicon--dashboard {
+  -webkit-mask-image: url(asset/dashboard.svg);
+          mask-image: url(asset/dashboard.svg);
+}
+.navicon--add-circle {
+  -webkit-mask-image: url(asset/add-circle.svg);
+          mask-image: url(asset/add-circle.svg);
+}
+.navicon--receipt {
+  -webkit-mask-image: url(asset/receipt.svg);
+          mask-image: url(asset/receipt.svg);
+}
+.navicon--menu {
+  -webkit-mask-image: url(asset/menu.svg);
+          mask-image: url(asset/menu.svg);
+}
+.navicon--lock {
+  -webkit-mask-image: url(asset/lock.svg);
+          mask-image: url(asset/lock.svg);
+}
+
+/* ---------- Main Content ---------- */
+.content {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: #ffffff;
+}
+
+/* Top App Bar */
+.topbar {
+  height: 68px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 24px;
+  border-bottom: 1px solid #E5E5E5;
+  background: #ffffff;
+}
+.topbar-title {
+  font-family: 'Graphik', sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 26px;
+  margin: 0;
+  color: #000;
+}
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.store-name {
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #000;
+}
+.iconbtn {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+}
+.iconbtn img {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+.iconbtn .dot {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 8px;
+  height: 8px;
+  background: #E70000;
+  border-radius: 50%;
+  border: 1.5px solid #fff;
+  box-sizing: content-box;
+}
+
+/* Body grid */
+.body {
+  flex: 1 1 auto;
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  min-height: 0;
+  overflow: hidden;
+}
+.left-col {
+  width: 753px;                  /* matches Figma exactly so the right column
+                                     stays a consistent 379px on both views */
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.right-col {
+  flex: 1 1 0;
+  min-width: 0;
+  background: #ffffff;
+  border: 1px solid #E5E5E5;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;            /* crop inner corner gradient inside rounded border */
+  position: relative;
+  isolation: isolate;
+  z-index: 11;                 /* sits above .insight-view (z-index 10) so the
+                                  panel keeps showing through during the swap */
+}
+/* Stacking shell that holds ai-hero and chat-thread layered over each other */
+.right-col-content {
+  flex: 1 1 auto;
+  position: relative;
+  min-height: 0;
+}
+
+/* ---------- KPI Card ---------- */
+.card {
+  background: #ffffff;
+  border: 1px solid #E5E5E5;
+  border-radius: 16px;
+}
+.kpis {
+  padding: 16px 8px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.kpi-row {
+  display: flex;
+  align-items: stretch;
+  gap: 24px;
+  padding: 8px 8px 0;
+}
+.metric {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+.metric-label {
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #5C5C5C;
+  margin: 0;
+}
+.metric-value {
+  font-family: 'Graphik', sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
+  color: #000;
+  margin: 0;
+}
+.metric-sub {
+  font-family: 'Graphik', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #5C5C5C;
+  margin: 0;
+}
+.delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.delta img { width: 24px; height: 24px; display: block; }
+.delta-up   { color: #228800; font-size: 14px; font-weight: 500; line-height: 20px; }
+.delta-down { color: #E70000; font-size: 14px; font-weight: 500; line-height: 20px; }
+.vdivider {
+  width: 1px;
+  background: #E5E5E5;
+  align-self: center;
+  height: 116px;
+  flex: 0 0 1px;
+}
+
+/* Streak banner */
+.streak {
+  background: #F5F5F5;
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.streak p {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #000;
+}
+.streak-right { display: flex; gap: 4px; align-items: center; }
+.streak-right img { width: 24px; height: 24px; }
+.streak-right span {
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #5C5C5C;
+}
+
+/* ---------- Briefing card ---------- */
+/* Two-layer background:
+     - padding-box layer paints the mint gradient fill
+     - border-box layer paints a gradient *border* that's brighter
+       in the middle and softer at the ends — the "highlight" area
+*/
+.briefing {
+  border: 1px solid transparent;
+  /* Symmetric repeating gradient — pattern doubled so hover can flow it
+     across without a visible seam (color at 0% == 50% == 100%). */
+  background:
+    linear-gradient(172deg, #FAFFF7 22%, #E1FFF2 87%) padding-box,
+    linear-gradient(115deg,
+      rgba(0, 215, 25, 0.55)  0%,
+      rgba(0, 215, 25, 0.30) 15%,
+      #E5E5E5                25%,
+      rgba(0, 215, 25, 0.30) 35%,
+      rgba(0, 215, 25, 0.55) 50%,
+      rgba(0, 215, 25, 0.30) 65%,
+      #E5E5E5                75%,
+      rgba(0, 215, 25, 0.30) 85%,
+      rgba(0, 215, 25, 0.55) 100%) border-box;
+  background-size: 100% 100%, 200% 100%;
+  background-position: 0 0, 0% 50%;
+  background-repeat: no-repeat, no-repeat;
+  border-radius: 16px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  transition: box-shadow 300ms ease;
+}
+/* Hover: drift the border gradient continuously in one direction */
+.briefing:hover {
+  animation: briefing-flow 4.5s linear infinite;
+  box-shadow: 0 4px 12px -10px rgba(0, 215, 25, 0.18);
+}
+@keyframes briefing-flow {
+  from { background-position: 0 0, 0%   50%; }
+  to   { background-position: 0 0, 100% 50%; }
+}
+.briefing-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+.briefing-iconbox {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 4.8px -2px #A7E1A3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 48px;
+}
+.briefing-iconbox img { width: 24px; height: 24px; }
+.briefing-text { min-width: 0; }
+.briefing-title {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #000;
+}
+.briefing-sub {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  background: linear-gradient(-3deg, #10364F 23%, #16494B 98%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.briefing-right {
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  background: linear-gradient(-7deg, #10364F 23%, #16494B 98%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  white-space: nowrap;
+}
+
+/* ---------- Recommended Actions ---------- */
+.rec-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: 24px;          /* 16px base gap + 24px = 40px between briefing and this section */
+}
+.rec-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 24px;
+}
+.rec-header h2 {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #000;
+}
+/* Shown only when every recommended action has reached its completed
+   state. Sits 8px below the heading (the rec-section gap is 12px, so a
+   -4px margin-top tightens it) and 12px above the grid (the natural gap).
+   Intro animation runs after the last FLIP shuffle settles. */
+.rec-subtitle {
+  margin: -4px 0 0 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #5A5A5A;
+  display: none;
+}
+.rec-section.all-completed .rec-subtitle {
+  display: block;
+  animation: fx-subtitle-in 720ms cubic-bezier(0.16, 1, 0.3, 1) 240ms both;
+}
+@keyframes fx-subtitle-in {
+  0%   { opacity: 0; transform: translateY(-10px); filter: blur(4px); }
+  60%  { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+.rec-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.rec-card {
+  /* JS sets --mx / --my (% of card) on mousemove. Used by the spotlight
+     pseudo + the on-hover border gradient. Spotlight is hidden via
+     opacity at rest so default state is a clean white card. */
+  --mx: 50%;
+  --my: 50%;
+  position: relative;
+  background: #ffffff;
+  border: 1px solid #E5E5E5;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: border-color 300ms ease, box-shadow 300ms ease, background 300ms ease;
+  isolation: isolate;
+}
+
+/* Inner mint spotlight follows the cursor; opacity:0 by default so the
+   resting card has zero glow. */
+.rec-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(220px circle at var(--mx) var(--my),
+    rgba(218, 255, 232, 0.32) 0%,
+    rgba(255, 255, 255, 0)   70%);
+  opacity: 0;
+  transition: opacity 300ms ease;
+  z-index: -1;
+}
+
+.rec-card:hover::before {
+  opacity: 1;
+}
+
+/* Hover: green spotlight on the BORDER originating at the cursor. */
+.rec-card:hover {
+  border-color: transparent;
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    radial-gradient(280px circle at var(--mx) var(--my),
+      rgba(0, 215, 25, 0.32)   0%,
+      rgba(0, 215, 25, 0.12)  35%,
+      rgba(229, 229, 229, 0.6) 100%) border-box;
+  box-shadow: 0 4px 10px -8px rgba(0, 215, 25, 0.18);
+}
+.rec-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.rec-iconbox {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(126deg, #FAFFF7 22%, #E1FFF2 87%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rec-iconbox img { width: 24px; height: 24px; }
+.rec-tag {
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: #727272;
+}
+.rec-title {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #000;
+}
+.rec-desc {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #5A5A5A;
+}
+
+/* ---------- Right column: AI assistant ---------- */
+/* Layered hero + chat thread fill the same slot in the right-col stack */
+.ai-hero,
+.right-col-content .chat-thread {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  transition:
+    opacity 320ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    visibility 0s linear 320ms;
+}
+.ai-hero {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px;
+  opacity: 1;
+  visibility: visible;
+}
+.right-col-content .chat-thread {
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 16px 0 16px;
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Toggle which layer is showing based on body state.
+   Delayed so the "Good morning" → suggestions hand-off plays AFTER
+   the art walk content cascade finishes (~1900ms). */
+body.insight-open .ai-hero {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 280ms cubic-bezier(0.22, 0.61, 0.36, 1) 1900ms,
+    visibility 0s linear 2180ms;
+}
+body.insight-open .right-col-content .chat-thread {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 280ms cubic-bezier(0.22, 0.61, 0.36, 1) 1900ms,
+    visibility 0s linear 1900ms;
+}
+/* Same hero → chat-thread hand-off when "Ask Clarity" is tapped on the
+   dashboard, but with no insight cascade to wait for so the swap is
+   immediate. */
+body.clarity-open .ai-hero {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 220ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    visibility 0s linear 220ms;
+}
+body.clarity-open .right-col-content .chat-thread {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 220ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    visibility 0s linear 0s;
+}
+.ai-star {
+  width: 56px;
+  height: 56px;
+  display: block;
+}
+.ai-greet {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+  color: #000;
+  text-align: center;
+}
+.ai-input-wrap {
+  flex: 0 0 auto;
+  padding: 16px;
+  background: transparent;       /* let the right-col gray border show; no fill covers it */
+}
+.ai-input {
+  height: 48px;
+  border-radius: 24px;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    linear-gradient(115deg,
+      rgba(0, 215, 25, 0.55) 0%,
+      rgba(0, 215, 25, 0.30) 30%,
+      #E5E5E5                50%,
+      rgba(0, 215, 25, 0.30) 70%,
+      rgba(0, 215, 25, 0.55) 100%) border-box;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 6px 0 16px;
+  box-shadow: 0 2px 8px -6px rgba(0, 215, 25, 0.25);
+}
+.ai-input-text { flex: 1 1 auto; }
+/* Caret-blink animation runs only while clarity-open — gives the input
+   a "focused" feel without using a real <input> element. */
+body.clarity-open .ai-input-text::before {
+  content: '';
+  display: inline-block;
+  width: 1px;
+  height: 18px;
+  vertical-align: -3px;
+  margin-right: 2px;
+  background: #228800;
+  animation: fx-caret-blink 1s steps(1, end) infinite;
+}
+@keyframes fx-caret-blink {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.ai-input-send {
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: #0C868D;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.ai-input-send img {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+body.clarity-open .ai-input-send {
+  display: flex;
+  animation: fx-bubble-pop 360ms cubic-bezier(0.34, 1.56, 0.64, 1) 80ms both;
+}
+.ai-input span {
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: #5A5A5A;
+}
+
+/* ===========================================================
+   Insight view — full-screen expansion of an action card
+   =========================================================== */
+
+.insight-view {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 100px;                 /* sits to the right of the navbar */
+  right: 0;
+  background: transparent;     /* topbar + body paint their own white;
+                                  right-col area is intentionally uncovered
+                                  so the AI panel keeps showing through */
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+
+  /* hidden state */
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.985);
+  transform-origin: 50% 60%;
+  pointer-events: none;
+  transition:
+    opacity 380ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    transform 380ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    visibility 0s linear 380ms;
+}
+.insight-view.open {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1);
+  pointer-events: auto;
+  transition:
+    opacity 380ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    transform 380ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    visibility 0s linear 0s;
+}
+
+/* Topbar — back arrow + title, both left-aligned with 8px gap.
+   Overrides the homepage topbar's space-between layout. */
+.topbar-insight {
+  justify-content: flex-start !important;
+  gap: 8px;
+}
+.topbar-insight .topbar-title {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.back-btn {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: 0 0 24px;
+}
+.back-btn img {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+.insight-search-ico {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+/* Body — only spans the LEFT half of the screen.
+   The right-col (AI panel) lives in the homepage layer and shows through
+   the uncovered right strip. */
+.insight-body {
+  flex: 1 1 auto;
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  min-height: 0;
+  overflow: hidden;
+  background: #ffffff;
+  margin-right: 395px;         /* 16px (body right padding) + 379px (right-col) */
+  position: relative;          /* anchor the .task-loading overlay */
+}
+
+.insight-left {
+  width: 753px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Insights label row */
+.insight-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #000;
+}
+.insight-desc {
+  margin: 0 0 12px 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: #5A5A5A;
+}
+
+/* The big combined card */
+.insight-card {
+  border: 1px solid rgba(0, 215, 25, 0.21);
+  border-radius: 16px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Card header — gradient mint with icon + title (mirrors briefing) */
+.insight-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(172deg, #FAFFF7 23%, #E1FFF2 100%);
+}
+.insight-card-text { min-width: 0; flex: 1; }
+.insight-card-title {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #000;
+}
+.insight-card-sub {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  background: linear-gradient(-2deg, #10364F 23%, #16494B 99%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.insight-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  background: #ffffff;
+}
+
+/* Bar chart */
+.chart {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+.chart-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #5C5C5C;
+}
+.legend-dot {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+/* Bars cluster sits in a tighter horizontal band so the chart doesn't
+   stretch edge-to-edge. The axis below uses the SAME inset so labels
+   land exactly on the column boundaries. */
+.chart-bars {
+  display: flex;
+  align-items: flex-end;            /* every bar's bottom rests on the same baseline */
+  justify-content: center;
+  gap: 8px;                          /* tighter — was 12px */
+  height: 100px;
+  margin: 0 24px;                    /* tighter horizontally */
+  position: relative;
+}
+.bar {
+  flex: 1 1 0;
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;             /* dark bar bottom-aligns to slot bottom */
+  justify-content: center;
+}
+.bar i {
+  width: 20px;
+  border-radius: 24px;
+  display: block;
+}
+/* Light bar sits behind, also bottom-aligned, extends taller than dark */
+.bar .b-light {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ABE5ED;
+  z-index: 1;
+}
+.bar .b-dark {
+  position: relative;
+  background: #14818D;
+  z-index: 2;
+}
+
+/* Axis labels mapped to the *exact* column boundaries of the tighter
+   bars container (margin 24px each side, gap 8px). Each bar represents
+   one hour: col 1 = 8a-9a … col 10 = 5p-6p. Labels sit at every-2-hour
+   boundary, with 8a in front of col 1 and 18p after col 10. */
+.chart-axis {
+  position: relative;
+  width: 100%;
+  height: 20px;
+  margin-top: 4px;
+  font-family: 'Graphik', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #727272;
+}
+.chart-axis span {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.chart-axis span:nth-child(1) { left: 3.5%;  }   /* 8a  — in front of col 1 */
+.chart-axis span:nth-child(2) { left: 21.5%; }   /* 10a — between col 2 & col 3 */
+.chart-axis span:nth-child(3) { left: 40.5%; }   /* 12p — between col 4 & col 5 */
+.chart-axis span:nth-child(4) { left: 59.5%; }   /* 14p — between col 6 & col 7 */
+.chart-axis span:nth-child(5) { left: 78.5%; }   /* 16p — between col 8 & col 9 */
+.chart-axis span:nth-child(6) { left: 96.5%; }   /* 18p — after col 10 */
+.chart-caption {
+  margin: 0;
+  text-align: center;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #5A5A5A;
+}
+
+/* Recommendations complete pill list */
+.rec-complete {
+  background: #F5F5F5;
+  border-radius: 8px;
+  padding: 16px;            /* per Figma — was 12px */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.rec-complete-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;                      /* roomier between icon and the label */
+  padding-left: 4px;             /* nudges the dot in from the rec-complete edge */
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #5C5C5C;
+}
+.rec-status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #228800;
+  box-shadow: 0 0 0 3px rgba(34, 136, 0, 0.15);
+  flex: 0 0 12px;
+  animation: fx-rec-breathe 2.4s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* Subtle "breathing" loop — gentle scale + halo pulse, never aggressive */
+@keyframes fx-rec-breathe {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 3px rgba(34, 136, 0, 0.15);
+  }
+  50% {
+    transform: scale(1.12);
+    box-shadow: 0 0 0 6px rgba(34, 136, 0, 0.06);
+  }
+}
+/* Shared breathing animation for status dots — each dot supplies its own
+   halo color via --dot-halo and --dot-halo-soft so the pulse matches
+   the dot's tint (orange for trending/sensor, green for channels). */
+@keyframes fx-dot-breathe {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 3px var(--dot-halo);
+  }
+  50% {
+    transform: scale(1.12);
+    box-shadow: 0 0 0 6px var(--dot-halo-soft);
+  }
+}
+.rec-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;                 /* per Figma — was 4px */
+}
+.rec-items li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 8px 12px;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #000;
+}
+.check-ico {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none'><circle cx='12' cy='12' r='9' stroke='%23228800' stroke-width='1.5'/><path d='M8 12.5l3 3 5-6' stroke='%23228800' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+/* Right column — chat thread */
+/* .insight-right was removed — the chat panel now lives in the homepage's
+   right-col and swaps in/out via body.insight-open. */
+.chat-bubble {
+  max-width: 100%;                /* allow full chat-thread width so long
+                                     suggestions ("When should I expect…")
+                                     stay on a single line */
+  background: #ffffff;
+  border: 1px solid #E5E5E5;
+  /* Per Figma component: top-left, top-right, bottom-left rounded; bottom-right is square */
+  border-radius: 24px 24px 0 24px;
+  padding: 12px 16px;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: #1E727F;                /* matches the Figma component color */
+  text-align: right;
+  white-space: nowrap;            /* never wrap suggestion text */
+  /* Hidden by default so the pop animation has room to play */
+  opacity: 0;
+  transform: translateY(14px) scale(0.92);
+}
+
+/* Bubble pop-up animation — fires whenever the body is in insight-open state */
+@keyframes fx-bubble-pop {
+  0%   { opacity: 0; transform: translateY(14px) scale(0.92); }
+  60%  { opacity: 1; transform: translateY(-2px) scale(1.03); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+body.insight-open .chat-bubble,
+body.clarity-open .chat-bubbles--home .chat-bubble {
+  animation: fx-bubble-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+/* Home suggestions pop in right after the hero fades out — short delay
+   so the "Good morning" greeting doesn't double-up with the bubbles. */
+body.clarity-open .chat-bubbles--home .chat-bubble:nth-child(1) {
+  animation-delay: 220ms;
+}
+body.clarity-open .chat-bubbles--home .chat-bubble:nth-child(2) {
+  animation-delay: 380ms;
+}
+/* Stagger so each suggestion lands after the last one.
+   Delays push bubbles past the art walk cascade + chatbot crossfade
+   (chat-thread done fading in ~2180ms). */
+body.insight-open .chat-bubble:nth-child(1) { animation-delay: 2180ms; }
+body.insight-open .chat-bubble:nth-child(2) { animation-delay: 2340ms; }
+body.insight-open .chat-bubble:nth-child(3) { animation-delay: 2500ms; }
+body.insight-open .chat-bubble:nth-child(4) { animation-delay: 2660ms; }
+
+/* ===========================================================
+   Insight view intro choreography
+   Similar fashion to the homepage intro:
+     1. Topbar back-arrow + title (fade-down)
+     2. Insights label + description (fade-up)
+     3. Card head with the Art Walk icon
+     4. Chart legend, then bars rising from baseline (staggered)
+     5. Axis labels + caption
+     6. Recommendations block, then each item popping in
+   =========================================================== */
+
+@keyframes fx-insight-fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fx-insight-fade-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fx-insight-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+/* Bars rise from the baseline using clip-path so existing transforms
+   (translateX(-50%) on .b-light) aren't disturbed */
+@keyframes fx-bar-rise {
+  from { clip-path: inset(100% 0 0 0); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+
+body.insight-open .topbar-insight .back-btn,
+body.insight-open .topbar-insight .topbar-title {
+  animation: fx-insight-fade-down 420ms cubic-bezier(0.22, 0.61, 0.36, 1) 80ms both;
+}
+body.insight-open .insight-label {
+  animation: fx-insight-fade-up 420ms cubic-bezier(0.22, 0.61, 0.36, 1) 220ms both;
+}
+body.insight-open .insight-desc {
+  animation: fx-insight-fade-up 420ms cubic-bezier(0.22, 0.61, 0.36, 1) 320ms both;
+}
+body.insight-open .insight-card-head {
+  animation: fx-insight-fade-up 500ms cubic-bezier(0.22, 0.61, 0.36, 1) 420ms both;
+}
+body.insight-open .chart-legend {
+  animation: fx-insight-fade 380ms ease-out 540ms both;
+}
+body.insight-open .bar i {
+  animation: fx-bar-rise 620ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+body.insight-open .bar:nth-child(1)  i { animation-delay: 600ms; }
+body.insight-open .bar:nth-child(2)  i { animation-delay: 650ms; }
+body.insight-open .bar:nth-child(3)  i { animation-delay: 700ms; }
+body.insight-open .bar:nth-child(4)  i { animation-delay: 750ms; }
+body.insight-open .bar:nth-child(5)  i { animation-delay: 800ms; }
+body.insight-open .bar:nth-child(6)  i { animation-delay: 850ms; }
+body.insight-open .bar:nth-child(7)  i { animation-delay: 900ms; }
+body.insight-open .bar:nth-child(8)  i { animation-delay: 950ms; }
+body.insight-open .bar:nth-child(9)  i { animation-delay: 1000ms; }
+body.insight-open .bar:nth-child(10) i { animation-delay: 1050ms; }
+body.insight-open .chart-axis,
+body.insight-open .chart-caption {
+  animation: fx-insight-fade 400ms ease-out 1100ms both;
+}
+body.insight-open .rec-complete {
+  animation: fx-insight-fade-up 500ms cubic-bezier(0.22, 0.61, 0.36, 1) 1180ms both;
+}
+body.insight-open .rec-items li:nth-child(1) {
+  animation: fx-insight-fade-up 420ms cubic-bezier(0.34, 1.4, 0.64, 1) 1340ms both;
+}
+body.insight-open .rec-items li:nth-child(2) {
+  animation: fx-insight-fade-up 420ms cubic-bezier(0.34, 1.4, 0.64, 1) 1430ms both;
+}
+body.insight-open .rec-items li:nth-child(3) {
+  animation: fx-insight-fade-up 420ms cubic-bezier(0.34, 1.4, 0.64, 1) 1520ms both;
+}
+
+/* Honor reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  body.insight-open .back-btn,
+  body.insight-open .topbar-title,
+  body.insight-open .insight-label,
+  body.insight-open .insight-desc,
+  body.insight-open .insight-card-head,
+  body.insight-open .chart-legend,
+  body.insight-open .bar i,
+  body.insight-open .chart-axis,
+  body.insight-open .chart-caption,
+  body.insight-open .rec-complete,
+  body.insight-open .rec-items li {
+    animation: none !important;
+  }
+}
+
+/* ===========================================================
+   Per-view switching: only the active view's content + bubbles render
+   =========================================================== */
+.insight-content { display: none; flex-direction: column; gap: 12px; width: 100%; }
+.chat-bubbles    { display: none; flex-direction: column; align-items: flex-end; gap: 8px; width: 100%; }
+
+body[data-view="art-walk"]        .insight-content--art-walk,
+body[data-view="review"]          .insight-content--review,
+body[data-view="promotions"]      .insight-content--promotions,
+body[data-view="rewards"]         .insight-content--rewards,
+body[data-view="capital"]         .insight-content--capital,
+body[data-view="capital-funding"] .insight-content--capital-funding,
+body[data-view="art-walk"]        .chat-bubbles--art-walk,
+body[data-view="review"]          .chat-bubbles--review,
+body[data-view="promotions"]      .chat-bubbles--promotions,
+body[data-view="rewards"]         .chat-bubbles--rewards,
+body[data-view="capital"]         .chat-bubbles--capital,
+body[data-view="capital-funding"] .chat-bubbles--capital {
+  display: flex;
+}
+/* Home dashboard's "Ask Clarity" suggestions appear only when the user
+   taps the input (toggles body.clarity-open). Same display rule as the
+   per-view bubbles so the existing chat-thread layout applies. */
+body.clarity-open .chat-bubbles--home {
+  display: flex;
+}
+/* The per-view (insight) bubble groups must NOT show on the home
+   dashboard — body.data-view defaults to "art-walk", which would
+   otherwise pop those bubbles in the chat-thread above the home
+   suggestions and shove everything down. */
+body.clarity-open .chat-bubbles:not(.chat-bubbles--home) {
+  display: none;
+}
+
+/* ===========================================================
+   "Sales report" answer state — fired when the user taps the first
+   suggestion. The clicked bubble morphs to a muted "submitted" pill,
+   the other suggestion fades out, and after a brief thinking beat the
+   AI response (paragraph + report card) materializes underneath.
+   =========================================================== */
+/* Once the user taps a suggestion the whole chat stack pins to the
+   top so the response can flow downward (rather than staying glued
+   to the input at the bottom). 24px gap between bubble + answer.
+   Top padding bumps to 24px so the clicked bubble breathes against
+   the chat panel's top border. */
+body.clarity-bubble-clicked .right-col-content .chat-thread {
+  justify-content: flex-start;
+  padding-top: 24px;
+}
+body.clarity-bubble-clicked .chat-bubbles--home {
+  gap: 24px;
+}
+/* Clicked suggestion — gray pill, dark text. Smooth 280ms cross-fade
+   from the unclicked state so it doesn't pop. */
+body.clarity-bubble-clicked .chat-bubble[data-action="sales-report"] {
+  background: #F5F5F5;
+  border-color: #F5F5F5;
+  color: #5A5A5A;
+  transition:
+    background-color 280ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    border-color 280ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    color 280ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  cursor: default;
+}
+/* Other suggestion fully collapses out of the layout so the gap to the
+   answer doesn't include its empty slot. */
+body.clarity-bubble-clicked .chat-bubble[data-action="staff-schedule"] {
+  display: none;
+}
+
+/* Response (text + report card) — hidden until the AI "finishes
+   thinking", then slides up + fades in. */
+.chat-response {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  align-self: stretch;
+}
+body.clarity-show-report .chat-response {
+  display: flex;
+  animation: fx-response-in 420ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+@keyframes fx-response-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.chat-response-text {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: #000;
+}
+.chat-response-amount {
+  font-weight: 500;
+}
+
+.report-card {
+  background: #ffffff;
+  border: 1px solid #E5E5E5;
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.report-metrics {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+.report-metric {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.report-metric-label {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: #5C5C5C;
+}
+.report-metric-value {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
+  color: #000;
+  white-space: nowrap;
+}
+.report-metric-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: #228800;
+}
+.report-metric-delta img {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+.report-metric-sub {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #5C5C5C;
+  white-space: nowrap;
+}
+.report-metric-divider {
+  align-self: stretch;
+  width: 1px;
+  background: #E5E5E5;
+}
+
+.report-chart {
+  position: relative;
+  height: 112px;
+  width: 100%;
+  overflow: hidden;
+}
+.report-chart-area,
+.report-chart-line {
+  position: absolute;
+  left: 3.63%;
+  right: 3.63%;
+  top: 2.68%;
+  width: 92.74%;
+  display: block;
+}
+.report-chart-area { height: 71%; }
+.report-chart-line { height: 53.5%; }
+.report-chart-axis {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 8px;
+  font-family: 'Graphik', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #727272;
+}
+
+.report-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #1E727F;
+  cursor: pointer;
+}
+.report-cta img {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+/* "Thinking…" beat — inserted by JS between click and report reveal.
+   Lives on the LEFT (AI side) without a bubble outline so it visually
+   reads as the assistant working, not another user message. */
+.chat-thinking {
+  display: none;
+  align-self: flex-start;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #5A5A5A;
+  animation: fx-thinking-in 240ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+.chat-thinking-label {
+  margin-right: 2px;
+}
+.chat-thinking i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #5A5A5A;
+  display: inline-block;
+  animation: fx-thinking-bounce 1.1s ease-in-out infinite;
+}
+.chat-thinking i:nth-child(3) { animation-delay: 160ms; }
+.chat-thinking i:nth-child(4) { animation-delay: 320ms; }
+body.clarity-thinking .chat-thinking {
+  display: inline-flex;
+}
+@keyframes fx-thinking-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fx-thinking-bounce {
+  0%, 80%, 100% { opacity: 0.35; transform: translateY(0); }
+  40%           { opacity: 1;    transform: translateY(-3px); }
+}
+
+/* The review insight stack — two sections (Insights + Recommendation) */
+.insight-content--review {
+  gap: 40px;
+}
+.review-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* AI sparkle icon scaled to 24px (the asset is 56×56) */
+.insight-ai-ico {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+/* ---------- Review card (the customer review) ---------- */
+.review-card {
+  border: 1px solid #E5E5E5;
+  border-radius: 16px;
+  padding: 16px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.review-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.review-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.review-stars img {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+.review-source {
+  display: none;
+}
+.google-logo {
+  height: 16px;
+  width: auto;
+  display: block;
+}
+.review-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.review-quote {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #000;
+}
+.review-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #5A5A5A;
+}
+
+/* ---------- Suggested-response card ---------- */
+.response-card {
+  background: #ffffff;
+  border: 1px solid #E5E5E5;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.response-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #1E727F;             /* AI teal */
+}
+.response-msg-ico {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+.response-body {
+  background: #F5F5F5;
+  border-radius: 8px;
+  padding: 8px;
+}
+.response-body p {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: #000;
+}
+.response-actions {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+}
+.btn-edit,
+.btn-send {
+  flex: 1 1 0;
+  min-width: 100px;
+  height: 48px;
+  border-radius: 8px;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+.btn-edit {
+  background: #ffffff;
+  border: 1px solid #727272;
+  color: #1E727F;
+}
+.btn-send {
+  background: linear-gradient(-7deg, #195278 23%, #62AEB1 99%);
+  border: 0;
+  color: #ffffff;
+}
+
+/* ===========================================================
+   REVIEW intro choreography — mirrors the art-walk cascade
+   =========================================================== */
+@keyframes fx-review-fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Slowed cascade — each stage gets longer duration + bigger gaps */
+body[data-view="review"].insight-open .insight-content--review .review-section:nth-child(1) .insight-label {
+  animation: fx-insight-fade-up 600ms cubic-bezier(0.22, 0.61, 0.36, 1) 280ms both;
+}
+body[data-view="review"].insight-open .insight-content--review .review-section:nth-child(1) .insight-desc {
+  animation: fx-insight-fade-up 600ms cubic-bezier(0.22, 0.61, 0.36, 1) 460ms both;
+}
+body[data-view="review"].insight-open .review-card {
+  animation: fx-insight-fade-up 700ms cubic-bezier(0.22, 0.61, 0.36, 1) 660ms both;
+}
+body[data-view="review"].insight-open .insight-content--review .review-section:nth-child(2) .insight-label {
+  animation: fx-insight-fade-up 600ms cubic-bezier(0.22, 0.61, 0.36, 1) 1100ms both;
+}
+body[data-view="review"].insight-open .insight-content--review .review-section:nth-child(2) .insight-desc {
+  animation: fx-insight-fade-up 600ms cubic-bezier(0.22, 0.61, 0.36, 1) 1280ms both;
+}
+body[data-view="review"].insight-open .response-card {
+  animation: fx-insight-fade-up 700ms cubic-bezier(0.22, 0.61, 0.36, 1) 1500ms both;
+}
+
+/* Override right-column hand-off & bubble pops for the review view —
+   wait for the typewriter (which kicks off at 2250ms and runs ~3600ms
+   including punctuation pauses) to finish (~5900ms) */
+body[data-view="review"].insight-open .ai-hero {
+  transition:
+    opacity 320ms cubic-bezier(0.22, 0.61, 0.36, 1) 5950ms,
+    visibility 0s linear 6270ms;
+}
+body[data-view="review"].insight-open .right-col-content .chat-thread {
+  transition:
+    opacity 320ms cubic-bezier(0.22, 0.61, 0.36, 1) 5950ms,
+    visibility 0s linear 5950ms;
+}
+body[data-view="review"].insight-open .chat-bubbles--review .chat-bubble:nth-child(1) {
+  animation-delay: 6270ms;
+}
+body[data-view="review"].insight-open .chat-bubbles--review .chat-bubble:nth-child(2) {
+  animation-delay: 6440ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-view="review"].insight-open .review-card,
+  body[data-view="review"].insight-open .response-card,
+  body[data-view="review"].insight-open .review-section .insight-label,
+  body[data-view="review"].insight-open .review-section .insight-desc {
+    animation: none !important;
+  }
+}
+
+/* ===========================================================
+   PROMOTIONS view — "Your competitors are selling more"
+   Two stacked sections (Insights + Recommendation) inside a
+   scrollable left column. Right column shows promotion-specific
+   chat suggestions.
+   =========================================================== */
+
+/* Allow the left column to scroll when content overflows the
+   panel — used by the promotions, rewards, and capital views
+   which are taller than the visible insight body. Scrollbar is
+   hidden so the content stays at the design width (753px). */
+body[data-view="promotions"] .insight-left,
+body[data-view="rewards"] .insight-left,
+body[data-view="capital"] .insight-left,
+body[data-view="capital-funding"] .insight-left {
+  overflow-y: auto;
+  min-height: 0;
+  scrollbar-width: none;          /* Firefox */
+}
+body[data-view="promotions"] .insight-left::-webkit-scrollbar,
+body[data-view="rewards"] .insight-left::-webkit-scrollbar,
+body[data-view="capital"] .insight-left::-webkit-scrollbar,
+body[data-view="capital-funding"] .insight-left::-webkit-scrollbar {
+  display: none;                  /* WebKit */
+}
+
+.insight-content--promotions {
+  gap: 40px;
+}
+.promo-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ---------- Ticket-gap card ---------- */
+.ticket-card {
+  border: 1px solid #E5E5E5;
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.ticket-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 10px 8px 0;
+}
+.ticket-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+.ticket-row-info {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ticket-name {
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #5C5C5C;
+}
+.ticket-bar {
+  height: 20px;
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+}
+.ticket-bar-fill {
+  display: block;
+  height: 20px;
+  border-radius: 10px;
+}
+.ticket-bar-fill--us  { background: #ABE5ED; }
+.ticket-bar-fill--top { background: #14818D; }
+.ticket-value {
+  font-family: 'Graphik', sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #000;
+  white-space: nowrap;
+}
+.ticket-caption {
+  margin: 0;
+  text-align: center;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #5A5A5A;
+}
+
+/* ---------- Trending block (inside ticket card) ---------- */
+.trending-block {
+  background: #F5F5F5;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.trending-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.trending-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #5C5C5C;
+}
+.trending-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #FF8A2B;
+  display: inline-block;
+  flex: 0 0 12px;
+  --dot-halo: rgba(255, 138, 43, 0.15);
+  --dot-halo-soft: rgba(255, 138, 43, 0.06);
+  box-shadow: 0 0 0 3px var(--dot-halo);
+  animation: fx-dot-breathe 2.4s ease-in-out infinite;
+  transform-origin: center;
+}
+.trending-text {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #000;
+}
+
+/* ---------- Campaign card ---------- */
+.campaign-card {
+  background: #ffffff;
+  border: 1px solid #E5E5E5;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.campaign-hero {
+  position: relative;
+  width: 100%;
+  height: 321px;
+  overflow: hidden;
+}
+.campaign-hero-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.campaign-hero-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  background: linear-gradient(178deg, rgba(102,102,102,0) 14%, rgba(0,0,0,0.35) 100%);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+.campaign-hero-text {
+  flex: 0 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.campaign-hero-title {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 40px;
+  color: #ffffff;
+  white-space: nowrap;
+}
+.campaign-hero-sub {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: rgba(255, 255, 255, 0.8);
+}
+.campaign-badge {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 4px 12px;
+  border-radius: 16px;
+  background: #EEFBFC;
+  color: #286271;
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.campaign-body {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px 12px 12px;
+}
+
+/* ---------- Two metric blocks separated by divider ---------- */
+.campaign-metrics {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 88px;
+}
+.campaign-metric {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.campaign-metric-label {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #5C5C5C;
+}
+.campaign-metric-value {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 40px;
+  text-align: center;
+  background: linear-gradient(-18deg, #195278 23%, #62AEB1 99%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  white-space: nowrap;
+}
+.campaign-metric-sub {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #727272;
+}
+.campaign-metric-divider {
+  width: 1px;
+  align-self: stretch;
+  background: #E5E5E5;
+}
+
+/* ---------- Channels list ---------- */
+.campaign-channels {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.channels-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 8px;             /* breathing room on the left of the dot */
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #5C5C5C;
+}
+.channels-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #228800;
+  display: inline-block;
+  flex: 0 0 12px;
+  --dot-halo: rgba(34, 136, 0, 0.15);
+  --dot-halo-soft: rgba(34, 136, 0, 0.06);
+  box-shadow: 0 0 0 3px var(--dot-halo);
+  animation: fx-dot-breathe 2.4s ease-in-out infinite;
+  transform-origin: center;
+}
+/* 3-column grid of vertical channel cards. Each card stacks:
+   icon → name + check → status → stats list (budget / duration / reach). */
+.channels-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+.channel-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 12px;
+  background: #F5F5F5;
+  border-radius: 16px;
+}
+.channel-icon {
+  width: 40px;
+  height: 40px;
+  display: block;
+  object-fit: cover;
+  flex: 0 0 40px;
+}
+.channel-icon--rounded {
+  border-radius: 8px;
+}
+.channel-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.channel-name-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+.channel-name {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #000;
+}
+.channel-status {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #5A5A5A;
+}
+.channel-check {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+/* Per-channel stat rows: label on the left (medium), value on the right (regular). */
+.channel-stats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.channel-stats li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  color: #5A5A5A;
+  white-space: nowrap;
+}
+.channel-stat-label { font-weight: 500; }
+.channel-stat-value { font-weight: 400; }
+
+/* ---------- Edit / Save buttons (mirrors response-actions) ---------- */
+.campaign-actions {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+}
+.btn-save {
+  flex: 1 1 0;
+  min-width: 100px;
+  height: 48px;
+  border-radius: 8px;
+  border: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  background: linear-gradient(-7deg, #195278 23%, #62AEB1 99%);
+  color: #ffffff;
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+/* ===========================================================
+   PROMOTIONS intro choreography — mirrors the review cascade.
+   Two stacked sections each play in label → desc → card order,
+   with section 2 starting after section 1 has settled.
+   =========================================================== */
+body[data-view="promotions"].insight-open .insight-content--promotions .promo-section:nth-child(1) .insight-label {
+  animation: fx-insight-fade-up 600ms cubic-bezier(0.22, 0.61, 0.36, 1) 280ms both;
+}
+body[data-view="promotions"].insight-open .insight-content--promotions .promo-section:nth-child(1) .insight-desc {
+  animation: fx-insight-fade-up 600ms cubic-bezier(0.22, 0.61, 0.36, 1) 460ms both;
+}
+body[data-view="promotions"].insight-open .ticket-card {
+  animation: fx-insight-fade-up 700ms cubic-bezier(0.22, 0.61, 0.36, 1) 660ms both;
+}
+/* Grow the two ticket-gap bars from the left after the card lands.
+   transform-origin pinned left so the rounded ends sweep outward. */
+body[data-view="promotions"].insight-open .ticket-bar-fill {
+  transform-origin: left center;
+  animation: fx-bar-grow 850ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+body[data-view="promotions"].insight-open .ticket-bar-fill--us  { animation-delay: 1000ms; }
+body[data-view="promotions"].insight-open .ticket-bar-fill--top { animation-delay: 1150ms; }
+@keyframes fx-bar-grow {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+/* Trending block fades in AFTER the bars finish (last bar ends at
+   1150 + 850 = 2000ms), then everything else cascades after. */
+body[data-view="promotions"].insight-open .trending-block {
+  animation: fx-insight-fade-up 600ms cubic-bezier(0.22, 0.61, 0.36, 1) 2100ms both;
+}
+body[data-view="promotions"].insight-open .insight-content--promotions .promo-section:nth-child(2) .insight-label {
+  animation: fx-insight-fade-up 600ms cubic-bezier(0.22, 0.61, 0.36, 1) 2900ms both;
+}
+body[data-view="promotions"].insight-open .insight-content--promotions .promo-section:nth-child(2) .insight-desc {
+  animation: fx-insight-fade-up 600ms cubic-bezier(0.22, 0.61, 0.36, 1) 3080ms both;
+}
+body[data-view="promotions"].insight-open .campaign-card {
+  animation: fx-insight-fade-up 700ms cubic-bezier(0.22, 0.61, 0.36, 1) 3280ms both;
+}
+
+/* Crossfade the right-column "Good morning, Maya!" greeting to the
+   chat thread RIGHT BEFORE the bubbles pop, so there's no dead gap. */
+body[data-view="promotions"].insight-open .ai-hero {
+  transition:
+    opacity 320ms cubic-bezier(0.22, 0.61, 0.36, 1) 3700ms,
+    visibility 0s linear 4020ms;
+}
+body[data-view="promotions"].insight-open .right-col-content .chat-thread {
+  transition:
+    opacity 320ms cubic-bezier(0.22, 0.61, 0.36, 1) 3700ms,
+    visibility 0s linear 3700ms;
+}
+/* Bubbles fire AFTER the campaign card lands (~3980ms). */
+body[data-view="promotions"].insight-open .chat-bubbles--promotions .chat-bubble:nth-child(1) {
+  animation-delay: 4100ms;
+}
+body[data-view="promotions"].insight-open .chat-bubbles--promotions .chat-bubble:nth-child(2) {
+  animation-delay: 4260ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-view="promotions"].insight-open .ticket-card,
+  body[data-view="promotions"].insight-open .campaign-card,
+  body[data-view="promotions"].insight-open .promo-section .insight-label,
+  body[data-view="promotions"].insight-open .promo-section .insight-desc,
+  body[data-view="promotions"].insight-open .ticket-bar-fill {
+    animation: none !important;
+  }
+}
+
+/* ===========================================================
+   REWARDS view — "Your wallet share is declining"
+   Two stacked sections: Insights (wallet chart) + Recommendation
+   (gradient promotion card with success summary).
+   =========================================================== */
+
+.insight-content--rewards {
+  gap: 40px;
+}
+.rewards-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ---------- Wallet card (Insights) ---------- */
+.wallet-card {
+  border: 1px solid #E5E5E5;
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 20px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Two metric blocks separated by divider */
+.wallet-metrics {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 88px;
+}
+.wallet-metric {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.wallet-metric-label {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #5C5C5C;
+}
+.wallet-metric-value {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
+  color: #000;
+}
+.wallet-metric-divider {
+  width: 1px;
+  align-self: stretch;
+  background: #E5E5E5;
+}
+.wallet-metric-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+}
+.wallet-metric-delta--placeholder {
+  width: 44px;
+}
+.wallet-metric-delta img {
+  width: 24px;
+  height: 24px;
+  display: block;
+  /* arrow-down.svg already strokes #E70000 — same color as the -3.4% text */
+}
+.wallet-delta-down {
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #E70000;
+}
+
+/* Wallet chart — bars + connecting curve + legend */
+.wallet-chart {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding-right: 64px;
+  height: 140px;
+  width: 100%;
+}
+.wallet-chart-area {
+  flex: 1 1 0;
+  min-width: 0;
+  position: relative;
+  height: 140px;
+}
+.wallet-yaxis {
+  position: absolute;
+  left: 119px;
+  top: 5px;
+  height: 105px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  font-family: 'Graphik', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #727272;
+  white-space: nowrap;
+}
+.wallet-plot {
+  position: absolute;
+  left: 179px;
+  top: 19px;
+  right: 0;
+  height: 105px;
+}
+.wallet-curve {
+  position: absolute;
+  left: 12px;
+  top: 0;
+  width: 200px;
+  height: 85px;
+  pointer-events: none;
+}
+.wallet-curve img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.wallet-bar {
+  position: absolute;
+  top: 0;
+  width: 24px;
+  height: 85px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow: hidden;
+  border-radius: 12px;
+}
+.wallet-bar--3m  { left: 0; }
+.wallet-bar--may { left: 200.32px; }
+.wallet-bar-fill {
+  display: block;
+  width: 100%;
+}
+.wallet-bar-fill--teal { background: #14818D; border-radius: 12px; }
+.wallet-bar-fill--gray { background: #E5E5E5; border-radius: 12px; margin-bottom: 2px; }
+.wallet-xaxis {
+  position: absolute;
+  top: 93px;
+  left: 0;
+  right: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #727272;
+}
+.wallet-xaxis-3m  { position: absolute; left: -13px;   }
+.wallet-xaxis-may { position: absolute; left: 187px;   }
+
+.wallet-legend {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.wallet-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #5C5C5C;
+}
+.wallet-legend-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 8px;
+  display: inline-block;
+}
+.wallet-legend-dot--teal { background: #1E727F; }
+.wallet-legend-dot--gray { background: #E5E5E5; }
+
+.wallet-caption {
+  margin: 0;
+  text-align: center;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #5A5A5A;
+}
+
+.wallet-callout {
+  background: #F5F5F5;
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.wallet-callout-text {
+  margin: 0;
+  flex: 1 1 0;
+  min-width: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #000;
+}
+.wallet-callout-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;                      /* breathing dot needs room for its halo */
+  flex: 0 0 auto;
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #5C5C5C;
+}
+.wallet-sensor-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #FF8A2B;             /* matches the trending-dot color */
+  display: inline-block;
+  flex: 0 0 12px;
+  --dot-halo: rgba(255, 138, 43, 0.15);
+  --dot-halo-soft: rgba(255, 138, 43, 0.06);
+  box-shadow: 0 0 0 3px var(--dot-halo);
+  animation: fx-dot-breathe 2.4s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* ---------- Reward card (Recommendation) ---------- */
+.reward-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #E5E5E5;
+}
+
+/* Top gradient promotion panel */
+.reward-promo {
+  background: linear-gradient(-24deg, #195278 23%, #62AEB1 99%);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  color: #ffffff;
+}
+.reward-promo-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.reward-megaphone {
+  width: 24px;
+  height: 24px;
+  display: block;
+  flex: 0 0 24px;
+  /* megaphone svg uses currentColor via var(--stroke-0, white); already white */
+}
+.reward-promo-label {
+  flex: 1 1 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #ffffff;
+}
+/* Override the global .review-source/.google-logo gray for the reward card,
+   where the brand mark needs to read white on the gradient. */
+.reward-promo-source {
+  color: #ffffff;
+}
+.reward-promo-source span {
+  color: #ffffff;
+}
+.reward-promo-source .google-logo {
+  /* recolor #C7C7C7 -> white */
+  filter: brightness(0) invert(1);
+}
+
+.reward-promo-title {
+  display: flex;
+  flex-direction: column;
+}
+.reward-promo-headline {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 40px;
+  color: #ffffff;
+}
+.reward-promo-sub {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #ffffff;
+}
+
+.reward-promo-blocks {
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+}
+.reward-block {
+  flex: 1 1 0;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 16px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.reward-block-title {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+  color: #ffffff;
+}
+.reward-channels {
+  display: inline-flex;
+  gap: 8px;
+}
+.reward-channel {
+  width: 40px;
+  height: 40px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.8);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.reward-channel img {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+.reward-block-desc {
+  margin: 0;
+  font-family: 'Graphik', 'Graphik-Regular', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Message block — its inner white card sits flush with the
+   bottom edge of the block (no bottom padding on the parent). */
+.reward-block--message {
+  padding-bottom: 0;
+}
+
+/* Inner message preview — radial gradient centered at the bottom
+   of the card, slightly translucent in the middle so the teal
+   bleeds through subtly, fully opaque at the edges. */
+.reward-message {
+  background-image: radial-gradient(ellipse 80% 60% at 50% 100%, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 1) 100%);
+  background-color: #ffffff;
+  border-radius: 8px 8px 0 0;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.reward-message-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.reward-message-avatar {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 24px;
+  display: block;
+  object-fit: cover;
+}
+.reward-message-meta {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.reward-message-name {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: #000;
+}
+.reward-message-subject {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: #000;
+}
+.reward-message-body {
+  margin: 0;
+  font-family: 'Graphik', 'Graphik-Regular', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #5D5D5D;
+}
+
+/* Bottom white summary panel */
+.reward-summary {
+  background: #ffffff;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.reward-points {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.reward-points li {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.reward-point-ico {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+.reward-points li p {
+  margin: 0;
+  font-family: 'Graphik', 'Graphik-Regular', sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  color: #5D5D5D;
+  font-weight: 400;
+}
+.reward-point-title {
+  font-family: 'Graphik', sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 28px;
+  color: #1E727F;
+  margin-right: 8px;
+}
+.reward-point-desc {
+  font-family: 'Graphik', 'Graphik-Regular', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: #5D5D5D;
+}
+.reward-actions {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+}
+
+/* ===========================================================
+   REWARDS intro choreography — mirrors the review/promotions
+   cascade. Two sections each play in label → desc → card order.
+   =========================================================== */
+body[data-view="rewards"].insight-open .insight-content--rewards .rewards-section:nth-child(1) .insight-label {
+  animation: fx-insight-fade-up 600ms cubic-bezier(0.22, 0.61, 0.36, 1) 280ms both;
+}
+body[data-view="rewards"].insight-open .insight-content--rewards .rewards-section:nth-child(1) .insight-desc {
+  animation: fx-insight-fade-up 600ms cubic-bezier(0.22, 0.61, 0.36, 1) 460ms both;
+}
+body[data-view="rewards"].insight-open .wallet-card {
+  animation: fx-insight-fade-up 700ms cubic-bezier(0.22, 0.61, 0.36, 1) 660ms both;
+}
+/* Section 2 starts AFTER the Fiserv callout has settled
+   (callout ends at 2750 + 600 = 3350ms). */
+body[data-view="rewards"].insight-open .insight-content--rewards .rewards-section:nth-child(2) .insight-label {
+  animation: fx-insight-fade-up 600ms cubic-bezier(0.22, 0.61, 0.36, 1) 3500ms both;
+}
+body[data-view="rewards"].insight-open .insight-content--rewards .rewards-section:nth-child(2) .insight-desc {
+  animation: fx-insight-fade-up 600ms cubic-bezier(0.22, 0.61, 0.36, 1) 3680ms both;
+}
+body[data-view="rewards"].insight-open .reward-card {
+  animation: fx-insight-fade-up 700ms cubic-bezier(0.22, 0.61, 0.36, 1) 3880ms both;
+}
+
+/* Wallet chart bars grow from the bottom after the wallet card lands */
+body[data-view="rewards"].insight-open .wallet-bar-fill {
+  transform-origin: center bottom;
+  animation: fx-bar-grow-y 850ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+body[data-view="rewards"].insight-open .wallet-bar--3m .wallet-bar-fill { animation-delay: 1000ms; }
+body[data-view="rewards"].insight-open .wallet-bar--may .wallet-bar-fill { animation-delay: 1150ms; }
+/* Curve fades in AFTER both bars finish growing
+   (last bar starts at 1150ms + 850ms = 2000ms). */
+body[data-view="rewards"].insight-open .wallet-curve {
+  animation: fx-insight-fade 600ms ease-out 2050ms both;
+}
+@keyframes fx-bar-grow-y {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+/* Fiserv Sensor callout fades in AFTER the chart settles
+   (curve ends at 2050 + 600 = 2650ms). */
+body[data-view="rewards"].insight-open .wallet-callout {
+  animation: fx-insight-fade-up 600ms cubic-bezier(0.22, 0.61, 0.36, 1) 2750ms both;
+}
+
+/* Crossfade the right-column greeting → chat thread RIGHT BEFORE
+   the bubbles pop, so the panel transition lines up with them. */
+body[data-view="rewards"].insight-open .ai-hero {
+  transition:
+    opacity 320ms cubic-bezier(0.22, 0.61, 0.36, 1) 4300ms,
+    visibility 0s linear 4620ms;
+}
+body[data-view="rewards"].insight-open .right-col-content .chat-thread {
+  transition:
+    opacity 320ms cubic-bezier(0.22, 0.61, 0.36, 1) 4300ms,
+    visibility 0s linear 4300ms;
+}
+/* Bubbles fire AFTER the entire left-side cascade — reward card
+   lands at 3880 + 700 = 4580ms. */
+body[data-view="rewards"].insight-open .chat-bubbles--rewards .chat-bubble:nth-child(1) {
+  animation-delay: 4700ms;
+}
+body[data-view="rewards"].insight-open .chat-bubbles--rewards .chat-bubble:nth-child(2) {
+  animation-delay: 4860ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-view="rewards"].insight-open .wallet-card,
+  body[data-view="rewards"].insight-open .reward-card,
+  body[data-view="rewards"].insight-open .rewards-section .insight-label,
+  body[data-view="rewards"].insight-open .rewards-section .insight-desc,
+  body[data-view="rewards"].insight-open .wallet-bar-fill,
+  body[data-view="rewards"].insight-open .wallet-curve {
+    animation: none !important;
+  }
+}
+
+/* ===========================================================
+   CAPITAL view — "Fund your next growth phase"
+   Two stacked sections: Insights (Fiserv Sensor signal rows)
+   + Recommendation (Clover Capital offer card with perks +
+   summary metric blocks and CTAs).
+   =========================================================== */
+
+.insight-content--capital {
+  gap: 40px;
+}
+.capital-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ---------- Insights card (Fiserv Sensor signals) ---------- */
+.capital-insight-card {
+  border: 1px solid #E5E5E5;
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.capital-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 4px;             /* breathing room before the dot */
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #5C5C5C;
+}
+.capital-source-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #FF8A2B;            /* Fiserv orange — same as trending/sensor */
+  display: inline-block;
+  flex: 0 0 12px;
+  --dot-halo: rgba(255, 138, 43, 0.15);
+  --dot-halo-soft: rgba(255, 138, 43, 0.06);
+  box-shadow: 0 0 0 3px var(--dot-halo);
+  animation: fx-dot-breathe 2.4s ease-in-out infinite;
+  transform-origin: center;
+}
+.capital-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.capital-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: #F5F5F5;
+  border-radius: 16px;
+}
+.capital-row-ico {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+.capital-row p {
+  margin: 0;
+  flex: 1 1 0;
+  min-width: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #000;
+}
+
+/* ---------- Capital offer card (gradient + summary) ---------- */
+.capital-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #E5E5E5;
+}
+
+/* Top green gradient panel */
+.capital-offer {
+  background: linear-gradient(-50deg, #165A00 14%, #208000 85%);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  color: #ffffff;
+}
+.capital-offer-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.capital-offer-ico {
+  width: 24px;
+  height: 24px;
+  display: block;
+  flex: 0 0 24px;
+}
+.capital-offer-label {
+  flex: 1 1 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #ffffff;
+}
+.capital-offer-prequal {
+  flex: 0 0 auto;
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: #ffffff;
+  opacity: 0.8;
+}
+.capital-offer-amount {
+  display: flex;
+  flex-direction: column;
+}
+.capital-offer-headline {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 52px;
+  color: #ffffff;
+}
+.capital-offer-sub {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 28px;
+  color: #ffffff;
+}
+.capital-perks {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 12px 16px;            /* symmetric — row sits visually centered */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.capital-perk {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: #ffffff;
+}
+.capital-perk:nth-child(2) {
+  flex: 1 1 0;
+  justify-content: center;
+}
+.capital-perk-ico {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+/* Bottom white summary panel */
+.capital-summary {
+  background: #ffffff;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.capital-metrics {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 88px;
+}
+.capital-metric {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.capital-metric-label {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #5C5C5C;
+}
+.capital-metric-value {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 40px;
+  text-align: center;
+  background: linear-gradient(-60deg, #165A00 14%, #208000 85%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  white-space: nowrap;
+}
+.capital-metric-sub {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #727272;
+}
+.capital-metric-divider {
+  width: 1px;
+  align-self: stretch;
+  background: #E5E5E5;
+}
+.capital-actions {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+}
+.btn-options,
+.btn-secure {
+  flex: 1 1 0;
+  min-width: 100px;
+  height: 48px;
+  border-radius: 8px;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+.btn-options {
+  background: #ffffff;
+  border: 1px solid #727272;
+  color: #228800;
+}
+.btn-secure {
+  background: linear-gradient(-28deg, #165A00 14%, #208000 85%);
+  border: 0;
+  color: #ffffff;
+}
+
+/* ===========================================================
+   CAPITAL intro choreography — mirrors the previous cascades.
+   Section 1 (Insights) → 280/460/660ms; Section 2 (Recommendation)
+   → 1100/1280/1500ms. Bubbles deferred to 2400/2560ms.
+   =========================================================== */
+body[data-view="capital"].insight-open .insight-content--capital .capital-section:nth-child(1) .insight-label {
+  animation: fx-insight-fade-up 600ms cubic-bezier(0.22, 0.61, 0.36, 1) 280ms both;
+}
+body[data-view="capital"].insight-open .insight-content--capital .capital-section:nth-child(1) .insight-desc {
+  animation: fx-insight-fade-up 600ms cubic-bezier(0.22, 0.61, 0.36, 1) 460ms both;
+}
+body[data-view="capital"].insight-open .capital-insight-card {
+  animation: fx-insight-fade-up 700ms cubic-bezier(0.22, 0.61, 0.36, 1) 660ms both;
+}
+body[data-view="capital"].insight-open .insight-content--capital .capital-section:nth-child(2) .insight-label {
+  animation: fx-insight-fade-up 600ms cubic-bezier(0.22, 0.61, 0.36, 1) 1100ms both;
+}
+body[data-view="capital"].insight-open .insight-content--capital .capital-section:nth-child(2) .insight-desc {
+  animation: fx-insight-fade-up 600ms cubic-bezier(0.22, 0.61, 0.36, 1) 1280ms both;
+}
+body[data-view="capital"].insight-open .capital-card {
+  animation: fx-insight-fade-up 700ms cubic-bezier(0.22, 0.61, 0.36, 1) 1500ms both;
+}
+body[data-view="capital"].insight-open .chat-bubbles--capital .chat-bubble:nth-child(1) {
+  animation-delay: 2400ms;
+}
+body[data-view="capital"].insight-open .chat-bubbles--capital .chat-bubble:nth-child(2) {
+  animation-delay: 2560ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-view="capital"].insight-open .capital-insight-card,
+  body[data-view="capital"].insight-open .capital-card,
+  body[data-view="capital"].insight-open .capital-section .insight-label,
+  body[data-view="capital"].insight-open .capital-section .insight-desc {
+    animation: none !important;
+  }
+}
+
+/* ===========================================================
+   TASK LOADING — overlay shown when the user clicks Send on
+   the customer-review reply. Lottie loader (Stars-to-Check)
+   plays once; text swaps to "Task complete" on the complete
+   event, then a 1s hold before the page closes.
+   =========================================================== */
+.task-loading {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: #ffffff;
+  z-index: 5;
+  pointer-events: none;
+}
+.insight-view.task-loading-active .task-loading {
+  display: flex;
+  pointer-events: auto;
+  animation: fx-insight-fade 240ms ease-out both;
+}
+.insight-view.task-loading-active .insight-left {
+  visibility: hidden;
+}
+.task-loading-anim {
+  width: 56px;
+  height: 56px;
+  display: block;
+}
+.task-loading-text {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  color: #000;
+  text-align: center;
+  /* small fade-in when text swaps to "Task complete" */
+  transition: opacity 220ms ease;
+}
+.task-loading-text.is-swapping { opacity: 0; }
+
+/* ===========================================================
+   COMPLETED CUSTOMER CARD — applied to the rec-card after the
+   send flow finishes. The card moves to the last grid slot,
+   gets a muted background, a green check next to the title,
+   and is no longer clickable.
+   =========================================================== */
+.rec-card--completed {
+  background: #F5F5F5;
+  border-color: #E5E5E5;
+  cursor: default;
+}
+.rec-card--completed::before,
+.rec-card--completed::after {
+  /* Disable the cursor-tracked spotlight hover for completed cards */
+  display: none !important;
+  content: none !important;
+}
+/* Icon box stays white so it pops against the muted card surface,
+   with the same soft mint shadow used on the art-walk briefing icon. */
+.rec-card--completed .rec-iconbox {
+  background: #ffffff;
+  box-shadow: 0 1px 4.8px -2px #A7E1A3;
+}
+/* Title + description keep their original (black / gray) colors */
+.rec-card--completed .rec-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.rec-title-check {
+  width: 24px;
+  height: 24px;
+  display: inline-block;
+  flex: 0 0 24px;
+}
+
+/* ===========================================================
+   CAPITAL FUNDING view — opened by tapping "Select funding amount"
+   on the capital recommendation. Heading + description + a
+   gradient-headed card with a slider, two metric blocks,
+   buttons, and a terms link.
+   =========================================================== */
+.insight-content--capital-funding {
+  gap: 12px;
+}
+.funding-heading {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #000;
+}
+.funding-desc {
+  margin: 0 0 12px 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: #5A5A5A;
+}
+.funding-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #E5E5E5;
+}
+.funding-card-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 16px;
+  background: linear-gradient(-16deg, #165A00 14%, #208000 85%);
+}
+.funding-card-ico {
+  width: 24px;
+  height: 24px;
+  display: block;
+  filter: brightness(0) invert(1);
+}
+.funding-card-title {
+  flex: 1 1 0;
+  min-width: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #ffffff;
+}
+.funding-card-prequal {
+  font-family: 'Graphik', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: #ffffff;
+  opacity: 0.8;
+}
+.funding-card-body {
+  background: #ffffff;
+  padding: 32px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: center;
+}
+.funding-amount {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 52px;
+  color: #228800;
+  text-align: center;
+}
+/* Slider — tick marks ruler under a green progress + circle handle. */
+.funding-slider {
+  width: 100%;
+  padding: 0 20px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+}
+.funding-ticks {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 20px;
+  padding: 0 4.5px;
+}
+.funding-tick {
+  width: 1px;
+  height: 16px;
+  background: #d5d5d5;
+  display: inline-block;
+}
+.funding-tick--major {
+  width: 2px;
+  height: 20px;
+}
+/* Native range input styled to match the design — green progress fill up
+   to the thumb, white circular thumb with a green border. The fill is a
+   linear-gradient on the track driven by --progress (set by JS on input). */
+.funding-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 32px;        /* tall enough for the 32px thumb hit-target */
+  background: transparent;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  --progress: 100%;
+}
+.funding-range:focus { outline: none; }
+.funding-range::-webkit-slider-runnable-track {
+  height: 10px;
+  border-radius: 8px;
+  background: linear-gradient(to right,
+    #228800 0,
+    #228800 var(--progress),
+    #c7c7c7 var(--progress),
+    #c7c7c7 100%);
+}
+.funding-range::-moz-range-track {
+  height: 10px;
+  border-radius: 8px;
+  background: linear-gradient(to right,
+    #228800 0,
+    #228800 var(--progress),
+    #c7c7c7 var(--progress),
+    #c7c7c7 100%);
+}
+.funding-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #228800;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  margin-top: -11px;       /* center the 32px thumb on the 10px track */
+  cursor: pointer;
+}
+.funding-range::-moz-range-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #228800;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+}
+.funding-metrics {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 88px;
+  width: 100%;
+}
+.funding-metric {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.funding-metric-label {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #5C5C5C;
+}
+.funding-metric-value {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
+  text-align: center;
+  background: linear-gradient(-75deg, #165A00 14%, #208000 85%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  white-space: nowrap;
+}
+.funding-metric-divider {
+  width: 1px;
+  align-self: stretch;
+  background: #E5E5E5;
+}
+.funding-actions {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+  width: 100%;
+}
+.funding-terms {
+  font-family: 'Graphik', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: #2A71B1;
+  text-decoration: none;
+  align-self: center;
+}

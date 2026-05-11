@@ -1,0 +1,3580 @@
+/* ===========================================================
+   Agentic Commerce — Tablet Demo
+   Gemini-style landing page wrapped in iPad bezel.
+   Inner content scales to bezel size (1366x977 design canvas).
+   =========================================================== */
+
+@font-face {
+  font-family: 'Google Sans';
+  src: url('asset/fonts/Google_Sans/static/GoogleSans-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Google Sans';
+  src: url('asset/fonts/Google_Sans/static/GoogleSans-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Google Sans';
+  src: url('asset/fonts/Google_Sans/static/GoogleSans-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Google Sans';
+  src: url('asset/fonts/Google_Sans/static/GoogleSans-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Roboto — used for the Google Maps-style merchant card so the
+   typography matches gmaps cards (merchant name, rating row, etc.).
+   Variable fonts cover 100–900 weight + italic in two files. */
+@font-face {
+  font-family: 'Roboto';
+  src: url('asset/fonts/Roboto/Roboto-VariableFont.ttf') format('truetype-variations'),
+       url('asset/fonts/Roboto/Roboto-VariableFont.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Roboto';
+  src: url('asset/fonts/Roboto/Roboto-Italic-VariableFont.ttf') format('truetype-variations'),
+       url('asset/fonts/Roboto/Roboto-Italic-VariableFont.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Graphik — used for the "Clover Merchant" header band so it
+   matches Clover's brand typography from the source design. */
+@font-face {
+  font-family: 'Graphik';
+  src: url('asset/fonts/Graphik/Graphik-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Graphik';
+  src: url('asset/fonts/Graphik/Graphik-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Graphik';
+  src: url('asset/fonts/Graphik/Graphik-Semibold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #e9ecef;
+  font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #1f1f1f;
+  cursor: none;                 /* hide native cursor — tap circle replaces it */
+}
+
+/* Force every element to use cursor: none — the custom tap cursor
+   replaces the OS pointer everywhere, including over <button> elements */
+*, *::before, *::after,
+button, a, input, textarea, select,
+.iconbtn, .rail-btn, .chrome-iconbtn, .pill, .tools-btn, .fast-btn,
+.composer, .address-bar {
+  cursor: none !important;
+}
+
+/* ---------- Touch tap-circle cursor ---------- */
+.tap-cursor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 30px;
+  height: 30px;
+  margin-left: -15px;
+  margin-top: -15px;
+  border-radius: 50%;
+  /* white frosted-glass puck with a white ring */
+  background: rgba(255, 255, 255, 0.4);
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  /* deeper cool-gray drop shadow keeps the puck findable on white surfaces */
+  box-shadow:
+    0 4px 14px rgba(30, 35, 45, 0.22),
+    0 1px 3px rgba(30, 35, 45, 0.12);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+  pointer-events: none;
+  z-index: 99999;
+  transform: translate3d(0, 0, 0) scale(1);
+  transition: transform 120ms ease, background-color 120ms ease, border-color 120ms ease, opacity 120ms ease;
+  will-change: transform, left, top;
+  opacity: 0;                   /* fades in on first move */
+}
+.tap-cursor.visible { opacity: 1; }
+
+/* Mouse-down state: shrink + brighten the puck */
+.tap-cursor.tapping {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 1);
+  transform: translate3d(0, 0, 0) scale(0.7);
+}
+
+/* Hover over interactive elements — subtle scale-down + slightly stronger fill.
+   Replaces the browser's hand cursor while still signaling "tappable". */
+.tap-cursor.hover {
+  background: rgba(255, 255, 255, 0.55);
+  border-color: rgba(255, 255, 255, 0.95);
+  transform: translate3d(0, 0, 0) scale(0.85);
+}
+/* When tapping wins out over hover (mousedown on interactive) */
+.tap-cursor.hover.tapping {
+  transform: translate3d(0, 0, 0) scale(0.65);
+}
+
+/* Text input — morph the puck into a thin I-beam caret while hovering
+   the composer. Overrides shape/color/shadow from the base puck. */
+.tap-cursor.typing {
+  width: 3px;
+  height: 26px;
+  margin-left: -1.5px;
+  margin-top: -13px;
+  background: rgba(31, 31, 31, 0.9);
+  border: none;
+  border-radius: 1.5px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.65),
+    0 2px 6px rgba(0, 0, 0, 0.18);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  transform: translate3d(0, 0, 0) scale(1);
+  animation: caret-blink 1100ms ease-in-out infinite;
+}
+.tap-cursor.typing.tapping {
+  background: rgba(31, 31, 31, 1);
+  transform: translate3d(0, 0, 0) scale(0.92);
+}
+@keyframes caret-blink {
+  0%, 50%      { opacity: 1; }
+  50.01%, 100% { opacity: 0.35; }
+}
+
+/* Ripple element appended on click */
+.tap-ripple {
+  position: fixed;
+  width: 30px;
+  height: 30px;
+  margin-left: -15px;
+  margin-top: -15px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 2px 8px rgba(30, 35, 45, 0.18);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  pointer-events: none;
+  z-index: 99998;
+  animation: tap-ripple 520ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+@keyframes tap-ripple {
+  0%   { transform: scale(0.6); opacity: 1; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+/* ---------- Intro / outro overlay ----------
+   Intro is a full-screen MapLibre map that frames the US on load,
+   then flies into Manhattan on the first click. A second click
+   triggers the same scale-up + fade reveal of the merchant homepage
+   that the old SVG slideshow used. The outro reuses the same
+   overlay structure with the legacy SVG slide markup (green-dot
+   variants in 3 → 2 → 1 order) to close the story. */
+.intro-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #F9F9F9;            /* matches the MapLibre palette bg */
+  overflow: hidden;
+  cursor: pointer;                /* a click advances the intro */
+}
+.intro-stage[hidden] { display: none; }
+.intro-stage.is-done {
+  display: none;
+}
+
+/* Fixed 1366x820 design canvas. JS scales it via transform-origin 0 0
+   so the map + portal + legend keep the same proportions on any
+   viewport — same pattern as the iPad screen-inner scaler. Width
+   chosen to suit a horizontal big screen; portrait viewports
+   letterbox top/bottom against the stage background. */
+.intro-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1366px;
+  height: 820px;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+/* Intro map (consumer side of the intro). Fills the canvas. The
+   map itself is non-interactive (`interactive: false` on the JS
+   side) so clicks bubble up to .intro-stage. */
+#introMap {
+  position: absolute;
+  inset: 0;
+}
+/* Soften MapLibre's attribution chrome — OSM ODbL requires the
+   credit be visible, but we collapse it to the compact ⓘ button so
+   it doesn't dominate the framing. */
+#introMap details.maplibregl-ctrl-attrib > .maplibregl-ctrl-attrib-inner {
+  display: none;
+}
+#introMap details.maplibregl-ctrl-attrib[open] > .maplibregl-ctrl-attrib-inner {
+  display: inline-block;
+  padding: 2px 24px 2px 8px;
+}
+#introMap .maplibregl-ctrl-attrib-button { display: block !important; }
+#introMap .maplibregl-ctrl-attrib {
+  background: rgba(255, 255, 255, 0.65) !important;
+  backdrop-filter: blur(4px);
+}
+
+/* Floating legend — matches the dot styling used by MapLibre paint
+   so the swatches read as the same "online" vs "offline" tokens.
+   pointer-events: none lets clicks pass through to the intro stage. */
+#introLegend {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 16px 20px;
+  border-radius: 14px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+  font-size: 18px;
+  line-height: 24px;
+  color: #333;
+  font-family: 'Graphik', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  pointer-events: none;
+}
+#introLegend .row { display: flex; align-items: center; gap: 14px; padding: 5px 0; }
+#introLegend .dot {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+#introLegend .dot-green {
+  background: #6BBD64;
+  border: 1.5px solid #FFFFFF;
+  box-shadow: 0 1px 3px rgba(20, 80, 0, 0.30);
+}
+#introLegend .dot-white {
+  background: #286271;             /* teal — matches offline map dot */
+  border: 1.5px solid #FFFFFF;     /* white outline */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
+}
+/* Hide the legend during the reveal so the expanding portal owns
+   the frame — otherwise the legend keeps drawing on top of the
+   white field. */
+.intro-stage.is-zooming #introLegend {
+  opacity: 0;
+  transition: opacity 200ms linear;
+}
+
+/* Selection halos — invisible 12px anchor elements whose
+   `box-shadow` JS animates each frame to render an expanding soft
+   shadow ring. JS sets `left`/`top` to track the portal's projected
+   pixel position so the rings stay anchored to the dot while the
+   camera pans. Layered just under the portal so the dot reads on
+   top of the shadow. */
+.intro-portal-halo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: transparent;
+  pointer-events: none;
+  z-index: 4;
+  transform: translate(-50%, -50%);
+  /* Off-screen until JS positions and shadows it. */
+  margin-left: -10000px;
+  will-change: box-shadow;
+}
+
+/* "Portal" dot — a plain CSS circle (div + border-radius + border).
+   JS drives `width` / `height` / `left` / `top` every frame from
+   the map's projected pixel coordinates, so the browser re-paints
+   the 1 px border at every size — pixel-perfect at rest and crisp
+   through every step of expansion. The fixed `transform:
+   translate(-50%, -50%)` re-centers the box on the (left, top)
+   coordinate so JS only has to pass the dot's true center. */
+#introPortal {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 12px;
+  height: 12px;
+  background: #286271;             /* teal — matches the offline dot */
+  border: 1px solid #FFFFFF;       /* white outline — matches offline dot stroke */
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+  transform: translate(-50%, -50%);
+  transform-origin: 50% 50%;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 5;
+  will-change: width, height, left, top;
+}
+.intro-stage.is-zooming #introPortal {
+  /* JS sets transform every frame; the class just unhides the dot
+     so its first sample is rendered. */
+  opacity: 1;
+  /* Dive-only "breathing" pulse — the selected merchant dot inhales
+     to a muted, desaturated teal then exhales back to the dark base
+     so the expansion reads as a calm, living beat. ~1.8s cycle. */
+  animation:
+    intro-portal-pulse        1800ms ease-in-out infinite,
+    intro-portal-pulse-border 1800ms ease-in-out infinite;
+}
+@keyframes intro-portal-pulse {
+  0%, 100% { background-color: #286271; }   /* dark teal — base offline */
+  50%      { background-color: #8FD0D8; }   /* bright, slightly desaturated cyan */
+}
+@keyframes intro-portal-pulse-border {
+  0%, 100% { border-color: #FFFFFF; }
+  50%      { border-color: #EAF8FB; }   /* tiny cyan tint at the breath peak */
+}
+
+/* Phase 2 — once the white field covers the viewport, the whole
+   intro stage fades + slightly scales up. The asymmetric spring
+   cubic-bezier on the transform gives it a little squash overshoot
+   so the handoff feels alive rather than a flat fade. The merchant
+   modal's entrance animation runs *under* this fade (we drop
+   body.intro-active from JS just before adding this class). */
+.intro-stage.is-receding {
+  opacity: 0;
+  transform: scale(1.06);
+  transform-origin: 50% 50%;
+  transition: opacity   680ms cubic-bezier(0.4, 0, 0.2, 1),
+              transform 760ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Reverse outro — JS plays the dive backwards from the end-of-recede
+   state to the start-of-pan state. We re-show the stage and need
+   transitions OFF so each per-frame inline opacity/transform value
+   applies immediately (the spring/ease curves all live in JS for
+   this direction). */
+.intro-stage.is-rewinding {
+  transition: none !important;
+}
+
+/* While the intro is on screen, hold the merchant modal entrance.
+   The modal + scrim use CSS keyframes with `forwards` fill — pausing
+   them keeps the modal at its initial off-state (opacity 0, scale
+   0.92) so it slides up *after* the zoom completes. */
+body.intro-active .m-modal-scrim,
+body.intro-active .m-modal { animation-play-state: paused; }
+
+/* ---------- Stage / iPad container ----------
+   Stage holds the tablet-stage which holds two overlapping tablets.
+   Each tablet sits in its own absolutely-positioned .tablet-slot so
+   the .ipad inside can keep its viewport-based sizing math. The
+   handoff slides the gemini slot off to the left while the merchant
+   slot slides in from the right. */
+.stage {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  padding: 32px;
+  overflow: hidden;
+  background: #e9ecef;
+  transition: background-color 1100ms cubic-bezier(0.2, 0, 0, 1);
+}
+.stage.handoff-running,
+.stage.merchant-active {
+  background: #e8f5e0;             /* light Clover green */
+}
+
+/* When the handoff is armed, any click on the stage swaps the
+   tablets — no extra hint affordance. Cursor stays pointer-y so
+   it's clear the surface is interactive. */
+.stage.handoff-armed { cursor: pointer; }
+
+/* tablet-stage spans the visible stage; both slots overlap inside it
+   and we drive the swap with translateX on each slot. */
+.tablet-stage {
+  position: absolute;
+  inset: 32px;                     /* match .stage padding */
+  pointer-events: auto;
+}
+
+.tablet-slot {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Material 3 emphasized easing — a settled, layered slide. */
+  transition: transform 1000ms cubic-bezier(0.2, 0, 0, 1),
+              opacity   600ms cubic-bezier(0.2, 0, 0, 1);
+  will-change: transform, opacity;
+}
+/* Default state: gemini centered, merchant pre-staged off-stage right
+   with a slight scale-down so it can scale up as it slides in. */
+.tablet-slot-gemini   { transform: translateX(0)      scale(1.00); opacity: 1; }
+.tablet-slot-merchant { transform: translateX(108%)   scale(0.96); opacity: 0; }
+
+/* During / after the handoff: gemini slides + scales out left, merchant
+   settles into the stage. Fade timings overlap with the slide for a
+   soft cross-dissolve feel. */
+.tablet-stage.to-merchant .tablet-slot-gemini   { transform: translateX(-108%) scale(0.94); opacity: 0; }
+.tablet-stage.to-merchant .tablet-slot-merchant { transform: translateX(0)     scale(1.00); opacity: 1; }
+
+.ipad {
+  position: relative;
+  /* Cap width by viewport WIDTH and viewport HEIGHT (factoring in the
+     bezel aspect ratio) so the iPad always fits both axes — auto-shrinks
+     on short viewports the same way Insights-Demo does. */
+  width: min(
+    1480px,
+    calc(100vw - 64px),
+    calc((100vh - 64px) * 1990 / 1404)
+  );
+  aspect-ratio: 1990 / 1404;
+  filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.18));
+}
+
+/* Station variant — used for the merchant tablet. The mockup is wider
+   and shorter than the iPad bezel, with the screen recessed behind a
+   thicker housing. We size the device to roughly the same footprint as
+   the iPad so the handoff feels visually consistent. */
+.ipad--station {
+  width: min(
+    1600px,
+    calc(100vw - 64px),
+    calc((100vh - 64px) * 3287 / 2264)
+  );
+  aspect-ratio: 3287 / 2264;
+}
+.ipad--station .screen {
+  /* Cover the green-screen region of asset/Station_mockup.png plus the
+     thin shadow/rim drawn around it in the original mockup. We oversize
+     by ~0.5% on each axis so the screen content paints over both the
+     anti-aliased fringe and the bezel's rim shadow on every side. */
+  top: 15.9%;
+  left: 7.85%;
+  right: 7.2%;
+  bottom: 14.3%;
+  border-radius: 0;
+  z-index: 3;
+}
+/* The 14-px white safe area above the status bar reads as wasted top
+   space on the station because the screen has no rounded-corner clip
+   to protect against. Collapse it so the status bar sits flush. */
+.ipad--station .top-safe { display: none; }
+/* The rightmost staff column's right border lands flush against the
+   station's screen edge and reads as a stray vertical line. Drop the
+   right border on the last column (and matching header cell). */
+.ipad--station .m-staff-col:last-child,
+.ipad--station .m-staff-cell:last-child { border-right: 0; }
+
+.bezel {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  z-index: 2;
+}
+
+.screen {
+  position: absolute;
+  top: 4.0%;
+  left: 3.55%;
+  right: 3.55%;
+  bottom: 4.0%;
+  background: #f0f3f8;        /* matches page bg so any sub-pixel sliver is invisible */
+  overflow: hidden;
+  border-radius: 0.6%;        /* smaller corner clip so the iPad status bar
+                                 stays fully visible at any viewport scale */
+  z-index: 1;
+}
+
+/* Fixed-size internal canvas. JS scales it via transform so every
+   element shrinks/grows uniformly with the iPad as the viewport changes.
+   1366 x 954 — ratio 1.432 matches the iPad screen visible area exactly,
+   so the canvas fills the screen with zero letterbox top/bottom and zero
+   white sliver under the page content. The screen uses a percentage
+   border-radius (1.5%) so the corner clip stays small enough at any
+   viewport that the status bar's 26 px side padding is always clear. */
+.screen-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1366px;
+  height: 954px;
+  transform-origin: 0 0;
+  background: #ffffff;
+  font-size: 14px;
+  line-height: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- iPad Status Bar ----------
+   Sized to match Insights-Demo's bar (24-px tall, 12-px text). A small
+   white safe area sits above it (`.top-safe`) so the time/date have
+   breathing room from the screen's rounded corner clip. */
+.top-safe {
+  height: 14px;
+  flex: 0 0 auto;
+  background: #ffffff;
+}
+.statusbar {
+  height: 24px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30px;
+  background: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro', 'Segoe UI', Roboto, sans-serif;
+  font-size: 12px;
+  font-weight: 510;
+  color: #000;
+}
+.sb-left, .sb-right { display: flex; gap: 8px; align-items: center; }
+.sb-right { gap: 4px; }
+.sb-pct { font-weight: 510; }
+.sb-signal { width: 17px; height: 11px; }
+.sb-wifi   { width: 15px; height: 11px; }
+.sb-batt   { width: 27px; height: 12px; }
+
+/* ---------- Browser App ---------- */
+.app {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  background: #f0f3f8;
+  min-height: 0;
+}
+
+/* ---------- Chrome browser bar ---------- */
+.chrome-bar {
+  flex: 0 0 auto;
+  background: #ffffff;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: inset 0 -1px 0 0 rgba(0, 0, 0, 0.15);
+}
+
+.chrome-icons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chrome-iconbtn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #5f6368;
+  cursor: pointer;
+  border-radius: 999px;
+  transition: background 160ms ease;
+  overflow: hidden;            /* keep hover bg fully inside */
+  flex-shrink: 0;
+}
+.chrome-iconbtn:hover { background: rgba(60, 64, 67, 0.08); }
+.chrome-iconbtn img,
+.chrome-iconbtn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.address-bar {
+  flex: 1 1 auto;
+  background: #edf2fa;
+  border-radius: 999px;
+  padding: 6px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+.address-bar .url {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.address-bar .url img {
+  width: 15.36px;
+  height: 15.36px;
+  color: #5f6368;
+}
+.address-bar .url p {
+  margin: 0;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: 0.5px;
+  color: #1d1b20;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.address-bar .star img {
+  width: 20px;
+  height: 20px;
+  color: #5f6368;
+}
+
+.chrome-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid #bbb;
+  overflow: hidden;
+  flex-shrink: 0;
+  opacity: 0.95;
+}
+.chrome-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ---------- Page body — sidebar + main ---------- */
+.page {
+  flex: 1 1 auto;
+  display: flex;
+  background: #f0f3f8;
+  min-height: 0;
+  /* Anchor for the checkout drawer + scrim so they overlay the page
+     area below the chrome bar instead of covering the navbar. The
+     overflow clip keeps the drawer's left-edge shadow from bleeding
+     up across the navbar. */
+  position: relative;
+  overflow: hidden;
+}
+
+/* ---------- Left rail (Gemini sidebar) ---------- */
+.rail {
+  width: 68px;
+  flex: 0 0 auto;
+  background: #e9edf6;
+  /* Larger bottom padding pushes the settings icon up from the screen's
+     bottom-left rounded corner so it doesn't sit right at the edge.
+     No right border — even an invisible 1px shifts the icon column off-axis
+     under box-sizing: border-box. */
+  padding: 16px 0 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
+.rail-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+}
+.rail-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #444746;
+  cursor: pointer;
+  transition: background 160ms ease;
+  padding: 0;
+  overflow: hidden;             /* hover bg fully contained inside rounded box */
+}
+.rail-btn:hover { background: rgba(60, 64, 67, 0.08); }
+.rail-btn img,
+.rail-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* ---------- Main panel ---------- */
+.main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Top bar with Gemini title + avatar.
+   Avatar's right padding mirrors the title's left padding so the bar
+   reads as visually balanced (instead of jammed against the screen edge). */
+.main-topbar {
+  flex: 0 0 auto;
+  height: 74px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  position: relative;
+}
+.main-topbar .title {
+  margin: 0;
+  font-family: 'Google Sans', 'Google Sans Flex', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 30px;
+  letter-spacing: 0.05px;
+  color: #1f1f1f;
+}
+.main-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid #bbb;
+  overflow: hidden;
+  opacity: 0.9;
+  flex-shrink: 0;
+}
+.main-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Hero center column — vertically centered in main panel
+   to mirror the real gemini.google.com layout (no empty band
+   under the suggestion pills). */
+.hero {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px 64px;
+}
+.hero-inner {
+  width: 100%;
+  max-width: 792px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: -40px; /* slight upper bias, matches real Gemini */
+}
+
+/* Greeting */
+.greeting {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 8px;
+}
+.greeting .hi {
+  margin: 0;
+  font-family: 'Google Sans', 'Google Sans Flex', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 400;
+  font-size: 36px;
+  line-height: 44px;
+  letter-spacing: 0;
+  color: #a1a1aa;
+}
+.greeting .prompt {
+  margin: 0;
+  font-family: 'Google Sans', 'Google Sans Flex', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 400;
+  font-size: 36px;
+  line-height: 44px;
+  letter-spacing: 0;
+  color: #1f1f1f;
+}
+
+/* Composer (Ask Gemini box) — sized to match real gemini.google.com.
+   Subtle 1px border instead of a soft shadow halo so the box edges
+   stay tight to the visible boundary. */
+.composer {
+  background: #ffffff;
+  border: 1px solid #e3e3e3;
+  border-radius: 32px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  margin-top: 24px;
+}
+.composer-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 8px 4px;
+  min-height: 36px;
+}
+.composer-input .shield {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: #5f6368;
+}
+.composer-input .placeholder {
+  margin: 0;
+  font-family: 'Google Sans', 'Google Sans Flex', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 500;
+  font-size: 17px;
+  line-height: 21.25px;
+  letter-spacing: -0.43px;
+  color: #636267;
+}
+
+.composer-actions {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+.composer-left,
+.composer-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.composer-right { gap: 8px; }
+
+/* All composer buttons sit on a 40px hit-target with 20px icons,
+   matching gemini.google.com. */
+.iconbtn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #444746;
+  cursor: pointer;
+  transition: background 160ms ease;
+  padding: 0;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.iconbtn:hover { background: rgba(60, 64, 67, 0.08); }
+.iconbtn img,
+.iconbtn svg { width: 20px; height: 20px; }
+
+.tools-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: transparent;
+  border: none;
+  font-family: 'Google Sans', 'Google Sans Flex', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1;
+  letter-spacing: -0.08px;
+  color: #464646;
+  cursor: pointer;
+  transition: background 160ms ease;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.tools-btn:hover { background: rgba(60, 64, 67, 0.06); }
+.tools-btn img,
+.tools-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+.fast-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: transparent;
+  border: none;
+  font-family: 'Google Sans', 'Google Sans Flex', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1;
+  letter-spacing: -0.08px;
+  color: #4b4b4b;
+  cursor: pointer;
+  transition: background 160ms ease;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.fast-btn:hover { background: rgba(60, 64, 67, 0.06); }
+.fast-btn img,
+.fast-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+/* Suggestion pills — sized to match real gemini.google.com
+   (~56px tall, 16px padding, ~13.3px text). */
+.suggestions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px;
+  margin-top: 24px;
+}
+.pill {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 9999px;
+  padding: 16px 22px;
+  font-family: 'Google Sans', 'Google Sans Flex', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 400;
+  font-size: 13.3333px;
+  line-height: 1.4;
+  letter-spacing: 0;
+  color: #444746;
+  cursor: pointer;
+  transition: background 160ms ease;
+  overflow: hidden;
+}
+.pill:hover { background: #f8f9fc; }
+
+/* ===========================================================
+   Chat / messages mode
+   When a user sends a message, the hero transitions:
+   greeting + suggestions hide, the composer slides to the bottom,
+   and a scrolling messages column fills the space above.
+   =========================================================== */
+
+.messages { display: none; }
+
+.composer-fade { display: none; }
+
+.hero.is-chat {
+  justify-content: stretch;
+  padding-bottom: 0;
+  min-height: 0;                /* allow hero to shrink so the messages
+                                   column scrolls instead of pushing the
+                                   composer off-screen */
+}
+
+/* ---------- Chat-mode chrome ----------
+   Mirrors gemini.google.com: the gray landing surface flips to white
+   the first time a message is sent. The rail keeps its gray tone so
+   it still reads as a separate column. */
+.app.is-chat .main,
+.app.is-chat .main-topbar,
+.app.is-chat .hero { background: #ffffff; }
+.app.is-chat .page { background: #ffffff; }
+.hero.is-chat .hero-inner {
+  margin-top: 0;
+  flex: 1 1 auto;
+  min-height: 0;                /* same — let the messages overflow scroll */
+  gap: 0;
+}
+.hero.is-chat .greeting,
+.hero.is-chat .suggestions { display: none; }
+
+.hero.is-chat .messages {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  /* Right padding holds the scrollbar lane outside the message
+     content so it stops overlapping bubbles and merchant cards.
+     scrollbar-gutter reserves the gutter even when the bar is
+     hidden so layout doesn't jump as content grows. */
+  padding: 24px 16px 80px 0;
+  scrollbar-gutter: stable;
+}
+/* Auto-hiding Gemini-style scrollbar — thumb is invisible until the
+   user hovers the messages column or interacts with the bar itself,
+   matching the gemini.google.com chat. The 8px gutter is still
+   reserved (scrollbar-gutter: stable) so layout never shifts. */
+.hero.is-chat .messages {
+  scrollbar-width: thin;                              /* Firefox */
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 240ms ease;
+}
+.hero.is-chat .messages:hover {
+  scrollbar-color: rgba(60, 64, 67, 0.30) transparent;
+}
+.hero.is-chat .messages::-webkit-scrollbar {
+  width: 8px;
+}
+.hero.is-chat .messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+.hero.is-chat .messages::-webkit-scrollbar-thumb {
+  background: transparent;                            /* hidden idle */
+  border-radius: 999px;
+  transition: background 240ms ease;
+}
+.hero.is-chat .messages:hover::-webkit-scrollbar-thumb,
+.hero.is-chat .messages:focus-within::-webkit-scrollbar-thumb {
+  background: rgba(60, 64, 67, 0.24);
+}
+.hero.is-chat .messages::-webkit-scrollbar-thumb:hover {
+  background: rgba(60, 64, 67, 0.40);
+}
+
+.hero.is-chat .composer {
+  margin-top: 0;
+  position: relative;
+  z-index: 2;
+  margin-bottom: 56px;          /* lifts composer off the bottom edge so it
+                                   doesn't crowd the screen's rounded corner */
+}
+.hero.is-chat .composer-fade {
+  display: block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 56px;
+  pointer-events: none;
+  /* Fade to the white chat surface so messages dissolve cleanly into
+     the composer's bg as they scroll up. */
+  background: linear-gradient(to top, #ffffff 30%, rgba(255, 255, 255, 0) 100%);
+  z-index: 1;
+}
+
+/* ---------- User typing in the composer (typewriter) ---------- */
+.composer-input.is-typing .placeholder {
+  color: #1f1f1f;
+}
+.typing-caret {
+  display: inline-block;
+  width: 2px;
+  height: 18px;
+  vertical-align: -3px;
+  background: #1f1f1f;
+  margin-left: 1px;
+  animation: caret-blink 1100ms ease-in-out infinite;
+}
+
+/* ---------- Message bubbles ---------- */
+.msg {
+  width: 100%;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: bubble-in 320ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+@keyframes bubble-in {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* User bubble — light blue, right-aligned with avatar */
+.msg-user {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 11px;
+}
+.msg-user .bubble {
+  background: #e9edf6;
+  color: #1c1f24;
+  padding: 14px 20px;
+  border-radius: 24px 6px 24px 24px;
+  max-width: 480px;
+  font-family: 'Google Sans', 'Google Sans Flex', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 26px;
+  letter-spacing: -0.3125px;
+}
+.msg-user .msg-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #9f9fa9;
+  overflow: hidden;
+  flex-shrink: 0;
+  opacity: 0.9;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+}
+.msg-user .msg-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* AI reply — sparkle header + body block */
+.msg-ai {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.msg-ai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.msg-ai-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.msg-ai-sparkle {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  animation: sparkle-pop 520ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+.msg-ai-sparkle img,
+.msg-ai-sparkle svg { width: 28px; height: 28px; display: block; }
+@keyframes sparkle-pop {
+  0%   { transform: scale(0.4); opacity: 0; }
+  60%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Thinking state — sparkle pulses while a "Thinking" label shimmers,
+   on the same row as the sparkle (matches gemini.google.com). */
+.msg-thinking {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.msg-thinking-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.thinking-sparkle {
+  animation: sparkle-pulse 1400ms ease-in-out infinite;
+}
+@keyframes sparkle-pulse {
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%      { transform: scale(0.86); opacity: 0.55; }
+}
+.msg-thinking-row .thinking-shimmer {
+  font-family: 'Google Sans', 'Google Sans Flex', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 26px;
+  letter-spacing: -0.3125px;
+}
+.thinking-shimmer {
+  background: linear-gradient(
+    90deg,
+    #c0c0c8 0%,
+    #1f1f1f 45%,
+    #1f1f1f 55%,
+    #c0c0c8 100%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 1500ms linear infinite;
+}
+@keyframes shimmer {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* "Show thinking" / source-attribution pill — sits inline with the
+   sparkle in the AI header. Static label only (no expanded state). */
+.show-thinking {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 30px;
+  padding: 0 8px 0 12px;
+  border-radius: 999px;
+  background: transparent;
+  font-family: 'Google Sans', 'Google Sans Flex', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: -0.08px;
+  color: #5f6368;
+  opacity: 0;
+  animation: show-thinking-fade-in 240ms ease 400ms forwards;
+}
+@keyframes show-thinking-fade-in {
+  to { opacity: 1; }
+}
+.show-thinking-chevron {
+  width: 18px;
+  height: 18px;
+}
+.msg-ai-volume {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  color: #5f6368;
+  opacity: 0.75;
+}
+.msg-ai-volume svg { width: 24px; height: 24px; display: block; }
+
+.msg-ai-body {
+  padding: 0 32px;
+  font-family: 'Google Sans', 'Google Sans Flex', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 26px;
+  letter-spacing: -0.3125px;
+  color: #2b2b2b;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.msg-ai-body p { margin: 0; line-height: 26px; }
+.msg-ai-body ul {
+  margin: 0;
+  padding-left: 24px;
+  list-style: disc;
+  display: flex;
+  flex-direction: column;
+}
+.msg-ai-body li { line-height: 26px; }
+
+.msg-ai-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  margin-left: -6px;            /* pull row left so first icon visually aligns
+                                   with body text — circular hit-target adds
+                                   a fixed inset around the smaller icon */
+  opacity: 0;
+  transition: opacity 300ms ease 100ms;
+}
+.msg-ai-actions.visible { opacity: 1; }
+.ai-action {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #5f6368;
+  cursor: pointer;
+  transition: background 160ms ease;
+  padding: 0;
+}
+.ai-action:hover { background: rgba(60, 64, 67, 0.06); }
+.ai-action img,
+.ai-action svg { width: 16px; height: 16px; display: block; }
+
+/* Streaming-text caret pulse on the line currently being filled in */
+.streaming::after {
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  vertical-align: -3px;
+  background: #2b2b2b;
+  margin-left: 2px;
+  animation: caret-blink 1100ms ease-in-out infinite;
+}
+
+/* ===========================================================
+   Merchant card (rich AI reply payload — turn 2)
+   Mirrors the Figma reference (40000724:32183) 1:1 — left card
+   = Clover merchant info with storefront photo + map, right
+   card = service + price + booking grid.
+   =========================================================== */
+.merchant-card {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+  max-width: 704px;
+  /* Google Maps-style cards: Roboto everywhere, with the system
+     stack as a graceful fallback while the .ttf is loading. */
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 360ms ease, transform 360ms ease;
+}
+.merchant-card.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.merchant-left,
+.merchant-right {
+  background: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  /* Subtle border so the white cards still read as cards on the
+     white chat surface (matches gemini.google.com). */
+  border: 1px solid #e3e3e3;
+}
+.merchant-left  { flex: 409 1 0; min-width: 0; }
+.merchant-right { flex: 295 1 0; min-width: 0; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+
+/* Left card — pale-green Clover Merchant header band */
+.merchant-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  height: 33px;
+  background: #e8f7d8;
+  color: #228800;
+  /* Clover brand uses Graphik in the source design — keep it
+     consistent in the chip even though the rest of the card runs
+     Roboto for the gmaps look. */
+  font-family: 'Graphik', 'Roboto', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: -0.14px;
+}
+.merchant-clover { width: 18px; height: 18px; flex-shrink: 0; display: block; }
+
+.merchant-body { padding: 20px 16px; }
+.merchant-imgs {
+  display: flex;
+  gap: 12px;
+  height: 160px;
+}
+.merchant-shop,
+.merchant-map {
+  height: 160px;
+  border-radius: 8px;
+  overflow: hidden;
+  display: block;
+}
+.merchant-shop {
+  flex: 245 1 0;
+  min-width: 0;
+}
+.merchant-map {
+  flex: 120 1 0;
+  min-width: 0;
+}
+.merchant-shop img,
+.merchant-map img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* Match Figma crop offsets so the photo composes the same way */
+.merchant-shop img { object-position: 50% 30%; }
+.merchant-map img  { object-position: 50% 30%; }
+
+.merchant-name {
+  margin: 12px 0 0;
+  font-family: 'Roboto', sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #202124;
+  letter-spacing: 0;
+}
+.merchant-rating {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px;
+  line-height: 16px;
+  color: #5f6368;
+}
+.merchant-rating .rating-stars {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+}
+.merchant-rating .rating-star {
+  width: 9px;
+  height: 8.5px;
+  display: block;
+}
+.merchant-meta {
+  margin-top: 6px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  color: #5f6368;
+}
+.merchant-cat    { color: #5f6368; margin-bottom: 2px; }
+.merchant-status { color: #5f6368; white-space: pre; }
+.merchant-open   { color: #137333; font-weight: 500; }
+
+/* Right card — "The Classic" service + slot grid + Book CTA */
+.service-top {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.service-name {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 20px;
+  color: #202124;
+}
+.service-desc-block {
+  display: flex;
+  flex-direction: column;
+}
+.service-desc {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: #202124;
+}
+.service-duration {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  font-style: italic;
+  font-size: 12px;
+  line-height: 20px;
+  color: #5f6368;
+}
+.service-price {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 24px;
+  color: #202124;
+}
+
+/* Slot pills + Book button live in a single 2-col grid so the Book
+   button can span both columns at the bottom (matches Figma). */
+.slot-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.slot-btn,
+.book-btn {
+  height: 32px;
+  padding: 4px 20px;
+  border-radius: 100px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  letter-spacing: 0;
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  /* Material 3 motion tokens: emphasized-easing for state transitions */
+  transition: background-color 200ms cubic-bezier(0.2, 0, 0, 1),
+              color 200ms cubic-bezier(0.2, 0, 0, 1),
+              border-color 200ms cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Material 3 outlined chip — slot pill */
+.slot-btn {
+  border: 1px solid #dadce0;
+  background: #ffffff;
+  color: #1a73e8;
+}
+.slot-btn:hover    { background: rgba(26, 115, 232, 0.08); }   /* 8% state layer */
+.slot-btn:focus-visible { outline: none; background: rgba(26, 115, 232, 0.12); border-color: #1a73e8; }
+.slot-btn:active   { background: rgba(26, 115, 232, 0.16); }   /* pressed state layer */
+.slot-btn.selected {
+  background: #1a73e8;
+  border-color: #1a73e8;
+  color: #ffffff;
+}
+.slot-btn.selected:hover  { background: #185abc; }
+.slot-btn.selected:active { background: #174ea6; }
+
+/* Material 3 filled button — Book CTA */
+.book-btn {
+  grid-column: span 2;
+  height: 39px;
+  border: none;
+  background: #1a73e8;
+  color: #ffffff;
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(60, 64, 67, 0.10);
+}
+.book-btn:hover         { background: #185abc; box-shadow: 0 1px 3px rgba(60, 64, 67, 0.18), 0 2px 4px rgba(60, 64, 67, 0.10); }
+.book-btn:focus-visible { outline: none; background: #185abc; box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.24); }
+.book-btn:active        { background: #174ea6; box-shadow: 0 1px 2px rgba(60, 64, 67, 0.10); }
+.book-btn:disabled,
+.book-btn[aria-disabled="true"] {
+  background: rgba(60, 64, 67, 0.12);
+  color: rgba(60, 64, 67, 0.38);
+  box-shadow: none;
+  cursor: default;
+}
+
+/* Material ripple — appended via JS on click, contained by overflow:hidden */
+.md-ripple {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  background: currentColor;
+  opacity: 0.2;
+  transform: scale(0);
+  animation: md-ripple-out 520ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes md-ripple-out {
+  to { transform: scale(2.4); opacity: 0; }
+}
+
+/* ===========================================================
+   Order checkout drawer (gemini tablet, turn 3 — Order now CTA)
+   Mirrors Figma 40000731:12189 — 560w drawer pinned right with a
+   product header, payment radio group, and Complete checkout CTA.
+   =========================================================== */
+.g-drawer-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.32);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9;
+}
+.g-drawer-scrim.open {
+  animation: g-drawer-scrim-in 700ms cubic-bezier(0.2, 0, 0, 1) forwards;
+  pointer-events: auto;
+}
+.g-drawer-scrim.closing {
+  animation: g-drawer-scrim-out 500ms cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+@keyframes g-drawer-scrim-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes g-drawer-scrim-out { from { opacity: 1; } to { opacity: 0; } }
+
+.g-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 560px;
+  height: 100%;
+  background: #ffffff;
+  box-shadow: -4px 0 18px rgba(0, 0, 0, 0.10);
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+  transform: translateX(100%);
+  pointer-events: none;
+  font-family: 'Google Sans', 'Google Sans Flex', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+.g-drawer.open {
+  animation: g-drawer-in 700ms cubic-bezier(0.2, 0, 0, 1) forwards;
+  pointer-events: auto;
+}
+.g-drawer.closing {
+  animation: g-drawer-out 500ms cubic-bezier(0.2, 0, 0, 1) forwards;
+  pointer-events: none;
+}
+@keyframes g-drawer-in  { from { transform: translateX(100%); } to { transform: translateX(0%);   } }
+@keyframes g-drawer-out { from { transform: translateX(0%);   } to { transform: translateX(100%); } }
+
+.g-drawer-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  /* Equal top + right padding so the close X has matching insets. */
+  padding: 24px 24px 0;
+}
+.g-drawer-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.g-drawer-close svg { display: block; }
+
+.g-drawer-body {
+  flex: 1 1 auto;
+  padding: 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+}
+
+/* Product header card */
+.g-order-product {
+  display: flex;
+  gap: 12px;
+  padding: 8px;
+  border: 1px solid #e3e3e3;
+  border-radius: 8px;
+  align-items: center;
+}
+.g-order-product-img {
+  width: 64px;
+  height: 59px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.g-order-product-img img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.g-order-product-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.g-order-product-name {
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 19px;
+  color: #1f1f1f;
+}
+.g-order-product-price {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 16px;
+  color: #1a73e8;
+}
+
+.g-order-section-title {
+  margin: 0;
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 28px;
+  color: #1f1f1f;
+}
+
+/* Payment radio options */
+.g-pay-options {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.g-pay-opt {
+  display: flex;
+  align-items: center;
+  /* Tighter spacing — gap controls radio↔logo and logo↔label distance.
+     Logo gets a smaller margin-right so the icon sits closer to the
+     label than to the radio. */
+  gap: 16px;
+  padding: 22px 16px;
+  border: 1px solid #dadce0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease;
+  background: #ffffff;
+}
+.g-pay-opt:hover { background: rgba(26, 115, 232, 0.04); }
+.g-pay-opt.is-selected {
+  border-color: #1a73e8;
+  border-width: 2px;
+  padding: 21px 15px;          /* compensate +1px border so heights match */
+}
+.g-pay-radio {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #5f6368;
+  flex-shrink: 0;
+  position: relative;
+  transition: border-color 160ms ease;
+  /* box-sizing: border-box from the global * rule keeps the rendered
+     diameter at exactly 20×20 including the border. */
+  box-sizing: border-box;
+}
+.g-pay-opt.is-selected .g-pay-radio {
+  border-color: #1a73e8;
+}
+/* Inner dot — absolutely centered via top/left + translate so its
+   center always lands exactly at the outer ring's center, regardless
+   of border thickness or sub-pixel rounding. */
+.g-pay-opt.is-selected .g-pay-radio::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #1a73e8;
+  transform: translate(-50%, -50%);
+}
+/* Fixed-width logo column so labels start at the same x in every row.
+   Wider than the largest logo so all four icons render at full size,
+   and the negative right margin pulls the label tighter to the icon
+   while keeping the column's edge constant. */
+.g-pay-logo {
+  flex-shrink: 0;
+  width: 64px;
+  height: 40px;
+  margin-right: -8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+.g-pay-logo img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  height: auto;
+  width: auto;
+}
+.g-pay-label {
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 24px;
+  color: #1f1f1f;
+}
+.g-pay-label strong { font-weight: 700; }
+
+/* Complete checkout button */
+.g-checkout-btn {
+  margin-top: 8px;
+  height: 48px;
+  border: none;
+  border-radius: 8px;
+  background: #1a73e8;
+  color: #ffffff;
+  font-family: inherit;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(60, 64, 67, 0.10);
+  transition: background-color 200ms cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+.g-checkout-btn:hover  { background: #185abc; box-shadow: 0 1px 3px rgba(60, 64, 67, 0.18), 0 2px 4px rgba(60, 64, 67, 0.10); }
+.g-checkout-btn:active { background: #174ea6; }
+
+/* "Powered by fiserv  |  Terms  Privacy" annotation. */
+.g-checkout-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  font-family: 'Graphik', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  color: #5a5a5a;
+}
+.g-powered-by {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.g-fiserv-logo {
+  display: block;
+  /* 27 × 14 lockup matches the 14px "Powered by" text height; the
+     source PNG is 54 × 28 (2x) so it stays crisp on retina. */
+  width: 27px;
+  height: 14px;
+  /* Optical lift so the wordmark baseline aligns with the
+     "Powered by" baseline instead of sitting slightly below. */
+  margin-bottom: 2px;
+}
+.g-checkout-divider {
+  width: 1px;
+  height: 17px;
+  background: #d2d2d2;
+}
+.g-checkout-link {
+  color: inherit;
+  text-decoration: none;
+}
+.g-checkout-link:hover { text-decoration: underline; }
+
+/* ===========================================================
+   Florist card (turn 3 reply)
+   Reuses the merchant-left Clover card as-is with florist-themed
+   placeholder images, and pairs it with a product card on the
+   right (bouquet image + price + Order now CTA).
+   =========================================================== */
+.florist-card {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+  max-width: 704px;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 360ms ease, transform 360ms ease;
+}
+.florist-card.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.florist-card .merchant-left  { flex: 409 1 0; min-width: 0; }
+.florist-card .merchant-left,
+.florist-right {
+  background: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e3e3e3;
+}
+
+/* The .florist-shop / .florist-side / .florist-product-img wrappers
+   inherit object-fit: cover from .merchant-shop img / .merchant-map img;
+   the bouquet image needs its own rule since the right-side product
+   image isn't part of the merchant-imgs row. */
+.florist-product-img img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+/* Right-side product card */
+.florist-right {
+  flex: 295 1 0;
+  min-width: 0;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.florist-product {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.florist-product-img {
+  width: 100%;
+  height: 183px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #f0f0f0;
+}
+.florist-product-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0 2px;
+}
+.florist-product-name {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #202124;
+}
+.florist-product-sub {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #5f6368;
+}
+.florist-product-price {
+  margin: 4px 0 0;
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #202124;
+}
+
+/* Material 3 filled button — Order now CTA */
+.order-btn {
+  width: 100%;
+  height: 39px;
+  border: none;
+  border-radius: 100px;
+  background: #1a73e8;
+  color: #ffffff;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  box-shadow: 0 1px 2px rgba(60, 64, 67, 0.10);
+  transition: background-color 200ms cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+.order-btn:hover  { background: #185abc; box-shadow: 0 1px 3px rgba(60, 64, 67, 0.18), 0 2px 4px rgba(60, 64, 67, 0.10); }
+.order-btn:active { background: #174ea6; }
+
+/* Purchased state — green pill with a check icon and "Purchased"
+   label. Disabled so further clicks are ignored. */
+.order-btn.is-purchased {
+  background: #228800;
+  color: #ffffff;
+  cursor: default;
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.order-btn.is-purchased:hover  { background: #228800; box-shadow: 0 1px 2px rgba(60, 64, 67, 0.10); }
+.order-btn .order-check { display: block; }
+
+/* ===========================================================
+   Route map card (turn 4 reply)
+   Two-column: Google Maps-style waypoint list on the left
+   (Work → Barber → Florist → Home, connected by a dotted blue
+   route line) and the map screenshot on the right.
+   =========================================================== */
+.route-card {
+  margin-top: 4px;
+  max-width: 720px;
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  border-radius: 24px;
+  overflow: hidden;
+  /* Same surface tone as the Google Calendar reply card so the gap
+     between the waypoints and the map blends into one unified card. */
+  background: #eff4fb;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 360ms ease, transform 360ms ease;
+}
+.route-card.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Left waypoint column — rounded card matching the map's radius so
+   both sections read as the same shape language. */
+.route-stops {
+  list-style: none;
+  margin: 0;
+  padding: 16px;
+  width: 188px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-radius: 24px;
+  background: #eff4fb;
+}
+.route-stop {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  position: relative;
+}
+/* Dotted blue connector between consecutive stops — sits behind the
+   markers, centered on the marker's x-axis. */
+.route-stop:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 10px;                      /* (22px marker / 2) - 1 */
+  top: 44px;                       /* below marker (14 padding + 22 marker + 8 gap) */
+  bottom: -10px;                   /* extends into next row's 14px top padding */
+  width: 2px;
+  background-image: linear-gradient(to bottom, #1a73e8 50%, transparent 50%);
+  background-size: 100% 6px;
+  background-repeat: repeat-y;
+}
+.route-marker {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #1a73e8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffffff;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+/* Start: solid blue dot inside a white-ringed blue circle */
+.route-marker--start {
+  background: #ffffff;
+  border: 2px solid #1a73e8;
+}
+.route-marker--start::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #1a73e8;
+}
+/* End: red Google Maps pin SVG (no circle background) */
+.route-marker--end {
+  background: transparent;
+  width: 22px;
+  height: 22px;
+  overflow: visible;
+}
+.route-marker--end svg { display: block; }
+.route-label {
+  font-family: 'Roboto', sans-serif;
+  font-size: 15px;
+  line-height: 22px;
+  color: #202124;
+  font-weight: 500;
+}
+
+/* Right map column — same 24px radius as the waypoint card so both
+   sections share the same shape. */
+.route-map {
+  flex: 1 1 auto;
+  min-width: 0;
+  border-radius: 24px;
+  overflow: hidden;
+}
+.route-map img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---------- Google Calendar reply card (turn 3) ----------
+   Coded card (no screenshot bg, no white frame). Two stacked
+   sections sit on the chat's light gray surface: a header band
+   with the Google Calendar app icon + service name, and a body
+   band with the booked timeslot. */
+.calendar-card {
+  width: 100%;
+  max-width: 718px;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 360ms ease, transform 360ms ease;
+}
+.calendar-card.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.cal-row {
+  background: #eff4fb;
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.cal-row.cal-header {
+  padding: 10px 16px;
+}
+.cal-app-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  display: block;
+}
+.cal-app-name {
+  font-family: 'Google Sans', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  color: #1f1f1f;
+}
+
+.cal-row.cal-body {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+.cal-title {
+  font-family: 'Google Sans', sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 24px;
+  color: #1f1f1f;
+  letter-spacing: -0.31px;
+}
+.cal-meta {
+  font-family: 'Google Sans', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
+  color: #454746;
+  letter-spacing: -0.27px;
+}
+
+/* =====================================================================
+   Merchant tablet — Jack's Barber Shop appointment dashboard.
+   Mirrors the Figma reference (40000735:18350). Design canvas for the
+   merchant tablet is 1194x810 (set by .m-screen-inner via the scaler).
+   Brand green: #228800; surface: #ffffff; rules: #e5e5e5;
+   text primary #000, secondary #606060, muted #5c5c5c.
+   ===================================================================== */
+.m-screen-inner {
+  width: 1194px;
+  height: 810px;
+  background: #ffffff;
+  font-family: 'Graphik', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #000;
+  /* Pin the scale origin to the top-left so the design canvas
+     anchors at the screen's top edge (the JS scaler sets top:0
+     left:0 and expects a top-aligned scale). Without this the
+     1.474-aspect canvas drifts upward inside the 1.768-aspect
+     station bezel, hiding the status bar + topbar behind the
+     housing image. */
+  transform-origin: 0 0;
+}
+
+.m-app {
+  flex: 1 1 auto;
+  display: flex;
+  background: #ffffff;
+  min-height: 0;
+}
+
+/* Left rail — 100px, white, 1px right border */
+.m-rail {
+  width: 100px;
+  flex: 0 0 auto;
+  background: #ffffff;
+  border-right: 1px solid #e5e5e5;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0;
+}
+.m-rail-top, .m-rail-bottom { display: flex; flex-direction: column; }
+.m-rail-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px;
+  background: transparent;
+  border: none;
+  border-left: 4px solid transparent;
+  font-family: inherit;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  color: #606060;
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+.m-rail-btn img { width: 24px; height: 24px; display: block; }
+.m-rail-btn:hover { background: #fafafa; }
+.m-rail-btn-active {
+  border-left-color: #228800;
+  color: #228800;
+}
+/* The active home SVG ships from Figma already stroked in #228800,
+   so render it as-is without any color filter (which would tint it
+   off-brand). */
+
+.m-main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Top app bar */
+.m-topbar {
+  flex: 0 0 auto;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 24px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e5e5;
+}
+.m-title {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 26px;
+  color: #000;
+}
+.m-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.m-shop {
+  font-family: 'Graphik', sans-serif;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 28px;
+  color: #000;
+}
+.m-icon-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.m-icon-btn img { width: 24px; height: 24px; display: block; }
+
+/* Calendar actions row */
+.m-cal-actions {
+  flex: 0 0 auto;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 30px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e5e5;
+}
+.m-cal-actions-left, .m-cal-actions-right { display: flex; align-items: center; gap: 8px; }
+.m-cal-actions-left { gap: 16px; }
+.m-day-select {
+  width: 114px;
+  height: 48px;
+  padding: 12px;
+  border: 1px solid #a0a0a0;
+  border-radius: 8px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: 'Graphik', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  color: #000;
+  cursor: pointer;
+}
+.m-day-select img { width: 20px; height: 20px; }
+.m-cal-date {
+  font-family: 'Graphik', sans-serif;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 28px;
+  color: #000;
+}
+.m-cal-arrow {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.m-cal-arrow img { width: 24px; height: 24px; }
+/* The disabled chevron uses its own Figma asset (with built-in 0.2
+   opacity) so we don't need a CSS-side opacity override. */
+.m-cal-arrow[aria-disabled="true"] { pointer-events: none; }
+.m-pagination {
+  font-family: 'Graphik', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  color: #000;
+  margin-right: 4px;
+}
+.m-filter-btn, .m-add-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 8px;
+}
+.m-filter-btn { border: 1px solid #a0a0a0; background: #ffffff; }
+.m-filter-btn img { width: 20px; height: 20px; }
+.m-add-btn { border: none; background: #228800; }
+/* add.svg already ships stroked in white — no filter needed. */
+.m-add-btn img { width: 24px; height: 24px; display: block; }
+
+/* Calendar grid */
+.m-calendar { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.m-staff-header {
+  flex: 0 0 auto;
+  height: 44px;
+  display: grid;
+  grid-template-columns: 84px 1fr 1fr 1fr;
+  border-bottom: 1px solid #e5e5e5;
+  background: #ffffff;
+}
+.m-staff-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-right: 1px solid #e5e5e5;
+}
+/* Keep the right border on the rightmost staff cell so the header
+   row's gutters mirror the body's gutters. */
+.m-staff-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Graphik', sans-serif;
+  font-weight: 500;
+  font-size: 11px;
+  color: #ffffff;
+  letter-spacing: -0.2px;
+  flex-shrink: 0;
+}
+.m-staff-name {
+  font-family: 'Graphik', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  color: #000;
+}
+
+.m-cal-body {
+  flex: 1 1 auto;
+  position: relative;
+  display: grid;
+  grid-template-columns: 84px 1fr 1fr 1fr;
+  overflow: hidden;
+  background: #ffffff;
+}
+.m-blocked-band {
+  position: absolute;
+  top: 0;
+  left: 84px;
+  right: 0;
+  height: 24px;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(0, 0, 0, 0.06),
+    rgba(0, 0, 0, 0.06) 5px,
+    transparent 5px,
+    transparent 11px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+.m-time-col {
+  border-right: 1px solid #e5e5e5;
+  padding-top: 24px;
+  position: relative;
+}
+.m-time-label {
+  height: 84px;
+  padding: 4px 8px 0 0;
+  text-align: right;
+  font-family: 'Graphik', sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  color: #5c5c5c;
+}
+.m-staff-col {
+  position: relative;
+  border-right: 1px solid #e5e5e5;
+  padding-top: 24px;
+  background: #ffffff;
+}
+/* Keep the right border on the rightmost column so all three staff
+   columns visually have the same gutter on each side — without it,
+   the last column's cards read as flush to the bezel. */
+.m-grid-lines {
+  position: absolute;
+  inset: 24px 0 0 0;
+  background-image: linear-gradient(to bottom,
+    transparent 0,
+    transparent 41px,
+    #f1f3f4 41px,
+    #f1f3f4 42px,
+    transparent 42px,
+    transparent 83px,
+    #e5e5e5 83px,
+    #e5e5e5 84px
+  );
+  background-size: 100% 84px;
+  pointer-events: none;
+}
+
+.m-appt {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  background: #ffffff;
+  border: 1px solid #c7c7c7;
+  border-radius: 8px;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  z-index: 2;
+  /* No padding-bottom — the green accent bar must fill the full
+     vertical edge of the card; any inner padding chops it off. */
+}
+.m-appt-bar {
+  width: 8px;
+  flex-shrink: 0;
+  align-self: stretch;
+  background: #228800;     /* brand green — full-height accent */
+}
+.m-appt-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 4px 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+.m-appt-content-tight { padding: 4px 8px; }
+.m-appt-title {
+  display: flex;
+  flex-direction: column;
+}
+.m-appt-name {
+  font-family: 'Graphik', sans-serif;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 18px;
+  color: #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.m-appt-svc {
+  font-family: 'Graphik', sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 18px;
+  color: #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.m-appt-time {
+  font-family: 'Graphik', sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  color: #5c5c5c;
+}
+/* Bottom Icons row — single Figma SVG combining the green-bordered
+   circle and the dollar/note shape, sits below the time line. */
+.m-appt-bottom {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: auto;
+}
+.m-appt-bottom img { width: 16px; height: 16px; display: block; }
+
+/* Right icons stack — three 16x16 figma SVGs:
+   Status Icon (check), Employee avatar (initials), Status Icon-1 (note). */
+.m-appt-icons {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 6px 4px 0;
+  flex-shrink: 0;
+  align-items: center;
+}
+.m-icon { width: 16px; height: 16px; display: block; }
+.m-avatar-mini { width: 16px; height: 16px; font-size: 9px; }
+
+.m-more-appts {
+  position: absolute;
+  right: 12px;
+  top: 290px;
+  width: 26px;
+  height: 22px;
+  border-radius: 11px;
+  border: 1px solid #2f6ad5;
+  background: #ffffff;
+  color: #2f6ad5;
+  font-family: 'Graphik', sans-serif;
+  font-weight: 500;
+  font-size: 11px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+}
+
+/* ---------- Appointment Requests drawer ----------
+   Pinned to the right edge of the merchant tablet's screen-inner.
+   Slides in from off-canvas right after the handoff finishes (the
+   .open class is added by JS once .stage.merchant-active settles).
+   Sized to the Figma reference (360w × full screen height). */
+.m-drawer-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.32);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9;
+}
+.m-drawer-scrim.open {
+  animation: m-drawer-scrim-in 700ms cubic-bezier(0.2, 0, 0, 1) forwards;
+  pointer-events: auto;
+}
+@keyframes m-drawer-scrim-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.m-drawer-scrim.closing {
+  animation: m-drawer-scrim-out 500ms cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+@keyframes m-drawer-scrim-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+.m-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 360px;
+  height: 100%;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+  transform: translateX(100%);
+  pointer-events: none;
+}
+/* Trigger a one-shot reveal animation when .open is added.
+   Keyframes (rather than a transition) sidestep a Chrome quirk where
+   the parent's running scale transform can leave a child's transform
+   transition stuck at currentTime 0.
+   Shadow only applies while the drawer is open. The closing animation
+   uses `forwards` fill and the .closing class is never cleaned up, so
+   keeping the shadow on .closing leaves it permanently leaking ~22px
+   back into the visible screen — most visibly on the orders page. */
+.m-drawer.open {
+  box-shadow: -4px 0 18px rgba(0, 0, 0, 0.10);
+  animation: m-drawer-in 700ms cubic-bezier(0.2, 0, 0, 1) forwards;
+  pointer-events: auto;
+}
+@keyframes m-drawer-in {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0%);   }
+}
+.m-drawer.closing {
+  animation: m-drawer-out 500ms cubic-bezier(0.2, 0, 0, 1) forwards;
+  pointer-events: none;
+}
+@keyframes m-drawer-out {
+  from { transform: translateX(0%);   }
+  to   { transform: translateX(100%); }
+}
+
+/* Confirmation pulse — soft green halo + a subtle "breath" scale
+   that swells and settles back. Spring-tinged ease-out bloom into a
+   single peak, then a long sine-eased decay so it feels organic
+   rather than mechanical. */
+.m-appt.confirmed {
+  animation: m-appt-confirmed 2400ms linear 1;
+  transform-origin: center;
+  will-change: transform, box-shadow;
+}
+@keyframes m-appt-confirmed {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(34, 136, 0, 0), 0 0 0 0 rgba(34, 136, 0, 0);
+    border-color: #c7c7c7;
+    /* Spring-tinged ease-out so the bloom + scale arrive with a
+       gentle settle (subtle overshoot at peak) — that "big tech"
+       hero-card feel without going cartoonish. */
+    animation-timing-function: cubic-bezier(0.34, 1.2, 0.64, 1);
+  }
+  32% {
+    transform: scale(1.025);
+    box-shadow:
+      0 0 0 2px rgba(34, 136, 0, 0.30),
+      0 6px 22px 4px rgba(34, 136, 0, 0.18);
+    border-color: #228800;
+    /* Glassy sine on the decay so the halo and scale dissolve
+       smoothly back to rest. */
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(34, 136, 0, 0), 0 0 0 0 rgba(34, 136, 0, 0);
+    border-color: #c7c7c7;
+  }
+}
+
+.m-drawer-header {
+  flex: 0 0 auto;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  border-bottom: 1px solid #e5e5e5;
+}
+.m-drawer-title {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 24px;
+  color: #1f1f1f;
+}
+.m-drawer-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.m-drawer-close svg { display: block; }
+
+.m-drawer-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+.m-drawer-eyebrow {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 24px;
+  color: #1f1f1f;
+}
+.m-drawer-time {
+  margin: 4px 0 0;
+  font-family: 'Graphik', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 24px;
+  color: #1f1f1f;
+}
+.m-drawer-customer,
+.m-drawer-service {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
+  color: #5c5c5c;
+}
+.m-drawer-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 16px;
+}
+.m-drawer-btn {
+  width: 100px;
+  height: 48px;
+  border-radius: 8px;
+  font-family: 'Graphik', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+.m-drawer-btn-accept {
+  background: #228800;
+  color: #ffffff;
+  border-color: #228800;
+}
+.m-drawer-btn-accept:hover { background: #1c7000; border-color: #1c7000; }
+.m-drawer-btn-reject {
+  background: #ffffff;
+  color: #1f1f1f;
+  border-color: #c7c7c7;
+}
+.m-drawer-btn-reject:hover { background: #fafafa; }
+
+/* ===========================================================
+   Florist orders view (Blooming Affairs Florist)
+   Sibling .m-app inside the merchant tablet — table layout for
+   the merchant orders dashboard. Mirrors Figma 40000731:12440.
+   =========================================================== */
+/* The HTML `hidden` attribute would normally hide an element with
+   `display: none`, but the base .m-app rule's `display: flex` wins
+   the cascade at equal specificity. Force-hide via an attribute
+   selector so both .m-app--barber and .m-app--florist can sit as
+   DOM siblings without competing for vertical flex space. */
+.m-app[hidden] { display: none; }
+
+/* ============================================================
+   Homepage merchant view — Figma 40000835:15291
+   ============================================================
+   Initial state. The user lands here on page load. Layout:
+   - rail (existing m-rail) on the left
+   - topbar with "Home" + shop/dots/switch/bell on the right
+   - body: dark-green time card (left, fixed 379px) + 2x2 tile grid
+
+   Height constraint
+   -----------------
+   The station bezel renders the 1194-wide design canvas with its
+   width pinned to the screen and content top-aligned (the JS scaler
+   uses fit-to-width for station tablets). The bezel's screen aspect
+   is ~1.768, so on a 1194-wide canvas only ~676 design px are
+   visible vertically (1194 / 1.768). Status bar consumes ~28 px,
+   leaving ~648 px for the merchant app. We pin the homepage's
+   height to 648 px so the clock + tile grid never tucks below the
+   screen's bottom edge. The barber and florist views still scroll
+   under the housing as before — only the homepage opts in. */
+.m-app--homepage {
+  position: relative;            /* anchor for the discover-modal scrim */
+  height: 648px;                 /* fits inside station's visible screen */
+  max-height: 648px;
+  overflow: hidden;
+}
+.m-app--homepage .m-rail-btn-active {
+  border-left-color: #228800;
+  color: #228800;
+}
+
+/* Topbar variant — title flexes to fill, the right cluster (which
+   now contains the dots indicator immediately before the shop name)
+   sits at the far right edge. */
+.m-topbar-home {
+  gap: 12px;
+}
+.m-topbar-home .m-title { flex: 1 1 auto; min-width: 0; }
+.m-home-dots {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+}
+.m-home-dots img {
+  width: 12px;
+  height: 12px;
+  display: block;
+  transition: opacity 240ms ease-out;
+}
+/* When .is-active is added the gray "online status" SVG fades out
+   and a larger CSS-drawn green dot bursts in with a clear scale-up
+   overshoot, then settles into the same gentle pulse the green
+   merchant dots on the map use. The activated dot is rendered at
+   18px (1.5× the resting 12px footprint) so the gray→green change
+   reads as a real state change rather than a recolour. */
+.m-home-dots.is-active img { opacity: 0; }
+
+/* Expanding green-shadow burst — same vocabulary as the outro green
+   wave's offline→online halo. Plays once when the dot activates so
+   the state change reads as "going online" rather than a static
+   icon swap. */
+.m-home-dots::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: 0 0 0 0 rgba(118, 170, 130, 0);
+  transform: translate(-50%, -50%) scale(1);
+  pointer-events: none;
+}
+.m-home-dots.is-active::before {
+  animation: m-home-dots-burst 1100ms cubic-bezier(0.2, 0, 0.2, 1) forwards;
+}
+@keyframes m-home-dots-burst {
+  0%   { box-shadow: 0 0 0 0 rgba(118, 170, 130, 0); }
+  35%  { box-shadow: 0 0 0 10px rgba(118, 170, 130, 0.42); }
+  100% { box-shadow: 0 0 0 28px rgba(118, 170, 130, 0); }
+}
+
+.m-home-dots::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #6BBD64;
+  border: 1.5px solid #FFFFFF;
+  box-sizing: border-box;
+  box-shadow: 0 1px 4px rgba(20, 80, 0, 0.35);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.3);
+  transform-origin: 50% 50%;
+  pointer-events: none;
+}
+.m-home-dots.is-active::after {
+  animation:
+    m-home-dots-enter 620ms cubic-bezier(0.4, 0, 0.2, 1) forwards,
+    m-home-dots-pulse 2200ms cubic-bezier(0.42, 0, 0.58, 1) 620ms infinite;
+}
+/* Explicit overshoot in the keyframe so the dot reads as a real
+   "pop" (0.3 → 1.25 → 1). cubic-bezier alone smooths the curve but
+   keeping a 1.25 spike in the middle stop guarantees the visible
+   bounce regardless of how the browser interpolates. */
+@keyframes m-home-dots-enter {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+  55%  { opacity: 1; transform: translate(-50%, -50%) scale(1.25); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes m-home-dots-pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50%      { transform: translate(-50%, -50%) scale(1.08); }
+}
+
+/* Body — 16px outer padding, 16px gap between the two columns,
+   stretches to fill the remaining vertical space below the topbar. */
+.m-home-body {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  padding: 16px;
+  min-height: 0;
+  background: #ffffff;
+}
+
+/* Left card — clover dark-green block with date/time + CTA. The
+   width tracks the Figma's 379px column on the 1180px content area
+   (~32% of the working width); flex-basis matches it directly so
+   the card stays the right proportion as the canvas scales. */
+.m-home-clock {
+  flex: 0 0 379px;
+  min-width: 0;
+  background: #004400;            /* Primary/Clover Dark Green */
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 24px;
+  color: #ffffff;
+}
+.m-home-clock-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.m-home-date {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-weight: 600;               /* web-lib-sprout/Heading 1 */
+  font-size: 32px;
+  line-height: 40px;
+  color: #ffffff;
+}
+.m-home-time {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-weight: 400;
+  font-size: 40px;
+  line-height: 1;                 /* h: 36.849 / 40 ≈ 0.92, normal works */
+  color: #ffffff;
+}
+.m-home-cta {
+  border: none;
+  background: transparent;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-family: 'Graphik', sans-serif;
+  font-weight: 500;               /* web-lib-sprout Label */
+  font-size: 16px;
+  line-height: 24px;
+  color: #43b02a;                 /* Primary Colors/$green-accent */
+  cursor: pointer;
+  text-align: center;
+}
+.m-home-cta:hover { background: rgba(255, 255, 255, 0.06); }
+
+/* Right column — 2x2 grid. Tiles are equal-sized, stretched to
+   fill, with 16px gutters. */
+.m-home-tiles {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 16px;
+}
+.m-home-tile {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  font-family: 'Graphik', sans-serif;
+  padding: 16px;
+  overflow: hidden;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+.m-home-tile:hover {
+  border-color: #cfcfcf;
+  background: #fafafa;
+}
+
+/* Tile icon container — fixed 56x56 from Figma. The user-provided
+   SVGs are already sized to the icon's intended footprint (56x56
+   for line/pie/list, 48x48 for closeout) so they drop in directly
+   without a per-icon override. */
+.m-tile-icon {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex: 0 0 auto;
+}
+.m-tile-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* Closeout art is 48x48 in source — let it sit at native size so
+   the stack drawing isn't stretched to fill the 56-square. */
+.m-tile-icon-closeout img { width: 48px; height: 48px; }
+
+.m-tile-label {
+  font-family: 'Graphik', sans-serif;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 26px;              /* web-lib-sprout/Heading 4 */
+  color: #000000;
+  text-align: center;
+}
+
+/* ============================================================
+   "Get discovered on Google" modal — Figma 40000856:14798/14889
+   ============================================================
+   Two-state modal that appears on top of the homepage on load.
+   State 1 (default): toggle off (gray track, knob left), no checks.
+   State 2 (after toggle click): toggle on (green track, knob right);
+   3 success rows fade up sequentially with a 250ms stagger.
+   ============================================================ */
+
+/* Scrim covers the entire homepage app (rail + main). It sits
+   below the modal and fades in on page load. Slower easing so the
+   "pull up" feels deliberate rather than snappy. */
+.m-modal-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.30);
+  opacity: 0;
+  pointer-events: auto;
+  z-index: 60;
+  animation: m-modal-scrim-in 560ms cubic-bezier(0.2, 0, 0, 1) 320ms forwards;
+}
+.m-modal-scrim.closing {
+  animation: m-modal-scrim-out 560ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+@keyframes m-modal-scrim-in  { to { opacity: 1; } }
+/* Explicit `from` is required here — when .closing is added, the
+   `m-modal-scrim-in` animation drops off `.animation` and the scrim
+   element re-resolves to its base style (opacity: 0). Without a
+   `from` keyframe, the implicit start state for `out` would be 0
+   and the fade would be 0→0 (invisible). */
+@keyframes m-modal-scrim-out { from { opacity: 1; } to { opacity: 0; } }
+
+/* Modal — 600px wide white card centered on the homepage. Pops up
+   with a scale + fade entrance so it reads as "pulled up" rather
+   than instantly painted. The modal also transitions its OWN box
+   when content collapses (hero + text hide on toggle ON), so its
+   center stays put while it shrinks around the toggle + checks. */
+.m-modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 600px;
+  min-width: 384px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow: hidden;
+  z-index: 61;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.92);
+  animation: m-modal-in 760ms cubic-bezier(0.2, 0, 0, 1) 420ms forwards;
+}
+.m-modal.closing {
+  /* Slide-down exit — the modal travels off the bottom edge of the
+     tablet screen while fading. Smooth ease-in so it starts gentle
+     and gathers speed (gravity-like drop). The 300% translateY is
+     relative to the modal's own height (3× the modal) — always
+     clears the screen regardless of how tall the modal grew during
+     the reveal.
+
+     Three-keyframe contract is REQUIRED:
+       - Explicit 0%: adding .closing replaces the page-load
+         animation, so the modal re-resolves to base CSS (opacity 0,
+         scale 0.92). Without 0%, the slide animates an invisible
+         modal. We hard-code opacity 1 + scale 1 so the start state
+         matches the post-reveal "settled" frame.
+       - 40%: holds opacity at 1 for the first part of the drop so
+         the modal stays fully solid while it's still on-screen,
+         then fades during the back half as it exits the frame.
+       - 100%: matching transform function list (translate + scale)
+         so the interpolation stays per-parameter instead of
+         falling back to matrix decomposition. */
+  animation: m-modal-out 620ms cubic-bezier(0.32, 0, 0.67, 0) forwards;
+}
+@keyframes m-modal-in  { to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+@keyframes m-modal-out {
+  0%   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  40%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, 300%) scale(1); }
+}
+
+/* Header — title + X close. */
+.m-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 24px 16px;
+}
+.m-modal-title {
+  flex: 1 1 auto;
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-weight: 600;
+  font-size: 24px;
+  line-height: 32px;             /* WIP-sprout/Headline X Large */
+  color: #000;
+}
+.m-modal-close {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.m-modal-close img { width: 20px; height: 20px; display: block; }
+
+/* Body — collapsible intro wrapper sits above the controls. The
+   spacing between sections is handled via .m-modal-intro's margin
+   so it can transition to 0 when the intro collapses (a flex `gap`
+   on the parent would leave 24px of phantom space behind). */
+.m-modal-body {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 24px 24px;
+}
+.m-modal-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 24px;            /* breathing room before .m-modal-controls */
+  max-height: 600px;              /* large enough for any natural content */
+  opacity: 1;
+  overflow: hidden;
+  /* Smooth two-stage collapse: opacity fades quickly, max-height +
+     margin take longer so the modal eases its way down. The slight
+     delay on opacity prevents a flash where the items fade before the
+     box has started shrinking. */
+  transition:
+    max-height   520ms cubic-bezier(0.4, 0, 0.2, 1),
+    margin-bottom 520ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity      280ms cubic-bezier(0.4, 0, 0.2, 1) 80ms;
+}
+.m-modal.is-revealed .m-modal-intro {
+  max-height: 0;
+  margin-bottom: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.m-modal-hero {
+  width: 100%;
+  height: 220px;                  /* trimmed from Figma 240 to keep the
+                                     state-2 modal inside the station's
+                                     visible viewport without clipping */
+  border-radius: 16px;
+  overflow: hidden;
+  background: #ffffff;
+  flex-shrink: 0;
+}
+.m-modal-hero img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+.m-modal-text {
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  color: #000;
+}
+
+/* Controls — toggle pill + checks list. */
+.m-modal-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Gray toggle pill */
+.m-modal-toggle-bg {
+  background: #f5f5f5;
+  border-radius: 16px;
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* Toggle switch — 52w x 32h track, 28x28 white knob. Off = gray
+   track + knob left + gray status dot. On = green track + knob
+   right + green status dot. */
+.m-modal-toggle {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 32px;
+  border-radius: 88px;
+  background: #c7c7c7;            /* surface/disabled */
+  border: none;
+  padding: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  cursor: pointer;
+  position: relative;
+  transition: background-color 360ms cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: visible;
+}
+.m-modal-toggle.is-on {
+  background: #228800;            /* Primary/Clover Green */
+}
+
+.m-modal-toggle-knob {
+  width: 28px;
+  height: 28px;
+  border-radius: 1000px;
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  /* Slide horizontally between the two states. Track inner is 48px
+     wide (52 - 2*2 padding); knob is 28w; travel = 48 - 28 = 20px. */
+  transform: translateX(0);
+  transition: transform 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.m-modal-toggle.is-on .m-modal-toggle-knob {
+  transform: translateX(20px);
+}
+/* Status dot — always visible inside the knob to indicate the
+   switch's state. Gray in OFF, green in ON; transitions when the
+   user flips the toggle. Knob is 28px with 4px padding (20px
+   inner); 11px reads as a clear status dot without overwhelming
+   the knob. */
+.m-modal-toggle-knob-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #c7c7c7;
+  display: block;
+  transition: background-color 360ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.m-modal-toggle.is-on .m-modal-toggle-knob-dot { background: #228800; }
+
+.m-modal-toggle-label {
+  font-family: 'Graphik', sans-serif;
+  font-weight: 600;
+  font-size: 24px;
+  line-height: 32px;              /* web-lib-sprout/Heading 2 */
+  color: #000;
+  white-space: nowrap;
+}
+
+/* Check list — 3 white pill rows. The container is ALWAYS flex,
+   but in the OFF state it's collapsed to max-height:0 + transparent
+   (no margin, no visible rows, no phantom height pushing the modal
+   down). When .is-revealing lands, max-height + margin animate up
+   smoothly so the modal grows in lock-step with the intro shrinking
+   above it — no instant size jump. The individual rows then fade
+   up via the staggered keyframes below. */
+.m-modal-checks {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 0;
+  margin: 0;
+  overflow: hidden;
+  transition:
+    max-height 520ms cubic-bezier(0.4, 0, 0.2, 1),
+    margin-top 520ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.m-modal-checks.is-revealing {
+  max-height: 220px;             /* enough to seat all 3 rows + gaps */
+}
+.m-modal-check {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* Initial hidden state — translates in from below + fades in. */
+  opacity: 0;
+  transform: translateY(8px);
+}
+.m-modal-checks.is-revealing .m-modal-check {
+  animation: m-modal-check-in 480ms cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+.m-modal-checks.is-revealing .m-modal-check:nth-child(1) { animation-delay: 400ms; }
+.m-modal-checks.is-revealing .m-modal-check:nth-child(2) { animation-delay: 760ms; }
+.m-modal-checks.is-revealing .m-modal-check:nth-child(3) { animation-delay: 1120ms; }
+@keyframes m-modal-check-in {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.m-modal-check-name {
+  flex: 1 1 auto;
+  font-family: 'Graphik', sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 24px;
+  color: #000;
+}
+.m-modal-check-detail {
+  flex: 0 0 auto;
+  font-family: 'Graphik', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  color: #5a5a5a;
+  text-align: center;
+  white-space: nowrap;
+}
+.m-modal-check-icon {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.m-modal-check-icon img { width: 20px; height: 20px; display: block; }
+
+.m-app--florist .m-rail-btn-active {
+  border-left-color: #228800;
+  color: #228800;
+}
+
+/* Search row */
+.m-orders-search {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+  background: #ffffff;
+}
+.m-search-input {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 12px;
+  border: 1px solid #bbbbbb;
+  border-radius: 8px;
+  background: #ffffff;
+  min-width: 0;
+}
+.m-search-input svg { flex-shrink: 0; }
+.m-search-placeholder {
+  font-family: 'Graphik', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  color: #909090;
+}
+.m-search-filter {
+  width: 48px;
+  height: 48px;
+  border: 1px solid #bbbbbb;
+  border-radius: 8px;
+  background: #ffffff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+}
+.m-search-filter img { width: 20px; height: 20px; }
+
+/* Orders table */
+.m-orders-table {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  /* Hide the scrollbar visually but keep scroll functional. */
+  scrollbar-width: none;          /* Firefox */
+  -ms-overflow-style: none;       /* IE/Edge */
+}
+.m-orders-table::-webkit-scrollbar { display: none; }  /* Chromium/Safari */
+.m-orders-header,
+.m-orders-row {
+  display: grid;
+  /* Placed at | Status | Total | Order type | Customer | ID */
+  grid-template-columns: 144px 184px 168px 168px 216px 1fr;
+  gap: 0;
+  padding: 0 16px;
+  border-bottom: 1px solid #e5e5e5;
+}
+.m-orders-header {
+  flex: 0 0 auto;
+  height: 72px;
+  align-items: center;
+  font-family: 'Graphik', sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 24px;
+  color: #5c5c5c;
+}
+.m-orders-row {
+  flex: 0 0 auto;
+  height: 96px;
+  align-items: center;
+  font-family: 'Graphik', sans-serif;
+  background: #ffffff;
+}
+.m-orders-row--highlight {
+  background: #e6f3ff;       /* light blue — flagged Sam Lufton row */
+}
+
+/* Sam Lufton row default state — collapsed and invisible until the
+   reveal animation kicks in. Higher specificity than the base
+   .m-orders-row { height: 96px; border-bottom: 1px solid } rule, so
+   the row takes zero space and the rows below sit flush. */
+.m-app--florist .m-orders-row--highlight {
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  border-bottom-width: 0;
+}
+
+/* Three-phase reveal — JS adds .is-revealing once the merchant slide
+   settles. Phase 1: row expands height 0 → 96px, pushing the rows
+   below it down with an emphasized ease-out (the "make space" beat).
+   Phase 2: contents slide in from the right + fade in, bright blue
+   highlight + 3px left bar visible. Phase 3: highlight gracefully
+   decays to the resting #e6f3ff and the left bar dissolves. Per-
+   keyframe easing keeps each phase coherent on its own arc — that
+   choreographed "big tech" reveal feel. */
+.m-app--florist.is-revealing .m-orders-row--highlight {
+  animation: m-orders-row-reveal 2400ms linear 350ms both;
+  will-change: height, transform, opacity, background-color, box-shadow, border-bottom-width;
+}
+@keyframes m-orders-row-reveal {
+  /* Phase 1 — height expands, content stays off-screen + invisible */
+  0% {
+    height: 0;
+    opacity: 0;
+    transform: translateX(56px);
+    background: #cce4f9;
+    box-shadow: inset 3px 0 0 0 #1a73e8;
+    border-bottom-width: 0;
+    animation-timing-function: cubic-bezier(0.32, 0.72, 0.24, 1);
+  }
+  /* End of phase 1: full height, border restored, content still
+     queued off-screen waiting to slide in. */
+  28% {
+    height: 96px;
+    opacity: 0;
+    transform: translateX(56px);
+    background: #cce4f9;
+    box-shadow: inset 3px 0 0 0 #1a73e8;
+    border-bottom-width: 1px;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  /* Phase 2 — contents slide in from the right + fade in. */
+  55% {
+    height: 96px;
+    opacity: 1;
+    transform: translateX(0);
+    background: #cce4f9;
+    box-shadow: inset 3px 0 0 0 #1a73e8;
+    border-bottom-width: 1px;
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  }
+  /* Phase 3 — bright highlight decays to the resting design color
+     and the left bar dissolves. */
+  100% {
+    height: 96px;
+    opacity: 1;
+    transform: translateX(0);
+    background: #e6f3ff;
+    box-shadow: inset 0 0 0 0 transparent;
+    border-bottom-width: 1px;
+  }
+}
+.m-orders-row > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.m-row-pri {
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 26px;
+  color: #253338;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.m-row-sec {
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  color: #5c5c5c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Status pills */
+.m-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 145px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 100px;
+  font-family: 'Graphik', sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 24px;
+  color: #253338;
+  white-space: nowrap;
+}
+.m-pill--paid    { background: #f2fcee; }   /* green-background */
+.m-pill--open    { background: #eefbfc; }   /* teal-background */
+.m-pill--partial { background: #eefbfc; }
+
+.m-now-line {
+  position: absolute;
+  left: 84px;
+  right: 0;
+  /* 11:28 = 24 + (28/60) * 84 = 63 (24px blocked-band offset plus
+     84px/hr from the 11:00 baseline). */
+  top: 63px;
+  height: 2px;
+  background: #228800;
+  z-index: 4;
+  pointer-events: none;
+}
+.m-now-line::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #228800;
+}

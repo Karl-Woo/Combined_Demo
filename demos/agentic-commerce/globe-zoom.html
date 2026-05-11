@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Map zoom — US → Manhattan</title>
+  <!-- Local first; falls back to CDN if you delete the lib/ folder. -->
+  <link rel="stylesheet" href="lib/maplibre-gl.css" />
+  <style>
+    @font-face {
+      font-family: 'Graphik';
+      src: url('asset/fonts/Graphik/Graphik-Regular.otf') format('opentype');
+      font-weight: 400; font-style: normal; font-display: swap;
+    }
+    @font-face {
+      font-family: 'Graphik';
+      src: url('asset/fonts/Graphik/Graphik-Medium.otf') format('opentype');
+      font-weight: 500; font-style: normal; font-display: swap;
+    }
+    @font-face {
+      font-family: 'Graphik';
+      src: url('asset/fonts/Graphik/Graphik-Semibold.otf') format('opentype');
+      font-weight: 600; font-style: normal; font-display: swap;
+    }
+
+    html, body, button, input, select {
+      font-family: 'Graphik', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    }
+    html, body { margin: 0; padding: 0; height: 100%; background: #fff; }
+    #map { position: absolute; inset: 0; }
+    #panel {
+      position: absolute; top: 16px; left: 16px; z-index: 2;
+      background: rgba(255,255,255,0.95); padding: 12px 14px; border-radius: 10px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.35); max-width: 320px;
+    }
+    #panel h1 { margin: 0 0 6px 0; font-size: 15px; }
+    #panel p  { margin: 0 0 10px 0; font-size: 13px; color: #333; }
+    #panel button {
+      font: inherit; font-size: 13px; padding: 6px 12px;
+      border: 1px solid #ccc; background: #fff; border-radius: 6px; cursor: pointer;
+      margin-right: 6px;
+    }
+    #panel button:hover { background: #f3f3f3; }
+    #status { font-size: 11px; color: #777; margin-top: 8px; }
+
+    #legend {
+      position: absolute; top: 16px; right: 16px; z-index: 2;
+      background: rgba(255,255,255,0.95); padding: 10px 14px; border-radius: 10px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.15);
+      font-size: 13px; color: #333;
+    }
+    #legend .row { display: flex; align-items: center; gap: 10px; padding: 3px 0; }
+    #legend .dot {
+      /* Static (no animation). Both green and white share the exact same
+         outer dimensions — same width/height + same 1px solid border. */
+      display: inline-block; width: 12px; height: 12px; border-radius: 50%;
+      flex-shrink: 0; box-sizing: border-box;
+    }
+    #legend .dot-green {
+      background: #6BBD64;
+      border: 1px solid #FFFFFF;
+      box-shadow: 0 1px 3px rgba(20, 80, 0, 0.30);
+    }
+    #legend .dot-white {
+      background: #FFFFFF;
+      border: 1px solid #5C5C5C;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    }
+
+    /* Attribution: hide the text by default, keep just the ⓘ button.
+       MapLibre uses a <details> element; we hide the inner when not [open].
+       Required by OSM ODbL — but the icon expands on click.               */
+    details.maplibregl-ctrl-attrib > .maplibregl-ctrl-attrib-inner {
+      display: none;
+    }
+    details.maplibregl-ctrl-attrib[open] > .maplibregl-ctrl-attrib-inner {
+      display: inline-block;
+      padding: 2px 24px 2px 8px;
+    }
+    .maplibregl-ctrl-attrib-button {
+      display: block !important;
+    }
+    /* Subtler attribution chrome — soft white pill */
+    .maplibregl-ctrl-attrib {
+      background: rgba(255, 255, 255, 0.65) !important;
+      backdrop-filter: blur(4px);
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="panel">
+    <h1>Map zoom: US → Manhattan</h1>
+    <p>Starts focused on the US, then flies down to Manhattan with full street detail.</p>
+    <button id="play">Play</button>
+    <button id="reset">Reset</button>
+    <div id="status">loading…</div>
+  </div>
+  <div id="legend">
+    <div class="row"><span class="dot dot-green"></span>Online Clover merchant</div>
+    <div class="row"><span class="dot dot-white"></span>Offline Clover merchant</div>
+  </div>
+
+  <script src="lib/maplibre-gl.js"></script>
+  <script src="lib/pmtiles.js"></script>
+  <script>
+    const status = document.getElementById('status');
+
+    // ---- Online/offline tile source selection -------------------------------
+    // If both PMTiles files are present in ./tiles/ AND the offline style is
+    // present, run completely offline. Otherwise fall back to OpenFreeMap.
+    async function pickStyle() {
+      try {
+        const heads = await Promise.all([
+          fetch('./tiles/us-overview.pmtiles', { method: 'HEAD' }),
+          fetch('./tiles/nyc-metro.pmtiles',   { method: 'HEAD' }),
+          fetch('./offline/style.json',         { method: 'HEAD' }),
+        ]);
+        if (heads.every((r) => r.ok)) {
+          // Register pmtiles:// protocol and use the local style.
+          const protocol = new pmtiles.Protocol();
+          maplibregl.addProtocol('pmtiles', protocol.tile);
+          return './offline/style.json';
+        }
+      } catch {}
+      return 'https://tiles.openfreemap.org/styles/liberty';
+    }
+    // -------------------------------------------------------------------------
+
+    const US_VIEW = { center: [-98.5, 39.8], zoom: 3.6 };
+    // Bounds for the Manhattan view — extended west into NJ (Newark edge) and
+    // east into Queens / Long Island (Forest Hills, Jackson Heights).
+    const MANHATTAN_BOUNDS = [[-74.080, 40.660], [-73.830, 40.808]];
+    const MANHATTAN_PADDING = { top: 220, right: 30, bottom: 30, left: 30 };
+
+    const PALETTE = {
+      bg:     '#F9F9F9',
+      land:   '#F0F0F0',
+      stroke: '#C7C7C7',
+      text:   '#888888',
+      water:  '#FFFFFF',
+      green:  '#6BBD64',  // soft, desaturated, premium-feel green
+      greenWhite: '#FFFFFF', // crisp white border separates green from gray map
+      // Clean opaque rings — green uses bg-match for a soft lifted look,
+      // white uses a thin dark stroke for contrast against gray land.
+      greenRing: '#F9F9F9',
+      grayRing:  '#5C5C5C',
+    };
+
+    const map = new maplibregl.Map({
+      container: 'map',
+      // Style is chosen async — start with the OpenFreeMap URL, then swap if
+      // local PMTiles are available. Map constructor needs a style synchronously.
+      style: 'https://tiles.openfreemap.org/styles/liberty',
+      center: US_VIEW.center,
+      zoom: US_VIEW.zoom,
+      attributionControl: false,
+    });
+    window.map = map;
+
+    // Swap to offline style as soon as we know it's available.
+    pickStyle().then((url) => {
+      if (url !== 'https://tiles.openfreemap.org/styles/liberty') {
+        status.textContent = 'using offline tiles…';
+        map.setStyle(url);
+      }
+    });
+
+    map.addControl(new maplibregl.AttributionControl({ compact: true }));
+    // Force the attribution into its compact (collapsed) state on load — the
+    // ⓘ button stays visible, the full text only appears on click. MapLibre
+    // uses a <details> element; removing the `open` attribute collapses it.
+    map.on('load', () => {
+      const a = document.querySelector('.maplibregl-ctrl-attrib');
+      if (a) {
+        a.classList.add('maplibregl-compact');
+        a.classList.remove('maplibregl-compact-show');
+        a.removeAttribute('open');
+      }
+    });
+
+    function restyleToPalette() {
+      const layers = map.getStyle().layers || [];
+      for (const l of layers) {
+        const id = l.id;
+        const set = (prop, val) => { try { map.setPaintProperty(id, prop, val); } catch {} };
+        const setLayout = (prop, val) => { try { map.setLayoutProperty(id, prop, val); } catch {} };
+
+        if (l.type === 'background') {
+          set('background-color', PALETTE.bg);
+        } else if (l.type === 'fill') {
+          const isWater = /water|river|ocean|sea|lake|stream|pond/i.test(id) ||
+                          /water/i.test(l['source-layer'] || '');
+          // Every non-water fill (park, grass, wood, farmland, landcover_*, landuse_*, etc.)
+          // → gray. Strip any fill-pattern so texture overlays can't leak green/color.
+          set('fill-color', isWater ? PALETTE.water : PALETTE.land);
+          set('fill-outline-color', PALETTE.stroke);
+          set('fill-opacity', 1);
+          set('fill-antialias', true);
+          set('fill-pattern', null);
+        } else if (l.type === 'fill-extrusion') {
+          set('fill-extrusion-color', PALETTE.land);
+        } else if (l.type === 'line') {
+          set('line-color', PALETTE.stroke);
+          set('line-pattern', null);
+        } else if (l.type === 'symbol') {
+          const keepLabel = /^(label_country_\d+|label_state|label_city|label_city_capital|water_name_)/i.test(id);
+          if (!keepLabel) {
+            setLayout('visibility', 'none');
+          } else {
+            set('text-color', PALETTE.text);
+            set('text-halo-color', PALETTE.bg);
+            set('text-halo-width', 1.5);
+            set('icon-color', PALETTE.text);
+            set('icon-opacity', 0.6);
+          }
+        } else if (l.type === 'hillshade' || l.type === 'raster') {
+          setLayout('visibility', 'none');
+        }
+      }
+    }
+
+    // Number of distinct breath phases (each with its own spring config).
+    const PHASE_COUNT = 4;
+
+    // Deterministic hash → phase. Uses Math.imul for 32-bit integer math
+    // (regular JS * loses precision beyond 2^53 and the low bits become zero).
+    function phaseHash(i, kind) {
+      let h = i + 1;
+      for (let k = 0; k < kind.length; k++) {
+        h = (Math.imul(h, 31) + kind.charCodeAt(k)) | 0;
+      }
+      h = Math.imul(h, 2654435761);
+      h = (h ^ (h >>> 16)) >>> 0;
+      return h % PHASE_COUNT;
+    }
+
+    // ---- Merchant dot data ---------------------------------------------------
+    // US metros (online merchants, sized by metro population in millions).
+    const US_METROS = [
+      ['New York',       -74.006,  40.713, 18.8],
+      ['Los Angeles',    -118.243, 34.052, 13.2],
+      ['Chicago',        -87.629,  41.878,  9.4],
+      ['Dallas',         -96.797,  32.776,  7.6],
+      ['Houston',        -95.369,  29.760,  7.1],
+      ['Washington DC',  -77.036,  38.895,  6.3],
+      ['Philadelphia',   -75.165,  39.952,  6.2],
+      ['Miami',          -80.191,  25.761,  6.1],
+      ['Atlanta',        -84.388,  33.749,  6.1],
+      ['Phoenix',        -112.074, 33.448,  5.0],
+      ['Boston',         -71.058,  42.360,  4.9],
+      ['San Francisco',  -122.419, 37.775,  9.5],  // Bay Area metro
+      ['Detroit',        -83.046,  42.331,  4.4],
+      ['Seattle',        -122.332, 47.606,  4.0],
+      ['Minneapolis',    -93.265,  44.978,  3.7],
+      ['San Diego',      -117.161, 32.715,  3.3],
+      ['Tampa',          -82.458,  27.951,  3.3],
+      ['Denver',         -104.991, 39.739,  3.0],
+      ['St. Louis',      -90.199,  38.627,  2.8],
+      ['Baltimore',      -76.612,  39.290,  2.8],
+      ['Charlotte',      -80.843,  35.227,  2.7],
+      ['Orlando',        -81.379,  28.538,  2.7],
+      ['San Antonio',    -98.494,  29.424,  2.6],
+      ['Portland',       -122.679, 45.512,  2.5],
+      ['Pittsburgh',     -79.996,  40.441,  2.4],
+      ['Sacramento',     -121.494, 38.582,  2.4],
+      ['Las Vegas',      -115.139, 36.169,  2.3],
+      ['Cincinnati',     -84.512,  39.103,  2.2],
+      ['Kansas City',    -94.579,  39.099,  2.2],
+      ['Austin',         -97.743,  30.267,  2.2],
+      ['Indianapolis',   -86.158,  39.768,  2.1],
+      ['Cleveland',      -81.694,  41.500,  2.1],
+      ['Nashville',      -86.781,  36.162,  2.0],
+      ['Salt Lake City', -111.891, 40.760,  1.3],
+    ].map(([name, lng, lat, pop], i) => ({
+      type: 'Feature',
+      properties: { name, pop, kind: 'online', phase: phaseHash(i, 'us-online') },
+      geometry: { type: 'Point', coordinates: [lng, lat] },
+    }));
+
+    // Rural/smaller offline merchants — scattered with size variation.
+    // size = circle radius in px (3 = very rural, 4 = small town, 5 = small city).
+    const US_RURAL = [
+      // West
+      [-119.30, 41.50, 3],   // NV-N rural
+      [-118.00, 39.00, 3.5], // NV-central
+      [-115.00, 38.50, 3],   // NV-S
+      [-115.50, 43.10, 4],   // ID
+      [-114.00, 46.50, 3.5], // MT-W
+      [-110.93, 44.42, 4],   // WY-NW (Jackson)
+      [-105.84, 45.30, 3.5], // MT-E
+      [-112.90, 38.20, 3],   // UT-S
+      [-109.00, 37.00, 3],   // UT/AZ border
+      [-108.40, 35.10, 4],   // NM-N
+      [-106.00, 35.00, 4],   // NM mid
+      [-104.50, 38.50, 3.5], // CO rural
+      [-122.50, 41.50, 3.5], // CA-N
+      [-121.00, 36.00, 4],   // CA-central (Monterey-ish)
+      // Plains / Midwest
+      [-103.20, 41.20, 3],   // NE-W
+      [ -99.80, 41.50, 3.5], // NE-mid
+      [-100.30, 44.50, 3.5], // SD
+      [-101.20, 47.60, 3],   // ND
+      [ -96.00, 43.20, 4],   // SD-E
+      [ -94.20, 45.50, 4],   // MN-rural
+      [ -91.50, 44.00, 4],   // WI-W
+      [ -88.20, 46.00, 3.5], // UP-MI
+      [ -83.50, 45.20, 4],   // N-MI
+      [ -86.50, 41.00, 4],   // IN-N
+      [ -88.00, 40.00, 4],   // IL-central
+      [ -94.30, 38.60, 4],   // KS-MO border
+      [ -98.50, 37.50, 3.5], // KS-W
+      [ -97.50, 35.10, 4.5], // OK (Oklahoma City suburbs)
+      [ -91.80, 36.50, 4],   // AR
+      [ -95.50, 33.00, 4],   // TX-NE
+      [-102.00, 32.00, 3.5], // TX-W (Midland-ish)
+      // South
+      [ -90.40, 32.30, 4.5], // MS
+      [ -87.20, 32.80, 4],   // AL
+      [ -85.50, 31.50, 4],   // AL-S/GA-S
+      [ -83.20, 33.20, 4],   // GA-rural
+      [ -82.10, 30.40, 4],   // FL-N
+      [ -81.50, 28.00, 4],   // FL-central
+      [ -85.00, 35.00, 4.5], // TN-E (Chattanooga)
+      [ -87.50, 36.50, 4],   // KY-S
+      [ -83.00, 38.50, 4],   // KY-E
+      // East / Northeast
+      [ -78.60, 35.70, 4.5], // NC-mid
+      [ -80.50, 36.00, 4],   // NC-W
+      [ -80.90, 38.00, 4],   // WV
+      [ -79.50, 39.50, 4],   // WV-N/PA-S
+      [ -77.50, 41.50, 4],   // PA-N
+      [ -78.00, 42.50, 4],   // NY rural west
+      [ -75.50, 42.50, 4],   // NY central
+      [ -73.20, 43.80, 4],   // VT
+      [ -71.50, 44.50, 4],   // NH
+      [ -69.50, 45.20, 4],   // ME
+      [ -76.50, 38.00, 4],   // MD/DE
+    ].map(([lng, lat, size], i) => ({
+      type: 'Feature',
+      properties: { kind: 'offline', size: size, phase: phaseHash(i, 'us-offline') },
+      geometry: { type: 'Point', coordinates: [lng, lat] },
+    }));
+
+    const US_DOTS = { type: 'FeatureCollection', features: [...US_METROS, ...US_RURAL] };
+
+    // Individual online merchants — wider coverage across Manhattan,
+    // Brooklyn, Queens, NJ, and Bronx edge so the horizontal range is full.
+    // Dense in restaurant-heavy zones (East Village, LES, West Village, SoHo,
+    // Chelsea, Williamsburg). Zero dots in Central Park (lat 40.764-40.797,
+    // lng -73.982 to -73.946).
+    const NYC_ONLINE = [
+      // Lower Manhattan / FiDi
+      [-74.014, 40.706], // Wall St
+      [-74.010, 40.710], // Battery Park N
+      [-74.008, 40.718], // Tribeca
+      // Chinatown / LES (restaurant heavy)
+      [-73.989, 40.718], // LES
+      [-73.991, 40.722], // Chinatown
+      // SoHo (restaurant heavy)
+      [-74.001, 40.722], // SoHo W
+      [-73.998, 40.724], // SoHo central
+      [-74.003, 40.726], // SoHo N
+      // East Village (restaurant heavy)
+      [-73.984, 40.726], // EV Avenue A
+      [-73.981, 40.731], // EV north
+      [-73.986, 40.728], // EV central
+      // NoHo / Greenwich Village
+      [-73.993, 40.732], // NoHo
+      [-73.999, 40.732], // Greenwich Village
+      // West Village (restaurant heavy)
+      [-74.005, 40.737], // WV central
+      [-74.001, 40.734], // WV Bleecker
+      [-74.005, 40.731], // WV south
+      // Chelsea (restaurant heavy)
+      [-73.998, 40.742], // Chelsea central
+      [-74.003, 40.745], // Chelsea Market area
+      [-73.997, 40.748], // Chelsea north
+      // Flatiron / Empire State / Murray Hill
+      [-73.992, 40.749], // Madison Sq
+      [-73.985, 40.748], // Empire State
+      [-73.978, 40.749], // Murray Hill
+      // Hudson Yards / Hell's Kitchen (restaurant heavy)
+      [-74.000, 40.756], // Hudson Yards
+      [-73.994, 40.758], // HK south
+      [-73.992, 40.763], // HK central
+      // Times Sq / Midtown
+      [-73.985, 40.758], // Times Sq
+      [-73.978, 40.762], // Midtown East (south of CP)
+      [-73.984, 40.768], // Lincoln Sq south
+      // UWS (west of CPW)
+      [-73.984, 40.773], // Lincoln Sq area
+      [-73.977, 40.781], // UWS central
+      [-73.974, 40.788], // UWS north
+      [-73.978, 40.794], // UWS / Riverside
+      // UES (east of 5th Ave)
+      [-73.962, 40.776], // UES (east of 5th Ave)
+      [-73.955, 40.785], // UES north
+      [-73.949, 40.792], // UES far north
+      // Harlem (north of CP)
+      [-73.948, 40.799], // Harlem south
+      [-73.942, 40.806], // Harlem central
+      // Brooklyn
+      [-73.989, 40.703], // DUMBO
+      [-73.999, 40.687], // Cobble Hill
+      [-73.978, 40.677], // Park Slope west
+      [-73.969, 40.677], // Prospect Heights
+      [-73.974, 40.689], // Fort Greene
+      [-73.954, 40.687], // Bed-Stuy west
+      [-73.957, 40.715], // Williamsburg Bedford
+      [-73.962, 40.713], // Williamsburg S
+      [-73.953, 40.717], // Williamsburg N
+      [-73.945, 40.715], // E. Williamsburg
+      [-73.949, 40.726], // Greenpoint
+      [-73.945, 40.728], // Greenpoint N
+      [-73.928, 40.694], // Bushwick
+      // Queens
+      [-73.948, 40.748], // LIC
+      [-73.946, 40.745], // LIC south
+      [-73.951, 40.741], // Hunters Point
+      [-73.939, 40.764], // Astoria south
+      [-73.918, 40.776], // Astoria east
+      [-73.928, 40.745], // Sunnyside
+      [-73.910, 40.769], // Steinway
+      // Bronx edge
+      [-73.918, 40.808], // Mott Haven
+      // NJ
+      [-74.028, 40.744], // Hoboken
+      [-74.030, 40.751], // Hoboken N
+      [-74.022, 40.770], // Weehawken (shifted off Union City)
+      [-74.043, 40.717], // Jersey City
+      [-74.040, 40.728], // JC waterfront
+      [-74.025, 40.762], // Union City (shifted off Weehawken)
+      [-74.013, 40.788], // West New York
+      [-74.020, 40.802], // North Bergen
+      [-74.054, 40.731], // JC north
+      [-74.067, 40.722], // JC central
+      [-74.063, 40.789], // Secaucus
+      [-74.030, 40.776], // Union City N
+      [-74.045, 40.745], // Hoboken W
+      [-74.060, 40.745], // JC waterfront central
+      // Long Island / Eastern Queens
+      [-73.943, 40.756], // LIC east
+      [-73.920, 40.745], // Sunnyside east
+      [-73.901, 40.730], // Maspeth
+      [-73.885, 40.755], // Jackson Heights
+      [-73.876, 40.737], // Elmhurst
+      [-73.860, 40.725], // Rego Park
+      [-73.847, 40.720], // Forest Hills
+      [-73.832, 40.762], // Flushing
+    ].map(([lng, lat], i) => ({
+      type: 'Feature',
+      properties: { kind: 'online', phase: phaseHash(i, 'nyc-online') },
+      geometry: { type: 'Point', coordinates: [lng, lat] },
+    }));
+
+    // Individual offline merchants — small businesses, all on land. Dense
+    // coverage across all visible boroughs. Restaurant-heavy zones (East
+    // Village, LES, West Village, SoHo, Chelsea, Hell's Kitchen, Williamsburg)
+    // get the most dots. Zero dots in Central Park.
+    const NYC_OFFLINE = [
+      // FiDi / Lower Manhattan
+      [-74.011, 40.712], // FiDi north
+      [-74.014, 40.708], // FiDi south
+      [-74.000, 40.715], // LES / Two Bridges
+      // Chinatown / LES (RESTAURANT HEAVY)
+      [-73.993, 40.720], // Chinatown N
+      [-73.996, 40.717], // Chinatown west
+      [-73.987, 40.716], // LES (shifted off online)
+      [-73.984, 40.719], // LES central
+      [-73.982, 40.721], // LES east
+      [-73.985, 40.713], // LES south (moved south for spacing)
+      [-73.994, 40.713], // Chinatown south
+      // SoHo / NoHo (RESTAURANT HEAVY)
+      [-74.005, 40.728], // SoHo NW
+      [-73.997, 40.722], // SoHo central (shifted off online)
+      [-74.000, 40.726], // SoHo (shifted off online)
+      [-73.995, 40.731], // NoHo
+      [-73.991, 40.729], // NoHo east
+      // East Village (RESTAURANT HEAVY)
+      [-73.988, 40.728], // EV south
+      [-73.983, 40.724], // EV Avenue A (shifted off online)
+      [-73.979, 40.733], // EV north (shifted off online)
+      [-73.984, 40.730], // EV central
+      [-73.986, 40.733], // EV / NoHo (shifted slightly)
+      [-73.978, 40.728], // EV east
+      // Gramercy / Flatiron
+      [-73.987, 40.738], // Gramercy
+      [-73.984, 40.744], // Murray Hill S
+      [-73.990, 40.741], // Flatiron
+      [-73.993, 40.745], // Flatiron N
+      // West Village (RESTAURANT HEAVY)
+      [-74.003, 40.739], // GV (shifted off WV)
+      [-74.006, 40.734], // WV south (shifted off online)
+      [-74.001, 40.736], // WV (shifted off online)
+      [-73.998, 40.735], // WV east
+      [-74.007, 40.739], // WV north (shifted off online)
+      // Chelsea (RESTAURANT HEAVY)
+      [-74.005, 40.748], // Chelsea S
+      [-73.996, 40.743], // Chelsea central
+      [-74.001, 40.747], // Chelsea Market (shifted off online)
+      [-74.000, 40.745], // Chelsea N
+      // Hell's Kitchen (RESTAURANT HEAVY)
+      [-73.998, 40.752], // HK south
+      [-73.995, 40.760], // HK central
+      [-73.992, 40.755], // HK east
+      [-73.989, 40.760], // HK north (shifted off online)
+      [-73.987, 40.764], // HK / Midtown
+      // Murray Hill / Midtown East (south of CP, lat < 40.764)
+      [-73.978, 40.752], // Murray Hill east
+      [-73.972, 40.755], // Midtown east
+      [-73.978, 40.760], // Midtown
+      // UWS (west of CPW)
+      [-73.978, 40.786], // UWS bodega
+      [-73.973, 40.793], // UWS north
+      [-73.984, 40.778], // UWS south
+      // UES (east of 5th Ave)
+      [-73.963, 40.771], // UES bodega
+      [-73.958, 40.779], // UES bodega 2
+      [-73.953, 40.788], // UES north
+      // Harlem (north of CP)
+      [-73.953, 40.799], // Harlem south
+      [-73.945, 40.802], // East Harlem
+      [-73.940, 40.808], // Harlem
+      // Roosevelt Island (on land, not in East River)
+      [-73.951, 40.760],
+      // Governor's Island
+      [-74.016, 40.690],
+      // Brooklyn (Brooklyn Heights to Park Slope to Williamsburg)
+      [-73.994, 40.696], // Brooklyn Heights
+      [-73.991, 40.703], // DUMBO (shifted off online)
+      [-73.996, 40.687], // Carroll Gardens (shifted off online)
+      [-73.985, 40.681], // Park Slope edge
+      [-73.974, 40.673], // Park Slope east
+      [-73.972, 40.673], // Park Slope central
+      [-73.978, 40.670], // Park Slope west
+      [-73.991, 40.674], // Gowanus
+      [-73.984, 40.685], // Boerum Hill
+      [-73.964, 40.689], // Clinton Hill
+      [-73.948, 40.687], // Bed-Stuy
+      [-73.962, 40.706], // S. Williamsburg
+      [-73.965, 40.711], // Williamsburg W
+      [-73.959, 40.713], // Williamsburg central (shifted off online)
+      [-73.964, 40.713], // Williamsburg E (shifted off online)
+      [-73.945, 40.708], // E. Williamsburg
+      [-73.944, 40.696], // Bushwick edge
+      [-73.926, 40.706], // Bushwick (deduped)
+      [-73.930, 40.704], // Bushwick south
+      [-73.953, 40.732], // Greenpoint south
+      [-73.948, 40.732], // Greenpoint
+      [-73.947, 40.730], // Greenpoint S (shifted off online)
+      // Queens
+      [-73.954, 40.740], // LIC south (shifted off online)
+      [-73.943, 40.755], // LIC north
+      [-73.939, 40.755], // Astoria south
+      [-73.929, 40.764], // Astoria west
+      [-73.928, 40.770], // Astoria north
+      [-73.918, 40.762], // Astoria far south
+      [-73.927, 40.739], // Sunnyside south
+      // Bronx
+      [-73.917, 40.806], // Mott Haven
+      // NJ
+      [-74.029, 40.756], // Weehawken south
+      [-74.034, 40.738], // Hoboken south
+      [-74.029, 40.738], // Hoboken east (moved inland off Hudson)
+      [-74.032, 40.749], // Hoboken north (shifted off online)
+      [-74.018, 40.776], // Weehawken north
+      [-74.026, 40.770], // Union City east
+      [-74.016, 40.794], // North Bergen north
+      [-74.045, 40.734], // JC inland north
+      [-74.039, 40.708], // JC south
+      [-74.051, 40.720], // Liberty State Park area
+      [-74.058, 40.722], // JC west
+      [-74.061, 40.711], // JC south
+      // More NJ inland dots
+      [-74.072, 40.730], // JC W central
+      [-74.040, 40.760], // Hoboken / Union City border
+      [-74.035, 40.768], // Union City W
+      [-74.060, 40.780], // Secaucus area
+      [-74.055, 40.798], // North Bergen W
+      [-74.050, 40.755], // JC NE
+      [-74.025, 40.785], // West New York N
+      // Long Island / Eastern Queens
+      [-73.946, 40.745], // LIC south-central
+      [-73.928, 40.749], // Sunnyside N
+      [-73.917, 40.738], // Woodside
+      [-73.905, 40.755], // Astoria far east
+      [-73.895, 40.742], // Jackson Heights S
+      [-73.880, 40.725], // Elmhurst S
+      [-73.865, 40.745], // Jackson Heights E
+      [-73.852, 40.735], // Rego Park N
+      [-73.840, 40.728], // Forest Hills E
+      [-73.835, 40.748], // Corona
+    ].map(([lng, lat], i) => ({
+      type: 'Feature',
+      properties: { kind: 'offline', phase: phaseHash(i, 'nyc-offline') },
+      geometry: { type: 'Point', coordinates: [lng, lat] },
+    }));
+
+    const NYC_DOTS = { type: 'FeatureCollection', features: [...NYC_ONLINE, ...NYC_OFFLINE] };
+    // -------------------------------------------------------------------------
+
+    // Wider fade range = smoother dot transformation when zooming in.
+    const FADE_LOW = 7, FADE_HIGH = 11;
+
+    // Base radius expressions (referenced by both main + halo layers).
+    // Smaller scaling for big metros so the global view feels balanced.
+    // 1M stays at 5px; 18.8M (NYC) now caps at ~16px instead of 30px.
+    const US_ONLINE_RADIUS = [
+      'interpolate', ['linear'], ['get', 'pop'],
+      1.0,   5,
+      5.0,   8,
+      10.0, 12,
+      18.8, 16,
+    ];
+    const US_OFFLINE_RADIUS  = ['coalesce', ['get', 'size'], 3.5];
+    const NYC_ONLINE_RADIUS  = 5.5;
+    const NYC_OFFLINE_RADIUS = 4.5;
+
+    function addDotLayers() {
+      if (!map.getSource('us-dots')) {
+        map.addSource('us-dots',  { type: 'geojson', data: US_DOTS });
+        map.addSource('nyc-dots', { type: 'geojson', data: NYC_DOTS });
+      }
+
+      // Main dot layers — halo/breathing is applied via animated
+      // circle-stroke-width on these same layers (see startPulse).
+      // Each kind is split into PHASE_COUNT sub-layers. Phase is assigned
+      // per-feature via phaseHash so adjacent dots almost never share one.
+      const PHASES = Array.from({ length: PHASE_COUNT }, (_, i) => i);
+      const SHADOW_SCALE = 1.6;
+
+      const makeFilter = (kind, ph) =>
+        ['all', ['==', ['get', 'kind'], kind], ['==', ['get', 'phase'], ph]];
+
+      // -- Pass 1: shadow layers (drawn beneath all main dots) ----------------
+      // Subtle drop shadow for premium "lifted" feel — not a halo.
+      for (const ph of PHASES) {
+        map.addLayer({
+          id: `us-offline-${ph}-shadow`, type: 'circle', source: 'us-dots',
+          filter: makeFilter('offline', ph),
+          paint: {
+            'circle-radius': ['*', US_OFFLINE_RADIUS, SHADOW_SCALE],
+            'circle-color': 'rgba(0, 0, 0, 0.16)',
+            'circle-blur': 0.5,
+            'circle-opacity': ['interpolate', ['linear'], ['zoom'], FADE_LOW, 1, FADE_HIGH, 0],
+          },
+        });
+        map.addLayer({
+          id: `us-online-${ph}-shadow`, type: 'circle', source: 'us-dots',
+          filter: makeFilter('online', ph),
+          paint: {
+            'circle-radius': ['interpolate', ['linear'], ['get', 'pop'],
+              1.0,  5 * SHADOW_SCALE,
+              5.0,  8 * SHADOW_SCALE,
+              10.0, 12 * SHADOW_SCALE,
+              18.8, 16 * SHADOW_SCALE],
+            'circle-color': 'rgba(34, 108, 50, 0.18)',
+            'circle-blur': 0.5,
+            'circle-opacity': ['interpolate', ['linear'], ['zoom'], FADE_LOW, 1, FADE_HIGH, 0],
+          },
+        });
+        map.addLayer({
+          id: `nyc-offline-${ph}-shadow`, type: 'circle', source: 'nyc-dots',
+          filter: makeFilter('offline', ph),
+          paint: {
+            'circle-radius': NYC_OFFLINE_RADIUS * SHADOW_SCALE,
+            'circle-color': 'rgba(0, 0, 0, 0.16)',
+            'circle-blur': 0.5,
+            'circle-opacity': ['interpolate', ['linear'], ['zoom'], FADE_LOW, 0, FADE_HIGH, 1],
+          },
+        });
+        map.addLayer({
+          id: `nyc-online-${ph}-shadow`, type: 'circle', source: 'nyc-dots',
+          filter: makeFilter('online', ph),
+          paint: {
+            'circle-radius': NYC_ONLINE_RADIUS * SHADOW_SCALE,
+            'circle-color': 'rgba(34, 108, 50, 0.20)',
+            'circle-blur': 0.5,
+            'circle-opacity': ['interpolate', ['linear'], ['zoom'], FADE_LOW, 0, FADE_HIGH, 1],
+          },
+        });
+      }
+
+      // -- Pass 2: main dots (drawn on top of shadows) ------------------------
+      // Green dots get a thin white border for a crisp "chip" look on the
+      // gray map. White dots get a thin dark border so they read against bg.
+      for (const ph of PHASES) {
+        map.addLayer({
+          id: `us-offline-${ph}`, type: 'circle', source: 'us-dots',
+          filter: makeFilter('offline', ph),
+          paint: {
+            'circle-radius': US_OFFLINE_RADIUS,
+            'circle-color': '#FFFFFF',
+            'circle-stroke-color': PALETTE.grayRing,
+            'circle-stroke-width': 1,
+            'circle-opacity':        ['interpolate', ['linear'], ['zoom'], FADE_LOW, 1, FADE_HIGH, 0],
+            'circle-stroke-opacity': ['interpolate', ['linear'], ['zoom'], FADE_LOW, 1, FADE_HIGH, 0],
+          },
+        });
+        map.addLayer({
+          id: `us-online-${ph}`, type: 'circle', source: 'us-dots',
+          filter: makeFilter('online', ph),
+          paint: {
+            'circle-radius': US_ONLINE_RADIUS,
+            'circle-color': PALETTE.green,
+            'circle-stroke-color': PALETTE.greenWhite,
+            'circle-stroke-width': 1.5,
+            'circle-opacity':        ['interpolate', ['linear'], ['zoom'], FADE_LOW, 1, FADE_HIGH, 0],
+            'circle-stroke-opacity': ['interpolate', ['linear'], ['zoom'], FADE_LOW, 1, FADE_HIGH, 0],
+          },
+        });
+        map.addLayer({
+          id: `nyc-offline-${ph}`, type: 'circle', source: 'nyc-dots',
+          filter: makeFilter('offline', ph),
+          paint: {
+            'circle-radius': NYC_OFFLINE_RADIUS,
+            'circle-color': '#FFFFFF',
+            'circle-stroke-color': PALETTE.grayRing,
+            'circle-stroke-width': 1,
+            'circle-opacity':        ['interpolate', ['linear'], ['zoom'], FADE_LOW, 0, FADE_HIGH, 1],
+            'circle-stroke-opacity': ['interpolate', ['linear'], ['zoom'], FADE_LOW, 0, FADE_HIGH, 1],
+          },
+        });
+        map.addLayer({
+          id: `nyc-online-${ph}`, type: 'circle', source: 'nyc-dots',
+          filter: makeFilter('online', ph),
+          paint: {
+            'circle-radius': NYC_ONLINE_RADIUS,
+            'circle-color': PALETTE.green,
+            'circle-stroke-color': PALETTE.greenWhite,
+            'circle-stroke-width': 1.5,
+            'circle-opacity':        ['interpolate', ['linear'], ['zoom'], FADE_LOW, 0, FADE_HIGH, 1],
+            'circle-stroke-opacity': ['interpolate', ['linear'], ['zoom'], FADE_LOW, 0, FADE_HIGH, 1],
+          },
+        });
+      }
+
+      startPulse();
+    }
+
+    // ---- Spring-driven radius pulse (per-phase profiles) --------------------
+    // Each phase has its OWN spring keyframes + frame interval, so the four
+    // groups breathe at different speeds and amplitudes. The result drifts
+    // Continuous easing pulse — cosine ease-in-out, no spring overshoot.
+    // Each phase has its own period and peak amplitude; different periods
+    // mean the four groups drift in and out of sync naturally.
+    function easedScaleAt(timeMs, profile) {
+      const { period, peak } = profile;
+      const A = peak - 1;
+      const phase = (((timeMs % period) + period) % period) / period;
+      // 1.0 → peak → 1.0 over one period, smooth ease-in-out via cosine.
+      return 1 + A * 0.5 * (1 - Math.cos(2 * Math.PI * phase));
+    }
+
+    const SPRING_PROFILES = [
+      { period: 2400, peak: 1.045, offset:    0 },
+      { period: 1900, peak: 1.065, offset:  500 },
+      { period: 2700, peak: 1.035, offset: 1100 },
+      { period: 2100, peak: 1.055, offset: 1700 },
+    ];
+
+    function radiusForKind(kind, scale) {
+      switch (kind) {
+        case 'us-online':
+          return ['interpolate', ['linear'], ['get', 'pop'],
+            1.0, 5 * scale, 5.0, 8 * scale, 10.0, 12 * scale, 18.8, 16 * scale];
+        case 'us-offline':
+          return ['*', ['coalesce', ['get', 'size'], 3.5], scale];
+        case 'nyc-online':
+          return NYC_ONLINE_RADIUS * scale;
+        case 'nyc-offline':
+          return NYC_OFFLINE_RADIUS * scale;
+      }
+    }
+
+    const SHADOW_SCALE_RUNTIME = 1.6;
+    function shadowRadiusForKind(kind, scale) {
+      const combined = scale * SHADOW_SCALE_RUNTIME;
+      return radiusForKind(kind, combined);
+    }
+
+    const pulseTimers = [];
+    function startPulse() {
+      const kinds = ['us-online', 'us-offline', 'nyc-online', 'nyc-offline'];
+
+      pulseTimers.forEach((t) => clearInterval(t));
+      pulseTimers.length = 0;
+
+      // Tight tween matching our tick rate, so the radius is always
+      // smoothly interpolating between two close samples on the curve.
+      const TICK_MS = 50;
+      for (const k of kinds) {
+        for (let ph = 0; ph < SPRING_PROFILES.length; ph++) {
+          for (const lid of [`${k}-${ph}`, `${k}-${ph}-shadow`]) {
+            if (!map.getLayer(lid)) continue;
+            try {
+              map.setPaintProperty(lid, 'circle-radius-transition', {
+                duration: TICK_MS, delay: 0,
+              });
+            } catch {}
+          }
+        }
+      }
+
+      const start = performance.now();
+      const tick = () => {
+        const now = performance.now() - start;
+        for (let ph = 0; ph < SPRING_PROFILES.length; ph++) {
+          const cfg = SPRING_PROFILES[ph];
+          const scale = easedScaleAt(now + cfg.offset, cfg);
+          for (const k of kinds) {
+            const id = `${k}-${ph}`;
+            const sid = `${id}-shadow`;
+            if (map.getLayer(id)) {
+              map.setPaintProperty(id, 'circle-radius', radiusForKind(k, scale));
+            }
+            if (map.getLayer(sid)) {
+              map.setPaintProperty(sid, 'circle-radius', shadowRadiusForKind(k, scale));
+            }
+          }
+        }
+      };
+      tick();
+      pulseTimers.push(setInterval(tick, TICK_MS));
+    }
+    // -------------------------------------------------------------------------
+
+    map.on('style.load', () => {
+      restyleToPalette();
+      addDotLayers();
+    });
+
+    function play() {
+      status.textContent = 'zooming into Manhattan…';
+      const cam = map.cameraForBounds(MANHATTAN_BOUNDS, { padding: MANHATTAN_PADDING });
+      map.flyTo({
+        center: cam.center,
+        zoom: cam.zoom,
+        bearing: cam.bearing || 0,
+        speed: 1.1,
+        curve: 1.3,
+        essential: true,
+      });
+      map.once('moveend', () => { status.textContent = 'done.'; });
+    }
+
+    function reset() {
+      map.jumpTo(US_VIEW);
+      status.textContent = 'ready — focused on US';
+    }
+
+    document.getElementById('play').addEventListener('click', play);
+    document.getElementById('reset').addEventListener('click', reset);
+
+    map.on('load', () => { status.textContent = 'ready — focused on US'; });
+    map.on('error', (e) => {
+      status.textContent = 'map error: ' + (e?.error?.message || 'unknown');
+      console.error(e);
+    });
+  </script>
+</body>
+</html>

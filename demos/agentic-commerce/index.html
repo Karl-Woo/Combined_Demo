@@ -1,0 +1,3460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Agentic Commerce — Tablet</title>
+<link rel="stylesheet" href="lib/maplibre-gl.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="intro-active">
+  <!-- ===== Intro overlay =====
+       Plays on first paint: a MapLibre US map (with merchant dots)
+       waits for a click; the click flies the camera into Manhattan.
+       A second click after the camera lands triggers the zoom-out
+       reveal of the merchant homepage. While `body.intro-active` is
+       set, the merchant modal's entrance animations are paused so
+       the modal slides up *after* the reveal completes. -->
+  <div class="intro-stage" id="introStage" aria-hidden="true">
+    <!-- Fixed 1366x820 design canvas — JS scales it via transform on
+         resize so the map + dots keep the same proportions on any
+         viewport, mirroring the iPad screen-inner scaler. -->
+    <div class="intro-canvas" id="introCanvas">
+      <div id="introMap"></div>
+      <!-- Selection halos — two staggered box-shadow rings that
+           expand outward from the portal dot during the pan to
+           highlight that the camera is locking on to this specific
+           merchant. JS sets `left`/`top` (tracking the dot's
+           projected pixel position) and `box-shadow` (the actual
+           expanding shadow) every frame. Hidden once the zoom
+           dive begins. -->
+      <div class="intro-portal-halo" aria-hidden="true"></div>
+      <div class="intro-portal-halo" aria-hidden="true"></div>
+      <!-- "Portal" dot — positioned over a specific NYC offline merchant
+           at reveal time and grown to fill the viewport so the camera
+           appears to dive into that dot and burst open onto the
+           merchant view. JS animates width/height (and left/top)
+           directly rather than CSS transform: scale, so the browser
+           re-renders the 1 px border at every frame — no rasterized
+           bitmap getting stretched, no saw-tooth aliasing on the
+           circle edge at large scale. -->
+      <div id="introPortal" aria-hidden="true"></div>
+    </div>
+    <!-- Legend lives OUTSIDE the scaling canvas so it always anchors
+         to the viewport's top-right corner — even when the canvas
+         overflows horizontally on big screens, the legend stays in
+         view at its native size. -->
+    <div id="introLegend" aria-hidden="true">
+      <div class="row"><span class="dot dot-green"></span>Online Clover merchant</div>
+      <div class="row"><span class="dot dot-white"></span>Offline Clover merchant</div>
+    </div>
+  </div>
+
+  <!-- Stage starts in `merchant-active` so the user lands on the
+       merchant homepage (Figma 40000835:15291). The very first click
+       anywhere flips the slot back to gemini and the existing chat
+       flow takes over from there. -->
+  <div class="stage merchant-active home-armed">
+    <!-- Two tablets share the stage: the merchant view (initial:
+         homepage) and the Gemini chat view. Sliding both tablets via
+         the same transform keeps them in lock-step. -->
+    <div class="tablet-stage to-merchant" id="tabletStage">
+    <div class="tablet-slot tablet-slot-gemini">
+    <div class="ipad">
+      <img class="bezel" src="asset/Bezel.png" alt="" />
+
+      <div class="screen">
+        <div class="screen-inner">
+
+          <!-- Small white safe area above the status bar so the time
+               clears the rounded screen corners cleanly. -->
+          <div class="top-safe"></div>
+
+          <!-- Status Bar (iPad) -->
+          <div class="statusbar">
+            <div class="sb-left">
+              <span class="sb-time">11:28</span>
+              <span class="sb-date">Fri Jun 12</span>
+            </div>
+            <div class="sb-right">
+              <svg class="sb-signal" viewBox="0 0 17 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <rect x="0" y="7" width="3" height="4" rx="0.5" fill="black"/>
+                <rect x="4.5" y="5" width="3" height="6" rx="0.5" fill="black"/>
+                <rect x="9" y="2.5" width="3" height="8.5" rx="0.5" fill="black"/>
+                <rect x="13.5" y="0" width="3" height="11" rx="0.5" fill="black"/>
+              </svg>
+              <svg class="sb-wifi" viewBox="0 0 15 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M7.5 9.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm-3.2-2.8a4.5 4.5 0 0 1 6.4 0l1-1a6 6 0 0 0-8.4 0l1 1Zm-2.4-2.4a8 8 0 0 1 11.2 0l1-1a9.5 9.5 0 0 0-13.2 0l1 1Z" fill="black"/>
+              </svg>
+              <span class="sb-pct">100%</span>
+              <svg class="sb-batt" viewBox="0 0 27 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <rect x="0.5" y="0.5" width="22" height="11" rx="2.5" stroke="black" fill="none"/>
+                <rect x="2" y="2" width="19" height="8" rx="1.5" fill="black"/>
+                <rect x="23.5" y="4" width="2" height="4" rx="1" fill="black"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Browser app -->
+          <div class="app">
+
+            <!-- Chrome browser bar -->
+            <div class="chrome-bar">
+              <div class="chrome-icons">
+                <button class="chrome-iconbtn" aria-label="Back">
+                  <img src="asset/icons/arrow_back.svg" alt="" />
+                </button>
+                <button class="chrome-iconbtn" aria-label="Forward">
+                  <img src="asset/icons/arrow_forward.svg" alt="" />
+                </button>
+                <button class="chrome-iconbtn" aria-label="Refresh">
+                  <img src="asset/icons/refresh.svg" alt="" />
+                </button>
+              </div>
+              <div class="address-bar">
+                <div class="url">
+                  <img src="asset/icons/lock.svg" alt="" />
+                  <p>gemini.google.com</p>
+                </div>
+                <div class="star">
+                  <img src="asset/icons/star.svg" alt="" />
+                </div>
+              </div>
+              <div class="chrome-avatar">
+                <img src="asset/avatar.png" alt="Profile" />
+              </div>
+              <button class="chrome-iconbtn" aria-label="More">
+                <img src="asset/icons/more_vert.svg" alt="" />
+              </button>
+            </div>
+
+            <!-- Page body: rail + main -->
+            <div class="page">
+
+              <!-- Left rail (Gemini sidebar) -->
+              <aside class="rail">
+                <div class="rail-group">
+                  <button class="rail-btn" aria-label="Menu">
+                    <img src="asset/icons/menu.svg" alt="" />
+                  </button>
+                  <button class="rail-btn" aria-label="New chat">
+                    <img src="asset/icons/edit_square.svg" alt="" />
+                  </button>
+                </div>
+                <div class="rail-group">
+                  <button class="rail-btn" aria-label="History">
+                    <img src="asset/icons/history.svg" alt="" />
+                  </button>
+                  <button class="rail-btn" aria-label="Settings">
+                    <img src="asset/icons/settings.svg" alt="" />
+                  </button>
+                </div>
+              </aside>
+
+              <!-- Main content -->
+              <main class="main">
+
+                <header class="main-topbar">
+                  <h1 class="title">Gemini</h1>
+                  <div class="main-avatar">
+                    <img src="asset/avatar.png" alt="Profile" />
+                  </div>
+                </header>
+
+                <section class="hero">
+                  <div class="hero-inner">
+
+                    <div class="greeting">
+                      <p class="hi">Hi Sam</p>
+                      <p class="prompt">What&rsquo;s on your mind?</p>
+                    </div>
+
+                    <div class="composer">
+                      <div class="composer-input">
+                        <img class="shield" src="asset/icons/page_info.svg" alt="" />
+                        <p class="placeholder">Ask Gemini</p>
+                      </div>
+                      <div class="composer-actions">
+                        <div class="composer-left">
+                          <button class="iconbtn" aria-label="Add">
+                            <img src="asset/icons/add_2.svg" alt="" />
+                          </button>
+                          <button class="tools-btn">
+                            <img src="asset/icons/tune.svg" alt="" />
+                            <span>Tools</span>
+                          </button>
+                        </div>
+                        <div class="composer-right">
+                          <button class="fast-btn">
+                            <span>Fast</span>
+                            <img src="asset/icons/keyboard_arrow_down.svg" alt="" />
+                          </button>
+                          <button class="iconbtn" aria-label="Voice">
+                            <img src="asset/icons/mic.svg" alt="" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="suggestions">
+                      <button class="pill">Write</button>
+                      <button class="pill">Plan</button>
+                      <button class="pill">Research</button>
+                      <button class="pill">Learn</button>
+                    </div>
+
+                  </div>
+                </section>
+
+              </main>
+
+              <!-- Order checkout drawer + scrim (Figma 40000731:12189).
+                   Triggered by the Order now button on the florist card —
+                   same slide-in / fade-in pattern as the merchant drawer.
+                   Nested inside .page so the dim overlay and drawer sit
+                   below the chrome bar instead of covering it. -->
+              <div class="g-drawer-scrim" id="orderDrawerScrim" aria-hidden="true"></div>
+              <aside class="g-drawer" id="orderDrawer" aria-hidden="true">
+                <header class="g-drawer-header">
+                  <button class="g-drawer-close" aria-label="Close">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                      <path d="M6 6L18 18M18 6L6 18" stroke="#1f1f1f" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                  </button>
+                </header>
+
+                <div class="g-drawer-body">
+                  <!-- Product header card -->
+                  <div class="g-order-product">
+                    <div class="g-order-product-img"><img src="asset/icons/bouquet.png" alt="Summer Fields Bouquet" /></div>
+                    <div class="g-order-product-meta">
+                      <div class="g-order-product-name">Summer Fields Bouquet</div>
+                      <div class="g-order-product-price">$82</div>
+                    </div>
+                  </div>
+
+                  <h3 class="g-order-section-title">Payment Information</h3>
+
+                  <div class="g-pay-options">
+                    <label class="g-pay-opt is-selected">
+                      <span class="g-pay-radio"></span>
+                      <span class="g-pay-logo" aria-hidden="true">
+                        <img src="asset/amex.png" alt="" />
+                      </span>
+                      <span class="g-pay-label">Credit Card ending <strong>7428</strong></span>
+                    </label>
+
+                    <label class="g-pay-opt">
+                      <span class="g-pay-radio"></span>
+                      <span class="g-pay-logo" aria-hidden="true">
+                        <img src="asset/applepay.png" alt="" />
+                      </span>
+                      <span class="g-pay-label">Apple Pay</span>
+                    </label>
+
+                    <label class="g-pay-opt">
+                      <span class="g-pay-radio"></span>
+                      <span class="g-pay-logo" aria-hidden="true">
+                        <img src="asset/paypal.png" alt="" />
+                      </span>
+                      <span class="g-pay-label">Pay Now or Pay Later with PayPal</span>
+                    </label>
+
+                    <label class="g-pay-opt">
+                      <span class="g-pay-radio"></span>
+                      <span class="g-pay-logo" aria-hidden="true">
+                        <img src="asset/card.png" alt="" />
+                      </span>
+                      <span class="g-pay-label">Credit Card</span>
+                    </label>
+                  </div>
+
+                  <button class="g-checkout-btn">Complete checkout</button>
+
+                  <div class="g-checkout-footer">
+                    <div class="g-powered-by">
+                      <span>Powered by</span>
+                      <img class="g-fiserv-logo" src="asset/icons/fiserv.png" alt="fiserv" />
+                    </div>
+                    <span class="g-checkout-divider" aria-hidden="true"></span>
+                    <a class="g-checkout-link" href="#">Terms</a>
+                    <a class="g-checkout-link" href="#">Privacy</a>
+                  </div>
+                </div>
+              </aside>
+
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+    <!-- /.tablet-slot-gemini -->
+
+    <!-- ===== Merchant tablet (Jack's Barber Shop appointments) =====
+         Slides into view after the user clicks Book and the calendar
+         card lands. The merchant context is signalled by a light
+         green page background that fades in at the same time. -->
+    <div class="tablet-slot tablet-slot-merchant">
+    <div class="ipad ipad--station">
+      <img class="bezel" src="asset/Station_mockup.png" alt="" />
+
+      <div class="screen">
+        <div class="screen-inner m-screen-inner">
+
+          <div class="top-safe"></div>
+
+          <!-- Status bar (matched to the gemini tablet so the device
+               chrome stays consistent across the handoff). -->
+          <div class="statusbar">
+            <div class="sb-left">
+              <span class="sb-time">11:28</span>
+              <span class="sb-date">Fri Jun 12</span>
+            </div>
+            <div class="sb-right">
+              <svg class="sb-signal" viewBox="0 0 17 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <rect x="0" y="7" width="3" height="4" rx="0.5" fill="black"/>
+                <rect x="4.5" y="5" width="3" height="6" rx="0.5" fill="black"/>
+                <rect x="9" y="2.5" width="3" height="8.5" rx="0.5" fill="black"/>
+                <rect x="13.5" y="0" width="3" height="11" rx="0.5" fill="black"/>
+              </svg>
+              <svg class="sb-wifi" viewBox="0 0 15 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M7.5 9.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm-3.2-2.8a4.5 4.5 0 0 1 6.4 0l1-1a6 6 0 0 0-8.4 0l1 1Zm-2.4-2.4a8 8 0 0 1 11.2 0l1-1a9.5 9.5 0 0 0-13.2 0l1 1Z" fill="black"/>
+              </svg>
+              <span class="sb-pct">100%</span>
+              <svg class="sb-batt" viewBox="0 0 27 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <rect x="0.5" y="0.5" width="22" height="11" rx="2.5" stroke="black" fill="none"/>
+                <rect x="2" y="2" width="19" height="8" rx="1.5" fill="black"/>
+                <rect x="23.5" y="4" width="2" height="4" rx="1" fill="black"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- ===== Homepage merchant view (initial state) =====
+               Figma 40000835:15291 — Home dashboard with the dark
+               green time card on the left and a 2x2 tile grid on
+               the right. The user lands here on page load; the very
+               first click anywhere flips the merchant tablet out and
+               the gemini chat slides in to take its place. -->
+          <div class="m-app m-app--homepage" id="homepageMerchantApp">
+
+            <!-- Left rail (Home active, then Sale, Orders, More).
+                 Icon paths match the barber + florist views so the
+                 rail glyphs render identically across all three
+                 merchant states. The active Home swaps in the green
+                 stroke variant (dashboard.svg) — same path data as
+                 nav_home_inactive.svg, just stroked in #228800. -->
+            <aside class="m-rail">
+              <div class="m-rail-top">
+                <button class="m-rail-btn m-rail-btn-active" aria-label="Home">
+                  <img src="asset/icons/merchant/dashboard.svg" alt="" />
+                  <span>Home</span>
+                </button>
+                <button class="m-rail-btn" aria-label="Sale">
+                  <img src="asset/icons/add-circle.svg" alt="" />
+                  <span>Sale</span>
+                </button>
+                <button class="m-rail-btn" aria-label="Orders">
+                  <img src="asset/icons/receipt.svg" alt="" />
+                  <span>Orders</span>
+                </button>
+                <button class="m-rail-btn" aria-label="More">
+                  <img src="asset/icons/menu.svg" alt="" />
+                  <span>More</span>
+                </button>
+              </div>
+            </aside>
+
+            <!-- Main column — topbar + dashboard body -->
+            <main class="m-main">
+
+              <header class="m-topbar m-topbar-home">
+                <h1 class="m-title">Home</h1>
+                <div class="m-topbar-right">
+                  <!-- Dots indicator sits to the LEFT of the shop name
+                       per Figma (and per the user's correction). The
+                       title flexes to fill the bar; this cluster is
+                       pushed to the right edge by space-between. -->
+                  <span class="m-home-dots" aria-hidden="true">
+                    <img src="asset/icons/merchant/home/dots.svg" alt="" />
+                  </span>
+                  <span class="m-shop">Blooming Affairs Florist</span>
+                  <!-- Topbar action icons reuse the same paths as the
+                       barber + florist views (switch.svg, notification.svg)
+                       so the right cluster renders identically across
+                       all three merchant states. -->
+                  <button class="m-icon-btn" aria-label="Switch view">
+                    <img src="asset/icons/switch.svg" alt="" />
+                  </button>
+                  <button class="m-icon-btn" aria-label="Notifications">
+                    <img src="asset/icons/notification.svg" alt="" />
+                  </button>
+                </div>
+              </header>
+
+              <!-- Body: 2 column layout — dark green time card + 2x2 tiles -->
+              <div class="m-home-body">
+
+                <!-- Dark green clock card with date + time + CTA -->
+                <section class="m-home-clock" aria-label="Today">
+                  <div class="m-home-clock-stack">
+                    <p class="m-home-date">Mon, 24 September</p>
+                    <p class="m-home-time">9:57 AM</p>
+                  </div>
+                  <button class="m-home-cta" type="button">view today&rsquo;s sales</button>
+                </section>
+
+                <!-- 2x2 tile grid: Sales Overview, Item sales report,
+                     Items list, Closeout. Each tile is icon + label,
+                     centered vertically/horizontally, white card with
+                     1px border. -->
+                <div class="m-home-tiles">
+                  <button class="m-home-tile" type="button">
+                    <span class="m-tile-icon">
+                      <img src="asset/icons/merchant/line-graph-single.svg" alt="" />
+                    </span>
+                    <span class="m-tile-label">Sales Overview</span>
+                  </button>
+                  <button class="m-home-tile" type="button">
+                    <span class="m-tile-icon">
+                      <img src="asset/icons/merchant/Frame 812122.svg" alt="" />
+                    </span>
+                    <span class="m-tile-label">Item sales report</span>
+                  </button>
+                  <button class="m-home-tile" type="button">
+                    <span class="m-tile-icon">
+                      <img src="asset/icons/merchant/items-list.svg" alt="" />
+                    </span>
+                    <span class="m-tile-label">Items list</span>
+                  </button>
+                  <button class="m-home-tile" type="button">
+                    <span class="m-tile-icon m-tile-icon-closeout">
+                      <img src="asset/icons/merchant/Closeout.svg" alt="" />
+                    </span>
+                    <span class="m-tile-label">Closeout</span>
+                  </button>
+                </div>
+
+              </div>
+            </main>
+
+            <!-- ===== "Get discovered on Google" modal =====
+                 Figma 40000856:14798 (initial) → 40000856:14889 (after
+                 toggle). On page load the scrim fades in and the modal
+                 scales up; the toggle is the only interactive element.
+                 Clicking it flips the toggle to the green ON state and
+                 reveals 3 success rows one-by-one. After the last row
+                 lands, any click anywhere dismisses the modal and
+                 slides to the gemini view. -->
+            <div class="m-modal-scrim" id="discoverScrim" aria-hidden="false"></div>
+
+            <aside class="m-modal" id="discoverModal" role="dialog" aria-labelledby="discoverModalTitle" aria-hidden="false">
+              <header class="m-modal-header">
+                <h2 class="m-modal-title" id="discoverModalTitle">Get discovered on Google</h2>
+                <button class="m-modal-close" aria-label="Close">
+                  <img src="asset/icons/merchant/modal/x-close.svg" alt="" />
+                </button>
+              </header>
+
+              <div class="m-modal-body">
+                <!-- Intro wrapper — hero + description live here so they
+                     can collapse together (max-height + opacity + margin
+                     transition) when the toggle flips ON. Wrapping them
+                     keeps the parent's spacing logic clean: no orphan
+                     flex-gap left behind once the items fade out. -->
+                <div class="m-modal-intro">
+                  <!-- Hero illustration (Figma image 513) -->
+                  <div class="m-modal-hero">
+                    <img src="asset/icons/merchant/modal/hero.png" alt="" />
+                  </div>
+
+                  <p class="m-modal-text">Connect your store to Gemini so local customers can find your products and shop directly through Search and AI.</p>
+                </div>
+
+                <div class="m-modal-controls">
+                  <!-- Toggle pill — gray bg surrounds the switch + label.
+                       The switch flips state when clicked: gray track
+                       with knob left → green track with knob right. -->
+                  <div class="m-modal-toggle-bg">
+                    <button class="m-modal-toggle" id="discoverToggle" role="switch" aria-checked="false" aria-label="Go online now" type="button">
+                      <span class="m-modal-toggle-knob">
+                        <!-- Status dot inside the knob — gray in OFF,
+                             green in ON. CSS-only colored circle so we
+                             can transition between states without an
+                             SVG swap. -->
+                        <span class="m-modal-toggle-knob-dot" aria-hidden="true"></span>
+                      </span>
+                    </button>
+                    <span class="m-modal-toggle-label">Go online now</span>
+                  </div>
+
+                  <!-- Sequential check rows. Hidden via opacity + translateY
+                       until the toggle fires; .is-revealing on the parent
+                       triggers the staggered keyframes (one per row, 250ms
+                       apart). -->
+                  <ul class="m-modal-checks" id="discoverChecks">
+                    <li class="m-modal-check">
+                      <span class="m-modal-check-name">Inventory</span>
+                      <span class="m-modal-check-detail">143 items listed</span>
+                      <span class="m-modal-check-icon">
+                        <img src="asset/icons/merchant/modal/check-success.svg" alt="" />
+                      </span>
+                    </li>
+                    <li class="m-modal-check">
+                      <span class="m-modal-check-name">Schedule</span>
+                      <span class="m-modal-check-detail">Appointments ready</span>
+                      <span class="m-modal-check-icon">
+                        <img src="asset/icons/merchant/modal/check-success.svg" alt="" />
+                      </span>
+                    </li>
+                    <li class="m-modal-check">
+                      <span class="m-modal-check-name">Online payments</span>
+                      <span class="m-modal-check-detail">Setup complete</span>
+                      <span class="m-modal-check-icon">
+                        <img src="asset/icons/merchant/modal/check-success.svg" alt="" />
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </aside>
+
+          </div>
+
+          <!-- Merchant app body — barber view. Hidden initially while
+               the homepage state is showing; the homepage→gemini
+               handoff swaps this in so it's ready for the calendar
+               handoff (the gemini→merchant flip). The florist orders
+               view is a sibling .m-app--florist, hidden until the
+               final-state click flips visibility. -->
+          <div class="m-app m-app--barber" hidden>
+
+            <!-- Left rail (Home, Sale, Orders, More + M.P at bottom) -->
+            <aside class="m-rail">
+              <div class="m-rail-top">
+                <button class="m-rail-btn" aria-label="Home">
+                  <img src="asset/icons/merchant/nav_home_inactive.svg" alt="" />
+                  <span>Home</span>
+                </button>
+                <button class="m-rail-btn" aria-label="Sale">
+                  <img src="asset/icons/add-circle.svg" alt="" />
+                  <span>Sale</span>
+                </button>
+                <button class="m-rail-btn" aria-label="Orders">
+                  <img src="asset/icons/receipt.svg" alt="" />
+                  <span>Orders</span>
+                </button>
+                <button class="m-rail-btn m-rail-btn-active" aria-label="More">
+                  <img src="asset/icons/menu_active.svg" alt="" />
+                  <span>More</span>
+                </button>
+              </div>
+              <div class="m-rail-bottom">
+                <button class="m-rail-btn" aria-label="M.P">
+                  <img src="asset/icons/lock.svg" alt="" />
+                  <span>M.P</span>
+                </button>
+              </div>
+            </aside>
+
+            <!-- Main column -->
+            <main class="m-main">
+
+              <header class="m-topbar">
+                <h1 class="m-title">Appointments</h1>
+                <div class="m-topbar-right">
+                  <!-- Online-status dot — by the time this view is
+                       reached the merchant has flipped the discover
+                       toggle, so the indicator is already in its
+                       activated green-pulse state. -->
+                  <span class="m-home-dots is-active" aria-hidden="true">
+                    <img src="asset/icons/merchant/home/dots.svg" alt="" />
+                  </span>
+                  <span class="m-shop">Jack&rsquo;s Barber Shop</span>
+                  <button class="m-icon-btn" aria-label="Switch view">
+                    <img src="asset/icons/switch.svg" alt="" />
+                  </button>
+                  <button class="m-icon-btn" aria-label="Notifications">
+                    <img src="asset/icons/notification.svg" alt="" />
+                  </button>
+                </div>
+              </header>
+
+              <div class="m-cal-actions">
+                <div class="m-cal-actions-left">
+                  <button class="m-day-select">
+                    <span>Day</span>
+                    <img src="asset/icons/merchant/cal_chevron_down.svg" alt="" />
+                  </button>
+                  <span class="m-cal-date">Sat, Jul 10, 2026</span>
+                  <button class="m-cal-arrow" aria-label="Previous day">
+                    <img src="asset/icons/chevron_left.svg" alt="" />
+                  </button>
+                  <button class="m-cal-arrow" aria-label="Next day">
+                    <img src="asset/icons/chevron_right.svg" alt="" />
+                  </button>
+                </div>
+                <div class="m-cal-actions-right">
+                  <span class="m-pagination">1 of 1</span>
+                  <button class="m-cal-arrow" aria-label="Previous page" aria-disabled="true">
+                    <img src="asset/icons/chevron_left_disabled.svg" alt="" />
+                  </button>
+                  <button class="m-cal-arrow" aria-label="Next page">
+                    <img src="asset/icons/chevron_right.svg" alt="" />
+                  </button>
+                  <button class="m-filter-btn" aria-label="Filter">
+                    <img src="asset/icons/filter.svg" alt="" />
+                  </button>
+                  <button class="m-add-btn" aria-label="Add appointment">
+                    <img src="asset/icons/add.svg" alt="" />
+                  </button>
+                </div>
+              </div>
+
+              <!-- Calendar grid: time column + 3 staff columns -->
+              <div class="m-calendar">
+                <!-- Staff header row -->
+                <div class="m-staff-header">
+                  <div class="m-staff-cell"></div>
+                  <div class="m-staff-cell">
+                    <span class="m-staff-avatar" style="background:#a61fe8">AF</span>
+                    <span class="m-staff-name">Anders Fjord</span>
+                  </div>
+                  <div class="m-staff-cell">
+                    <span class="m-staff-avatar" style="background:#2b42c5">AB</span>
+                    <span class="m-staff-name">Ashley Barnes</span>
+                  </div>
+                  <div class="m-staff-cell">
+                    <span class="m-staff-avatar" style="background:#228800">CL</span>
+                    <span class="m-staff-name">Coretta Lundgren</span>
+                  </div>
+                </div>
+
+                <!-- Calendar body — relative-positioned. Time column +
+                     three staff columns each render their own grid. -->
+                <div class="m-cal-body">
+                  <!-- Diagonal-stripe band marking pre-business hours
+                       (sits above the first time row to indicate the
+                       slot before the day's start, matches Figma). -->
+                  <div class="m-blocked-band"></div>
+
+                  <!-- Time labels column -->
+                  <div class="m-time-col">
+                    <div class="m-time-label">11:00 AM</div>
+                    <div class="m-time-label">12:00 PM</div>
+                    <div class="m-time-label">1:00 PM</div>
+                    <div class="m-time-label">2:00 PM</div>
+                    <div class="m-time-label">3:00 PM</div>
+                    <div class="m-time-label">4:00 PM</div>
+                    <div class="m-time-label">5:00 PM</div>
+                    <div class="m-time-label">6:00 PM</div>
+                  </div>
+
+                  <!-- Anders column.
+                       Card top math (time grid + 24px blocked-band offset
+                       from 11:00 baseline):
+                         11:00=24, 11:30=66, 12:00=108, 12:30=150,
+                         1:00=192, 1:30=234, 2:00=276, 3:00=360,
+                         4:00=444, 5:00=528, 6:00=612. -->
+                  <div class="m-staff-col">
+                    <div class="m-grid-lines"></div>
+                    <div class="m-appt" style="top:150px;height:84px">
+                      <div class="m-appt-bar"></div>
+                      <div class="m-appt-content">
+                        <div class="m-appt-title">
+                          <div class="m-appt-name">Maya Patel</div>
+                          <div class="m-appt-svc">Color</div>
+                          <div class="m-appt-time">12:45 – 1:45 PM</div>
+                        </div>
+                        <div class="m-appt-bottom">
+                          <img src="asset/icons/bottom_icons.svg" alt="Paid" />
+                        </div>
+                      </div>
+                      <div class="m-appt-icons">
+                        <img class="m-icon" src="asset/icons/status_check.svg" alt="" />
+                        <span class="m-staff-avatar m-avatar-mini" style="background:#a61fe8">AF</span>
+                        <img class="m-icon" src="asset/icons/status_note.svg" alt="" />
+                      </div>
+                    </div>
+                    <div class="m-appt" id="apptSamLufton" style="top:276px;height:60px">
+                      <div class="m-appt-bar"></div>
+                      <div class="m-appt-content">
+                        <div class="m-appt-title">
+                          <div class="m-appt-name">Sam Lufton</div>
+                          <div class="m-appt-svc">Haircut</div>
+                          <div class="m-appt-time">2:00 – 2:45 PM</div>
+                        </div>
+                      </div>
+                      <div class="m-appt-icons">
+                        <img class="m-icon m-icon-status" src="asset/icons/status_star.svg" alt="" />
+                        <span class="m-staff-avatar m-avatar-mini" style="background:#a61fe8">AF</span>
+                        <img class="m-icon" src="asset/icons/status_note.svg" alt="" />
+                      </div>
+                    </div>
+                    <div class="m-appt" style="top:444px;height:60px">
+                      <div class="m-appt-bar"></div>
+                      <div class="m-appt-content">
+                        <div class="m-appt-title">
+                          <div class="m-appt-name">Diego Romero</div>
+                          <div class="m-appt-svc">Buzzcut</div>
+                          <div class="m-appt-time">4:00 – 4:45 PM</div>
+                        </div>
+                        <div class="m-appt-bottom">
+                          <img src="asset/icons/bottom_icons.svg" alt="Paid" />
+                        </div>
+                      </div>
+                      <div class="m-appt-icons">
+                        <img class="m-icon" src="asset/icons/status_check.svg" alt="" />
+                        <span class="m-staff-avatar m-avatar-mini" style="background:#a61fe8">AF</span>
+                        <img class="m-icon" src="asset/icons/status_note.svg" alt="" />
+                      </div>
+                    </div>
+                    <div class="m-appt" style="top:612px;height:36px">
+                      <div class="m-appt-bar"></div>
+                      <div class="m-appt-content m-appt-content-tight">
+                        <div class="m-appt-title">
+                          <div class="m-appt-name">Ben Kim</div>
+                          <div class="m-appt-svc">Beard trim</div>
+                        </div>
+                      </div>
+                      <div class="m-appt-icons">
+                        <img class="m-icon" src="asset/icons/status_check.svg" alt="" />
+                        <span class="m-staff-avatar m-avatar-mini" style="background:#a61fe8">AF</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Ashley column -->
+                  <div class="m-staff-col">
+                    <div class="m-grid-lines"></div>
+                    <div class="m-appt" style="top:66px;height:84px">
+                      <div class="m-appt-bar"></div>
+                      <div class="m-appt-content">
+                        <div class="m-appt-title">
+                          <div class="m-appt-name">Rachel Chen</div>
+                          <div class="m-appt-svc">Haircut</div>
+                          <div class="m-appt-time">11:30 AM – 12:30 PM</div>
+                        </div>
+                        <div class="m-appt-bottom">
+                          <img src="asset/icons/bottom_icons.svg" alt="Paid" />
+                        </div>
+                      </div>
+                      <div class="m-appt-icons">
+                        <img class="m-icon" src="asset/icons/status_check.svg" alt="" />
+                        <span class="m-staff-avatar m-avatar-mini" style="background:#2b42c5">AB</span>
+                        <img class="m-icon" src="asset/icons/status_note.svg" alt="" />
+                      </div>
+                    </div>
+                    <div class="m-appt" style="top:156px;height:36px">
+                      <div class="m-appt-bar"></div>
+                      <div class="m-appt-content m-appt-content-tight">
+                        <div class="m-appt-title">
+                          <div class="m-appt-name">Liam O&rsquo;Brien</div>
+                          <div class="m-appt-svc">Hot towel shave</div>
+                        </div>
+                      </div>
+                      <div class="m-appt-icons">
+                        <img class="m-icon" src="asset/icons/status_check.svg" alt="" />
+                        <span class="m-staff-avatar m-avatar-mini" style="background:#2b42c5">AB</span>
+                      </div>
+                    </div>
+                    <div class="m-appt" style="top:276px;height:60px">
+                      <div class="m-appt-bar"></div>
+                      <div class="m-appt-content">
+                        <div class="m-appt-title">
+                          <div class="m-appt-name">Priya Shah</div>
+                          <div class="m-appt-svc">Fade</div>
+                          <div class="m-appt-time">2:00 – 2:45 PM</div>
+                        </div>
+                        <div class="m-appt-bottom">
+                          <img src="asset/icons/bottom_icons.svg" alt="Paid" />
+                        </div>
+                      </div>
+                      <div class="m-appt-icons">
+                        <img class="m-icon" src="asset/icons/status_check.svg" alt="" />
+                        <span class="m-staff-avatar m-avatar-mini" style="background:#2b42c5">AB</span>
+                        <img class="m-icon" src="asset/icons/status_note.svg" alt="" />
+                      </div>
+                    </div>
+                    <div class="m-appt" style="top:444px;height:60px">
+                      <div class="m-appt-bar"></div>
+                      <div class="m-appt-content">
+                        <div class="m-appt-title">
+                          <div class="m-appt-name">Jordan Wells</div>
+                          <div class="m-appt-svc">Haircut</div>
+                          <div class="m-appt-time">4:00 – 4:45 PM</div>
+                        </div>
+                        <div class="m-appt-bottom">
+                          <img src="asset/icons/bottom_icons.svg" alt="Paid" />
+                        </div>
+                      </div>
+                      <div class="m-appt-icons">
+                        <img class="m-icon" src="asset/icons/status_check.svg" alt="" />
+                        <span class="m-staff-avatar m-avatar-mini" style="background:#2b42c5">AB</span>
+                        <img class="m-icon" src="asset/icons/status_note.svg" alt="" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Coretta column -->
+                  <div class="m-staff-col">
+                    <div class="m-grid-lines"></div>
+                    <div class="m-appt" style="top:24px;height:60px">
+                      <div class="m-appt-bar"></div>
+                      <div class="m-appt-content">
+                        <div class="m-appt-title">
+                          <div class="m-appt-name">Marcus Hayes</div>
+                          <div class="m-appt-svc">Beard trim</div>
+                          <div class="m-appt-time">11:00 – 11:45 AM</div>
+                        </div>
+                        <div class="m-appt-bottom">
+                          <img src="asset/icons/bottom_icons.svg" alt="Paid" />
+                        </div>
+                      </div>
+                      <div class="m-appt-icons">
+                        <img class="m-icon" src="asset/icons/status_check.svg" alt="" />
+                        <span class="m-staff-avatar m-avatar-mini" style="background:#228800">CL</span>
+                        <img class="m-icon" src="asset/icons/status_note.svg" alt="" />
+                      </div>
+                    </div>
+                    <div class="m-appt" style="top:150px;height:60px">
+                      <div class="m-appt-bar"></div>
+                      <div class="m-appt-content">
+                        <div class="m-appt-title">
+                          <div class="m-appt-name">Elena Vargas</div>
+                          <div class="m-appt-svc">Clean shave</div>
+                          <div class="m-appt-time">12:30 – 1:15 PM</div>
+                        </div>
+                        <div class="m-appt-bottom">
+                          <img src="asset/icons/bottom_icons.svg" alt="Paid" />
+                        </div>
+                      </div>
+                      <div class="m-appt-icons">
+                        <img class="m-icon" src="asset/icons/status_check.svg" alt="" />
+                        <span class="m-staff-avatar m-avatar-mini" style="background:#228800">CL</span>
+                        <img class="m-icon" src="asset/icons/status_note.svg" alt="" />
+                      </div>
+                    </div>
+                    <div class="m-appt" style="top:276px;height:60px">
+                      <div class="m-appt-bar"></div>
+                      <div class="m-appt-content">
+                        <div class="m-appt-title">
+                          <div class="m-appt-name">Tom&aacute;s Reyes</div>
+                          <div class="m-appt-svc">Wash &amp; style</div>
+                          <div class="m-appt-time">2:00 – 2:45 PM</div>
+                        </div>
+                        <div class="m-appt-bottom">
+                          <img src="asset/icons/bottom_icons.svg" alt="Paid" />
+                        </div>
+                      </div>
+                      <div class="m-appt-icons">
+                        <img class="m-icon" src="asset/icons/status_check.svg" alt="" />
+                        <span class="m-staff-avatar m-avatar-mini" style="background:#228800">CL</span>
+                        <img class="m-icon" src="asset/icons/status_note.svg" alt="" />
+                      </div>
+                    </div>
+                    <div class="m-appt" style="top:444px;height:60px">
+                      <div class="m-appt-bar"></div>
+                      <div class="m-appt-content">
+                        <div class="m-appt-title">
+                          <div class="m-appt-name">Aisha Khan</div>
+                          <div class="m-appt-svc">Haircut</div>
+                          <div class="m-appt-time">4:00 – 4:45 PM</div>
+                        </div>
+                        <div class="m-appt-bottom">
+                          <img src="asset/icons/bottom_icons.svg" alt="Paid" />
+                        </div>
+                      </div>
+                      <div class="m-appt-icons">
+                        <img class="m-icon" src="asset/icons/status_check.svg" alt="" />
+                        <span class="m-staff-avatar m-avatar-mini" style="background:#228800">CL</span>
+                        <img class="m-icon" src="asset/icons/status_note.svg" alt="" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Current-time green marker (positioned at ~11:30) -->
+                  <div class="m-now-line"></div>
+                </div>
+              </div>
+
+            </main>
+          </div>
+
+          <!-- ===== Florist orders view (Blooming Affairs Florist) =====
+               Hidden by default; shown after the user reaches the route
+               map (turn 4) and clicks anywhere to transition to this
+               final merchant view. Mirrors Figma 40000731:12440. -->
+          <div class="m-app m-app--florist" id="floristMerchantApp" hidden>
+
+            <aside class="m-rail">
+              <div class="m-rail-top">
+                <button class="m-rail-btn" aria-label="Home">
+                  <img src="asset/icons/merchant/nav_home_inactive.svg" alt="" />
+                  <span>Home</span>
+                </button>
+                <button class="m-rail-btn" aria-label="Sale">
+                  <img src="asset/icons/add-circle.svg" alt="" />
+                  <span>Sale</span>
+                </button>
+                <button class="m-rail-btn m-rail-btn-active" aria-label="Orders">
+                  <img src="asset/icons/merchant/nav_orders_active.svg" alt="" />
+                  <span>Orders</span>
+                </button>
+                <button class="m-rail-btn" aria-label="More">
+                  <img src="asset/icons/menu.svg" alt="" />
+                  <span>More</span>
+                </button>
+              </div>
+              <div class="m-rail-bottom">
+                <button class="m-rail-btn" aria-label="M.P">
+                  <img src="asset/icons/lock.svg" alt="" />
+                  <span>M.P</span>
+                </button>
+              </div>
+            </aside>
+
+            <main class="m-main">
+
+              <header class="m-topbar">
+                <h1 class="m-title">Orders</h1>
+                <div class="m-topbar-right">
+                  <!-- Online-status dot — by the time this view is
+                       reached the merchant has flipped the discover
+                       toggle, so the indicator is already in its
+                       activated green-pulse state. -->
+                  <span class="m-home-dots is-active" aria-hidden="true">
+                    <img src="asset/icons/merchant/home/dots.svg" alt="" />
+                  </span>
+                  <span class="m-shop">Blooming Affairs Florist</span>
+                  <button class="m-icon-btn" aria-label="Switch view">
+                    <img src="asset/icons/switch.svg" alt="" />
+                  </button>
+                  <button class="m-icon-btn" aria-label="Notifications">
+                    <img src="asset/icons/notification.svg" alt="" />
+                  </button>
+                </div>
+              </header>
+
+              <div class="m-orders-search">
+                <div class="m-search-input">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7" stroke="#5c5c5c" stroke-width="2"/>
+                    <line x1="16.5" y1="16.5" x2="20.5" y2="20.5" stroke="#5c5c5c" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  <span class="m-search-placeholder">Search orders</span>
+                </div>
+                <button class="m-search-filter" aria-label="Filter">
+                  <img src="asset/icons/filter.svg" alt="" />
+                </button>
+              </div>
+
+              <div class="m-orders-table">
+                <div class="m-orders-header">
+                  <div class="m-col-time">Placed at</div>
+                  <div class="m-col-status">Status</div>
+                  <div class="m-col-total">Total / Tender</div>
+                  <div class="m-col-type">Order type</div>
+                  <div class="m-col-cust">Customer / Employee</div>
+                  <div class="m-col-id">ID / Notes</div>
+                </div>
+
+                <div class="m-orders-row m-orders-row--highlight">
+                  <div class="m-col-time"><span class="m-row-pri">11:46 AM</span><span class="m-row-sec">7/10/26</span></div>
+                  <div class="m-col-status"><span class="m-pill m-pill--paid">Paid</span></div>
+                  <div class="m-col-total"><span class="m-row-pri">$82.00</span><span class="m-row-sec">— —</span></div>
+                  <div class="m-col-type"><span class="m-row-pri">Gemini</span></div>
+                  <div class="m-col-cust"><span class="m-row-pri">Sam Lufton</span><span class="m-row-sec">Micheal</span></div>
+                  <div class="m-col-id"><span class="m-row-pri">1 item</span><span class="m-row-sec">Summer Fields B…</span></div>
+                </div>
+
+                <div class="m-orders-row">
+                  <div class="m-col-time"><span class="m-row-pri">11:12 AM</span><span class="m-row-sec">7/10/26</span></div>
+                  <div class="m-col-status"><span class="m-pill m-pill--open">Open</span></div>
+                  <div class="m-col-total"><span class="m-row-pri">$54.50</span><span class="m-row-sec">— —</span></div>
+                  <div class="m-col-type"><span class="m-row-pri">Phone</span></div>
+                  <div class="m-col-cust"><span class="m-row-pri">Andrea Mitchell</span><span class="m-row-sec">Micheal</span></div>
+                  <div class="m-col-id"><span class="m-row-pri">1 item</span><span class="m-row-sec">Garden Roses Bo…</span></div>
+                </div>
+
+                <div class="m-orders-row">
+                  <div class="m-col-time"><span class="m-row-pri">10:53 AM</span><span class="m-row-sec">7/10/26</span></div>
+                  <div class="m-col-status"><span class="m-pill m-pill--paid">Paid</span></div>
+                  <div class="m-col-total"><span class="m-row-pri">$643.50</span><span class="m-row-sec">— —</span></div>
+                  <div class="m-col-type"><span class="m-row-pri">Phone</span></div>
+                  <div class="m-col-cust"><span class="m-row-pri">Tamara Williams</span><span class="m-row-sec">Micheal</span></div>
+                  <div class="m-col-id"><span class="m-row-pri">10 items</span><span class="m-row-sec">Small Event Pack…</span></div>
+                </div>
+
+                <div class="m-orders-row">
+                  <div class="m-col-time"><span class="m-row-pri">10:35 AM</span><span class="m-row-sec">7/10/26</span></div>
+                  <div class="m-col-status"><span class="m-pill m-pill--partial">Partially Paid</span></div>
+                  <div class="m-col-total"><span class="m-row-pri">$192.35</span><span class="m-row-sec">— —</span></div>
+                  <div class="m-col-type"><span class="m-row-pri">Walk-In</span></div>
+                  <div class="m-col-cust"><span class="m-row-pri">Daniel Sutter</span><span class="m-row-sec">Micheal</span></div>
+                  <div class="m-col-id"><span class="m-row-pri">3 items</span><span class="m-row-sec">Custom Floral Arr…</span></div>
+                </div>
+
+                <div class="m-orders-row">
+                  <div class="m-col-time"><span class="m-row-pri">10:04 AM</span><span class="m-row-sec">7/10/26</span></div>
+                  <div class="m-col-status"><span class="m-pill m-pill--open">Open</span></div>
+                  <div class="m-col-total"><span class="m-row-pri">$82.21</span><span class="m-row-sec">— —</span></div>
+                  <div class="m-col-type"><span class="m-row-pri">Phone</span></div>
+                  <div class="m-col-cust"><span class="m-row-pri">Arturo Diaz</span><span class="m-row-sec">Ricky</span></div>
+                  <div class="m-col-id"><span class="m-row-pri">1 item</span><span class="m-row-sec">Summer Fields B…</span></div>
+                </div>
+
+                <div class="m-orders-row">
+                  <div class="m-col-time"><span class="m-row-pri">9:31 AM</span><span class="m-row-sec">7/10/26</span></div>
+                  <div class="m-col-status"><span class="m-pill m-pill--paid">Paid</span></div>
+                  <div class="m-col-total"><span class="m-row-pri">$125.50</span><span class="m-row-sec">Multiple</span></div>
+                  <div class="m-col-type"><span class="m-row-pri">Walk-In</span></div>
+                  <div class="m-col-cust"><span class="m-row-pri">— —</span><span class="m-row-sec">Ricky</span></div>
+                  <div class="m-col-id"><span class="m-row-pri">2 items</span><span class="m-row-sec">Sunflower Large …</span></div>
+                </div>
+              </div>
+
+            </main>
+          </div>
+
+          <!-- Scrim/overlay behind the drawer — fades in alongside it
+               to dim the rest of the merchant screen and pull focus to
+               the appointment request. -->
+          <div class="m-drawer-scrim" id="merchantDrawerScrim" aria-hidden="true"></div>
+
+          <!-- Right-side drawer ("Appointment Requests") — slides in
+               automatically once the merchant tablet finishes its
+               handoff. Mirrors Figma 40000731:13180. -->
+          <aside class="m-drawer" id="merchantDrawer" aria-hidden="true">
+            <header class="m-drawer-header">
+              <h2 class="m-drawer-title">Appointment Requests</h2>
+              <button class="m-drawer-close" aria-label="Close">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M6 6L18 18M18 6L6 18" stroke="#1f1f1f" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </header>
+            <div class="m-drawer-body">
+              <p class="m-drawer-eyebrow">New Appointment Request</p>
+              <p class="m-drawer-time">2:00pm</p>
+              <p class="m-drawer-customer">Sam Lufton</p>
+              <p class="m-drawer-service">The Classic</p>
+              <div class="m-drawer-actions">
+                <button class="m-drawer-btn m-drawer-btn-accept">Accept</button>
+                <button class="m-drawer-btn m-drawer-btn-reject">Reject</button>
+              </div>
+            </div>
+          </aside>
+
+        </div>
+      </div>
+    </div>
+    </div>
+    <!-- /.tablet-slot-merchant -->
+
+    </div>
+    <!-- /.tablet-stage -->
+  </div>
+
+  <!-- MapLibre + PMTiles for the intro map zoom. Loaded before the
+       inline scripts so the intro IIFE can construct the map
+       synchronously. Falls back to OpenFreeMap if local PMTiles are
+       missing — see the pickStyle() helper in the intro setup. -->
+  <script src="lib/maplibre-gl.js"></script>
+  <script src="lib/pmtiles.js"></script>
+
+  <script>
+    /* ---------- Intro map zoom on first paint ----------
+       Two-tap flow:
+         1. Page lands focused on the US, merchant dots pulsing.
+         2. First click anywhere → camera flies to Manhattan.
+         3. After the camera lands, a second click triggers the
+            `.is-zooming` → `.is-done` reveal of the merchant view,
+            mirroring the original SVG-stack behavior. While the
+            intro is on screen, `body.intro-active` keeps the
+            merchant modal's entrance animation paused. */
+    (function () {
+      const intro = document.getElementById('introStage');
+      const canvas = document.getElementById('introCanvas');
+      const mapEl = document.getElementById('introMap');
+      if (!intro || !canvas || !mapEl || !window.maplibregl) {
+        document.body.classList.remove('intro-active');
+        return;
+      }
+
+      // Fill the viewport with the fixed 1366x820 design canvas.
+      // max(sw/DW, sh/DH) guarantees the canvas always covers the
+      // viewport edge-to-edge — overflow on one axis is hidden by
+      // `.intro-stage { overflow: hidden }` so the user never sees
+      // a letterbox seam. Same scaler runs for the outro because the
+      // reverse rewinds against the same #introCanvas.
+      const INTRO_DW = 1366;
+      const INTRO_DH = 820;
+      function fitIntroCanvas() {
+        const sw = intro.clientWidth;
+        const sh = intro.clientHeight;
+        // While `.intro-stage.is-done` is hiding the intro the
+        // computed dimensions are 0 — bailing keeps the last good
+        // transform in place so the outro re-shows at the right size
+        // instead of getting clobbered to scale(0).
+        if (sw === 0 || sh === 0) return;
+        const scale = Math.max(sw / INTRO_DW, sh / INTRO_DH);
+        const offsetX = (sw - INTRO_DW * scale) / 2;
+        const offsetY = (sh - INTRO_DH * scale) / 2;
+        canvas.style.transform =
+          'translate(' + offsetX + 'px, ' + offsetY + 'px) scale(' + scale + ')';
+      }
+      fitIntroCanvas();
+      window.addEventListener('resize', fitIntroCanvas);
+
+      // Tries local PMTiles + offline style first; falls back to
+      // OpenFreeMap if any of the three files are missing. The
+      // initial style passed to the Map constructor has to be
+      // synchronous, so we start on OpenFreeMap and swap to the
+      // offline style as soon as we know it's available.
+      async function pickStyle() {
+        try {
+          const heads = await Promise.all([
+            fetch('./tiles/us-overview.pmtiles', { method: 'HEAD' }),
+            fetch('./tiles/nyc-metro.pmtiles',   { method: 'HEAD' }),
+            fetch('./offline/style.json',         { method: 'HEAD' }),
+          ]);
+          if (heads.every((r) => r.ok)) {
+            const protocol = new pmtiles.Protocol();
+            maplibregl.addProtocol('pmtiles', protocol.tile);
+            return './offline/style.json';
+          }
+        } catch {}
+        return 'https://tiles.openfreemap.org/styles/liberty';
+      }
+
+      const US_VIEW = { center: [-98.5, 39.8], zoom: 3.6 };
+      // Bounds for the Manhattan view — extended west into NJ
+      // (Newark edge) and east into Queens / Long Island.
+      const MANHATTAN_BOUNDS = [[-74.080, 40.660], [-73.830, 40.808]];
+      const MANHATTAN_PADDING = { top: 80, right: 30, bottom: 30, left: 30 };
+
+      const PALETTE = {
+        bg:     '#F9F9F9',
+        land:   '#F0F0F0',
+        stroke: '#C7C7C7',
+        text:   '#888888',
+        water:  '#FFFFFF',
+        green:  '#6BBD64',
+        greenWhite: '#FFFFFF',
+        grayRing:  '#FFFFFF',           /* white outline — clean ring against teal fill */
+      };
+
+      // Pre-compute the CSS upscale factor so MapLibre renders at a
+      // pixelRatio that bakes it in. The canvas otherwise renders at
+      // INTRO_DW × INTRO_DH × devicePixelRatio and gets stretched by
+      // CSS — visibly blurry on big monitors. Cap at 4 so very large
+      // displays don't tank initial paint perf.
+      const initialIntroScale = Math.max(
+        window.innerWidth  / INTRO_DW,
+        window.innerHeight / INTRO_DH,
+      );
+      const introPixelRatio = Math.min(
+        4,
+        (window.devicePixelRatio || 1) * Math.max(1, initialIntroScale),
+      );
+
+      const map = new maplibregl.Map({
+        container: 'introMap',
+        style: 'https://tiles.openfreemap.org/styles/liberty',
+        center: US_VIEW.center,
+        zoom: US_VIEW.zoom,
+        attributionControl: false,
+        // Disable all user input on the map so clicks bubble up to
+        // the intro-stage container handler — this is a presentation
+        // surface, not an interactive map.
+        interactive: false,
+        pixelRatio: introPixelRatio,
+      });
+
+      pickStyle().then((url) => {
+        if (url !== 'https://tiles.openfreemap.org/styles/liberty') {
+          map.setStyle(url);
+        }
+      });
+
+      map.addControl(new maplibregl.AttributionControl({ compact: true }));
+      map.on('load', () => {
+        const a = document.querySelector('#introMap .maplibregl-ctrl-attrib');
+        if (a) {
+          a.classList.add('maplibregl-compact');
+          a.classList.remove('maplibregl-compact-show');
+          a.removeAttribute('open');
+        }
+      });
+
+      function restyleToPalette() {
+        const layers = map.getStyle().layers || [];
+        for (const l of layers) {
+          const id = l.id;
+          const set = (prop, val) => { try { map.setPaintProperty(id, prop, val); } catch {} };
+          const setLayout = (prop, val) => { try { map.setLayoutProperty(id, prop, val); } catch {} };
+          if (l.type === 'background') {
+            set('background-color', PALETTE.bg);
+          } else if (l.type === 'fill') {
+            const isWater = /water|river|ocean|sea|lake|stream|pond/i.test(id) ||
+                            /water/i.test(l['source-layer'] || '');
+            set('fill-color', isWater ? PALETTE.water : PALETTE.land);
+            set('fill-outline-color', PALETTE.stroke);
+            set('fill-opacity', 1);
+            set('fill-antialias', true);
+            set('fill-pattern', null);
+          } else if (l.type === 'fill-extrusion') {
+            set('fill-extrusion-color', PALETTE.land);
+          } else if (l.type === 'line') {
+            set('line-color', PALETTE.stroke);
+            set('line-pattern', null);
+          } else if (l.type === 'symbol') {
+            const keepLabel = /^(label_country_\d+|label_state|label_city|label_city_capital|water_name_)/i.test(id);
+            if (!keepLabel) {
+              setLayout('visibility', 'none');
+            } else {
+              set('text-color', PALETTE.text);
+              set('text-halo-color', PALETTE.bg);
+              set('text-halo-width', 1.5);
+              set('icon-color', PALETTE.text);
+              set('icon-opacity', 0.6);
+            }
+          } else if (l.type === 'hillshade' || l.type === 'raster') {
+            setLayout('visibility', 'none');
+          }
+        }
+      }
+
+      // Number of distinct breath phases (each with its own profile).
+      const PHASE_COUNT = 4;
+
+      // Deterministic hash → phase. Uses Math.imul for 32-bit integer
+      // math (regular JS * loses precision beyond 2^53 and the low
+      // bits become zero).
+      function phaseHash(i, kind) {
+        let h = i + 1;
+        for (let k = 0; k < kind.length; k++) {
+          h = (Math.imul(h, 31) + kind.charCodeAt(k)) | 0;
+        }
+        h = Math.imul(h, 2654435761);
+        h = (h ^ (h >>> 16)) >>> 0;
+        return h % PHASE_COUNT;
+      }
+
+      // ---- Merchant dot data --------------------------------------
+      const US_METROS = [
+        ['New York',       -74.006,  40.713, 18.8],
+        ['Los Angeles',    -118.243, 34.052, 13.2],
+        ['Chicago',        -87.629,  41.878,  9.4],
+        ['Dallas',         -96.797,  32.776,  7.6],
+        ['Houston',        -95.369,  29.760,  7.1],
+        ['Washington DC',  -77.036,  38.895,  6.3],
+        ['Philadelphia',   -75.165,  39.952,  6.2],
+        ['Miami',          -80.191,  25.761,  6.1],
+        ['Atlanta',        -84.388,  33.749,  6.1],
+        ['Phoenix',        -112.074, 33.448,  5.0],
+        ['Boston',         -71.058,  42.360,  4.9],
+        ['San Francisco',  -122.419, 37.775,  9.5],
+        ['Detroit',        -83.046,  42.331,  4.4],
+        ['Seattle',        -122.332, 47.606,  4.0],
+        ['Minneapolis',    -93.265,  44.978,  3.7],
+        ['San Diego',      -117.161, 32.715,  3.3],
+        ['Tampa',          -82.458,  27.951,  3.3],
+        ['Denver',         -104.991, 39.739,  3.0],
+        ['St. Louis',      -90.199,  38.627,  2.8],
+        ['Baltimore',      -76.612,  39.290,  2.8],
+        ['Charlotte',      -80.843,  35.227,  2.7],
+        ['Orlando',        -81.379,  28.538,  2.7],
+        ['San Antonio',    -98.494,  29.424,  2.6],
+        ['Portland',       -122.679, 45.512,  2.5],
+        ['Pittsburgh',     -79.996,  40.441,  2.4],
+        ['Sacramento',     -121.494, 38.582,  2.4],
+        ['Las Vegas',      -115.139, 36.169,  2.3],
+        ['Cincinnati',     -84.512,  39.103,  2.2],
+        ['Kansas City',    -94.579,  39.099,  2.2],
+        ['Austin',         -97.743,  30.267,  2.2],
+        ['Indianapolis',   -86.158,  39.768,  2.1],
+        ['Cleveland',      -81.694,  41.500,  2.1],
+        ['Nashville',      -86.781,  36.162,  2.0],
+        ['Salt Lake City', -111.891, 40.760,  1.3],
+      ].map(([name, lng, lat, pop], i) => ({
+        type: 'Feature',
+        properties: { name, pop, kind: 'online', phase: phaseHash(i, 'us-online') },
+        geometry: { type: 'Point', coordinates: [lng, lat] },
+      }));
+
+      const US_RURAL = [
+        [-119.30, 41.50, 3], [-118.00, 39.00, 3.5], [-115.00, 38.50, 3],
+        [-115.50, 43.10, 4], [-114.00, 46.50, 3.5], [-110.93, 44.42, 4],
+        [-105.84, 45.30, 3.5], [-112.90, 38.20, 3], [-109.00, 37.00, 3],
+        [-108.40, 35.10, 4], [-106.00, 35.00, 4], [-104.50, 38.50, 3.5],
+        [-122.50, 41.50, 3.5], [-121.00, 36.00, 4],
+        [-103.20, 41.20, 3], [ -99.80, 41.50, 3.5], [-100.30, 44.50, 3.5],
+        [-101.20, 47.60, 3], [ -96.00, 43.20, 4], [ -94.20, 45.50, 4],
+        [ -91.50, 44.00, 4], [ -88.20, 46.00, 3.5], [ -83.50, 45.20, 4],
+        [ -86.50, 41.00, 4], [ -88.00, 40.00, 4], [ -94.30, 38.60, 4],
+        [ -98.50, 37.50, 3.5], [ -97.50, 35.10, 4.5], [ -91.80, 36.50, 4],
+        [ -95.50, 33.00, 4], [-102.00, 32.00, 3.5],
+        [ -90.40, 32.30, 4.5], [ -87.20, 32.80, 4], [ -85.50, 31.50, 4],
+        [ -83.20, 33.20, 4], [ -82.10, 30.40, 4], [ -81.50, 28.00, 4],
+        [ -85.00, 35.00, 4.5], [ -87.50, 36.50, 4], [ -83.00, 38.50, 4],
+        [ -78.60, 35.70, 4.5], [ -80.50, 36.00, 4], [ -80.90, 38.00, 4],
+        [ -79.50, 39.50, 4], [ -77.50, 41.50, 4], [ -78.00, 42.50, 4],
+        [ -75.50, 42.50, 4], [ -73.20, 43.80, 4], [ -71.50, 44.50, 4],
+        [ -69.50, 45.20, 4], [ -76.50, 38.00, 4],
+      ].map(([lng, lat, size], i) => ({
+        type: 'Feature',
+        properties: {
+          kind: 'offline',
+          size: size,
+          phase: phaseHash(i, 'us-offline'),
+          // Per-feature variance for the shadow burst so the wave
+          // doesn't read as a uniform robotic ripple. Range ~0.55-1.45.
+          burstScale: 0.55 + Math.random() * 0.9,
+        },
+        geometry: { type: 'Point', coordinates: [lng, lat] },
+      }));
+
+      const US_DOTS = { type: 'FeatureCollection', features: [...US_METROS, ...US_RURAL] };
+
+      const NYC_ONLINE = [
+        [-74.014, 40.706], [-74.010, 40.710], [-74.008, 40.718],
+        [-73.989, 40.718], [-73.991, 40.722],
+        [-74.001, 40.722], [-73.998, 40.724], [-74.003, 40.726],
+        [-73.984, 40.726], [-73.981, 40.731], [-73.986, 40.728],
+        [-73.993, 40.732], [-73.999, 40.732],
+        [-74.005, 40.737], [-74.001, 40.734], [-74.005, 40.731],
+        [-73.998, 40.742], [-74.003, 40.745], [-73.997, 40.748],
+        [-73.992, 40.749], [-73.985, 40.748], [-73.978, 40.749],
+        [-74.000, 40.756], [-73.994, 40.758], [-73.992, 40.763],
+        [-73.985, 40.758], [-73.978, 40.762], [-73.984, 40.768],
+        [-73.984, 40.773], [-73.977, 40.781], [-73.974, 40.788], [-73.978, 40.794],
+        [-73.962, 40.776], [-73.955, 40.785], [-73.949, 40.792],
+        [-73.948, 40.799], [-73.942, 40.806],
+        [-73.989, 40.703], [-73.999, 40.687], [-73.978, 40.677],
+        [-73.969, 40.677], [-73.974, 40.689], [-73.954, 40.687],
+        [-73.957, 40.715], [-73.962, 40.713], [-73.953, 40.717],
+        [-73.945, 40.715], [-73.949, 40.726], [-73.945, 40.728],
+        [-73.928, 40.694],
+        [-73.948, 40.748], [-73.946, 40.745], [-73.951, 40.741],
+        [-73.939, 40.764], [-73.918, 40.776], [-73.928, 40.745],
+        [-73.910, 40.769],
+        [-73.918, 40.808],
+        [-74.028, 40.744], [-74.030, 40.751], [-74.022, 40.770],
+        [-74.043, 40.717], [-74.040, 40.728], [-74.025, 40.762],
+        [-74.013, 40.788], [-74.020, 40.802], [-74.054, 40.731],
+        [-74.067, 40.722], [-74.063, 40.789], [-74.030, 40.776],
+        [-74.045, 40.745], [-74.060, 40.745],
+        [-73.943, 40.756], [-73.920, 40.745], [-73.901, 40.730],
+        [-73.885, 40.755], [-73.876, 40.737], [-73.860, 40.725],
+        [-73.847, 40.720], [-73.832, 40.762],
+      ].map(([lng, lat], i) => ({
+        type: 'Feature',
+        properties: { kind: 'online', phase: phaseHash(i, 'nyc-online') },
+        geometry: { type: 'Point', coordinates: [lng, lat] },
+      }));
+
+      const NYC_OFFLINE = [
+        [-74.011, 40.712], [-74.014, 40.708], [-74.000, 40.715],
+        [-73.993, 40.720], [-73.996, 40.717], [-73.987, 40.716],
+        [-73.984, 40.719], [-73.982, 40.721], [-73.985, 40.713], [-73.994, 40.713],
+        [-74.005, 40.728], [-73.997, 40.722], [-74.000, 40.726],
+        [-73.995, 40.731], [-73.991, 40.729],
+        [-73.988, 40.728], [-73.983, 40.724], [-73.979, 40.733],
+        [-73.984, 40.730], [-73.986, 40.733], [-73.978, 40.728],
+        [-73.987, 40.738], [-73.984, 40.744], [-73.990, 40.741], [-73.993, 40.745],
+        [-74.003, 40.739], [-74.006, 40.734], [-74.001, 40.736],
+        [-73.998, 40.735], [-74.007, 40.739],
+        [-74.005, 40.748], [-73.996, 40.743], [-74.001, 40.747], [-74.000, 40.745],
+        [-73.998, 40.752], [-73.995, 40.760], [-73.992, 40.755],
+        [-73.989, 40.760], [-73.987, 40.764],
+        [-73.978, 40.752], [-73.972, 40.755], [-73.978, 40.760],
+        [-73.978, 40.786], [-73.973, 40.793], [-73.984, 40.778],
+        [-73.963, 40.771], [-73.958, 40.779], [-73.953, 40.788],
+        [-73.953, 40.799], [-73.945, 40.802], [-73.940, 40.808],
+        [-73.951, 40.760],
+        [-74.016, 40.690],
+        [-73.994, 40.696], [-73.991, 40.703], [-73.996, 40.687],
+        [-73.985, 40.681], [-73.974, 40.673], [-73.972, 40.673],
+        [-73.978, 40.670], [-73.991, 40.674], [-73.984, 40.685],
+        [-73.964, 40.689], [-73.948, 40.687], [-73.962, 40.706],
+        [-73.965, 40.711], [-73.959, 40.713], [-73.964, 40.713],
+        [-73.945, 40.708], [-73.944, 40.696], [-73.926, 40.706],
+        [-73.930, 40.704], [-73.953, 40.732], [-73.948, 40.732],
+        [-73.947, 40.730],
+        [-73.954, 40.740], [-73.943, 40.755], [-73.939, 40.755],
+        [-73.929, 40.764], [-73.928, 40.770], [-73.918, 40.762],
+        [-73.927, 40.739],
+        [-73.917, 40.806],
+        [-74.029, 40.756], [-74.034, 40.738], [-74.029, 40.738],
+        [-74.032, 40.749], [-74.018, 40.776], [-74.026, 40.770],
+        [-74.016, 40.794], [-74.045, 40.734], [-74.039, 40.708],
+        [-74.051, 40.720], [-74.058, 40.722], [-74.061, 40.711],
+        [-74.072, 40.730], [-74.040, 40.760], [-74.035, 40.768],
+        [-74.060, 40.780], [-74.055, 40.798], [-74.050, 40.755],
+        [-74.025, 40.785],
+        [-73.946, 40.745], [-73.928, 40.749], [-73.917, 40.738],
+        [-73.905, 40.755], [-73.895, 40.742], [-73.880, 40.725],
+        [-73.865, 40.745], [-73.852, 40.735], [-73.840, 40.728],
+        [-73.835, 40.748],
+      ].map(([lng, lat], i) => ({
+        type: 'Feature',
+        properties: {
+          kind: 'offline',
+          phase: phaseHash(i, 'nyc-offline'),
+          // Per-feature variance for the shadow burst so the wave
+          // doesn't read as a uniform robotic ripple. Range ~0.55-1.45.
+          burstScale: 0.55 + Math.random() * 0.9,
+        },
+        geometry: { type: 'Point', coordinates: [lng, lat] },
+      }));
+
+      const NYC_DOTS = { type: 'FeatureCollection', features: [...NYC_ONLINE, ...NYC_OFFLINE] };
+
+      // Sequential reveal — stagger each NYC dot's appearance so
+      // they pop in one-by-one as the playZoom flyTo (US→Manhattan)
+      // dives in, rather than all fading in together. Order: closest
+      // to the focal merchant point first, then radiating outward.
+      //
+      // We can't express "per-feature opacity ramped by current
+      // camera zoom" inside MapLibre's interpolate (the validator
+      // rejects any non-trivial output expression when ['zoom'] is
+      // the input). So each NYC feature gets a precomputed
+      // `seqStartZoom`, the layer's `circle-opacity` just reads
+      // `appearOpacity` (purely data-driven), and a JS handler on
+      // map.on('zoom') updates each feature's `appearOpacity` then
+      // calls setData on the nyc-dots source to push the new values.
+      // Tighter than the original 0.6 so each NYC dot fades in
+      // faster, filling the visual gap between US fading out and
+      // NYC fully populated. With SEQ_Z_START/END below the whole
+      // wave now wraps up by zoom ≈ 8.7 instead of 9.4 — Manhattan
+      // arrives at zoom 9.4 with the dot field already complete.
+      const SEQ_FADE_BAND = 0.35;
+      (function () {
+        const focal = [-74.000, 40.726];  // matches PORTAL_LNGLAT
+        const ranked = NYC_DOTS.features.map((f) => {
+          const c = f.geometry.coordinates;
+          const dx = c[0] - focal[0], dy = c[1] - focal[1];
+          return { f, d: dx * dx + dy * dy };
+        });
+        ranked.sort((a, b) => a.d - b.d);
+        const N = ranked.length;
+        // First NYC dot starts fading in right when the US fade-out
+        // completes (FADE_HIGH = 7.8), so the big New York metro dot
+        // is fully gone before any of the smaller NYC dots become
+        // visible — no overlap during the handoff. Last dot starts
+        // at 8.8 and is fully in by 9.4 (Manhattan-fit zoom) with
+        // the 0.6 fade band.
+        // Last dot starts at 8.35 → fully visible by 8.7 (= start +
+        // SEQ_FADE_BAND). Camera arrives at Manhattan (zoom 9.4)
+        // with the entire dot field already lit, so there's no
+        // sparse "low-poly gap" between US fading out and NYC
+        // filling in.
+        const SEQ_Z_START = 7.8, SEQ_Z_END = 8.35;
+        ranked.forEach((entry, i) => {
+          const t = N === 1 ? 0 : i / (N - 1);
+          entry.f.properties.seqStartZoom = SEQ_Z_START + t * (SEQ_Z_END - SEQ_Z_START);
+          entry.f.properties.appearOpacity = 0;
+        });
+      })();
+      function nycSeqOpacity() {
+        // Fresh array each call (MapLibre may mutate shared
+        // expression arrays during layer validation).
+        // Multiplied by (1 - diveActive) so the focused merchant's
+        // underlying MapLibre dot disappears while the DOM portal
+        // overlays it during the forward dive. Without this you can
+        // see both a slightly-misaligned MapLibre circle AND the
+        // portal as two separate dots as the camera pans.
+        return ['*',
+          ['coalesce', ['get', 'appearOpacity'], 0],
+          ['-', 1, ['coalesce', ['get', 'diveActive'], 0]]];
+      }
+
+      // -------------------------------------------------------------
+
+      // US dots fade OUT over [FADE_LOW, FADE_HIGH]. Tight window so
+      // the big New York metro dot is gone BEFORE the NYC sequential
+      // dots start appearing — otherwise the large green blob and
+      // the smaller dots overlap in the same patch of map, which
+      // reads as a messy crossfade.
+      const FADE_LOW = 7.0, FADE_HIGH = 7.8;
+      const US_ONLINE_RADIUS = [
+        'interpolate', ['linear'], ['get', 'pop'],
+        1.0, 5, 5.0, 8, 10.0, 12, 18.8, 16,
+      ];
+      const US_OFFLINE_RADIUS  = ['coalesce', ['get', 'size'], 3.5];
+      // Manhattan dots — online and offline render at the same size so
+      // the visual difference between the two states reads purely as a
+      // color difference, not a size difference.
+      const NYC_ONLINE_RADIUS  = 5.5;
+      const NYC_OFFLINE_RADIUS = 5.5;
+
+      function addDotLayers() {
+        if (!map.getSource('us-dots')) {
+          map.addSource('us-dots',  { type: 'geojson', data: US_DOTS });
+          map.addSource('nyc-dots', { type: 'geojson', data: NYC_DOTS });
+        }
+
+        const PHASES = Array.from({ length: PHASE_COUNT }, (_, i) => i);
+        const SHADOW_SCALE = 1.6;
+        const makeFilter = (kind, ph) =>
+          ['all', ['==', ['get', 'kind'], kind], ['==', ['get', 'phase'], ph]];
+
+        // Peak the shadow radius + color mid-transition so the
+        // offline → online flip reads as a prominent "burst" instead
+        // of a silent fill swap. Radius arcs 1.6× → 9.0× → 2.0× of
+        // the base dot, color punches to a saturated bright green at
+        // the peak before settling. The asymmetric peak (0.45) makes
+        // the wave-front feel like it's pushing outward as each dot
+        // flips.
+        const SHADOW_BURST_PEAK = 9.0;
+        const SHADOW_SETTLED    = 2.0;
+        for (const ph of PHASES) {
+          map.addLayer({
+            id: `us-offline-${ph}-shadow`, type: 'circle', source: 'us-dots',
+            filter: makeFilter('offline', ph),
+            paint: {
+              'circle-radius': ['*', US_OFFLINE_RADIUS,
+                ['interpolate', ['linear'],
+                  ['coalesce', ['get', 'greenT'], 0],
+                  0,    SHADOW_SCALE,
+                  0.45, SHADOW_BURST_PEAK,
+                  1,    SHADOW_SETTLED]],
+              'circle-color': ['interpolate', ['linear'],
+                ['coalesce', ['get', 'greenT'], 0],
+                0,    'rgba(40, 98, 113, 0.32)',    /* teal #286271, matches dot fill */
+                0.45, 'rgba(118, 170, 130, 0.24)',  /* desaturated muted peak */
+                1,    'rgba(34, 108, 50, 0.18)'],
+              'circle-blur': 0.5,
+              'circle-opacity': ['interpolate', ['linear'], ['zoom'], FADE_LOW, 1, FADE_HIGH, 0],
+            },
+          });
+          map.addLayer({
+            id: `us-online-${ph}-shadow`, type: 'circle', source: 'us-dots',
+            filter: makeFilter('online', ph),
+            paint: {
+              'circle-radius': ['interpolate', ['linear'], ['get', 'pop'],
+                1.0,  5 * SHADOW_SCALE, 5.0,  8 * SHADOW_SCALE,
+                10.0, 12 * SHADOW_SCALE, 18.8, 16 * SHADOW_SCALE],
+              'circle-color': 'rgba(34, 108, 50, 0.18)',
+              'circle-blur': 0.5,
+              'circle-opacity': ['interpolate', ['linear'], ['zoom'], FADE_LOW, 1, FADE_HIGH, 0],
+            },
+          });
+          map.addLayer({
+            id: `nyc-offline-${ph}-shadow`, type: 'circle', source: 'nyc-dots',
+            filter: makeFilter('offline', ph),
+            paint: {
+              'circle-radius': ['interpolate', ['linear'],
+                ['coalesce', ['get', 'greenT'], 0],
+                0,    NYC_OFFLINE_RADIUS * SHADOW_SCALE,
+                0.45, NYC_OFFLINE_RADIUS * SHADOW_BURST_PEAK,
+                1,    NYC_OFFLINE_RADIUS * SHADOW_SETTLED],
+              'circle-color': ['interpolate', ['linear'],
+                ['coalesce', ['get', 'greenT'], 0],
+                0,    'rgba(40, 98, 113, 0.34)',    /* teal #286271, matches dot fill */
+                0.45, 'rgba(118, 170, 130, 0.26)',  /* desaturated muted peak */
+                1,    'rgba(34, 108, 50, 0.20)'],
+              'circle-blur': 0.5,
+              'circle-opacity': nycSeqOpacity(),
+            },
+          });
+          map.addLayer({
+            id: `nyc-online-${ph}-shadow`, type: 'circle', source: 'nyc-dots',
+            filter: makeFilter('online', ph),
+            paint: {
+              'circle-radius': NYC_ONLINE_RADIUS * SHADOW_SCALE,
+              'circle-color': 'rgba(34, 108, 50, 0.20)',
+              'circle-blur': 0.5,
+              'circle-opacity': nycSeqOpacity(),
+            },
+          });
+        }
+
+        for (const ph of PHASES) {
+          map.addLayer({
+            id: `us-offline-${ph}`, type: 'circle', source: 'us-dots',
+            filter: makeFilter('offline', ph),
+            paint: {
+              'circle-radius': US_OFFLINE_RADIUS,
+              'circle-color': ['interpolate', ['linear'],
+                ['coalesce', ['get', 'greenT'], 0],
+                0, '#286271', 1, PALETTE.green],
+              'circle-stroke-color': ['interpolate', ['linear'],
+                ['coalesce', ['get', 'greenT'], 0],
+                0, PALETTE.grayRing, 1, PALETTE.greenWhite],
+              'circle-stroke-width': 1.5,
+              'circle-opacity':        ['interpolate', ['linear'], ['zoom'], FADE_LOW, 1, FADE_HIGH, 0],
+              'circle-stroke-opacity': ['interpolate', ['linear'], ['zoom'], FADE_LOW, 1, FADE_HIGH, 0],
+            },
+          });
+          map.addLayer({
+            id: `us-online-${ph}`, type: 'circle', source: 'us-dots',
+            filter: makeFilter('online', ph),
+            paint: {
+              'circle-radius': US_ONLINE_RADIUS,
+              'circle-color': PALETTE.green,
+              'circle-stroke-color': PALETTE.greenWhite,
+              'circle-stroke-width': 1.5,
+              'circle-opacity':        ['interpolate', ['linear'], ['zoom'], FADE_LOW, 1, FADE_HIGH, 0],
+              'circle-stroke-opacity': ['interpolate', ['linear'], ['zoom'], FADE_LOW, 1, FADE_HIGH, 0],
+            },
+          });
+          map.addLayer({
+            id: `nyc-offline-${ph}`, type: 'circle', source: 'nyc-dots',
+            filter: makeFilter('offline', ph),
+            paint: {
+              'circle-radius': NYC_OFFLINE_RADIUS,
+              'circle-color': ['interpolate', ['linear'],
+                ['coalesce', ['get', 'greenT'], 0],
+                0, '#286271', 1, PALETTE.green],
+              'circle-stroke-color': ['interpolate', ['linear'],
+                ['coalesce', ['get', 'greenT'], 0],
+                0, PALETTE.grayRing, 1, PALETTE.greenWhite],
+              'circle-stroke-width': 1.5,
+              'circle-opacity':        nycSeqOpacity(),
+              'circle-stroke-opacity': nycSeqOpacity(),
+            },
+          });
+          map.addLayer({
+            id: `nyc-online-${ph}`, type: 'circle', source: 'nyc-dots',
+            filter: makeFilter('online', ph),
+            paint: {
+              'circle-radius': NYC_ONLINE_RADIUS,
+              'circle-color': PALETTE.green,
+              'circle-stroke-color': PALETTE.greenWhite,
+              'circle-stroke-width': 1.5,
+              'circle-opacity':        nycSeqOpacity(),
+              'circle-stroke-opacity': nycSeqOpacity(),
+            },
+          });
+        }
+
+        startPulse();
+        // Drive the per-feature `appearOpacity` from the current
+        // camera zoom and push it to the source. Runs on every
+        // 'zoom' event during the playZoom dive (US→Manhattan) so
+        // the NYC dots fade in one-by-one as the camera approaches.
+        map.on('zoom', updateNycSeqOpacity);
+        updateNycSeqOpacity();
+      }
+
+      function updateNycSeqOpacity() {
+        const z = map.getZoom();
+        let changed = false;
+        for (const f of NYC_DOTS.features) {
+          const seqStart = f.properties.seqStartZoom;
+          if (seqStart === undefined) continue;
+          const newOp = Math.max(0, Math.min(1, (z - seqStart) / SEQ_FADE_BAND));
+          if (Math.abs((f.properties.appearOpacity || 0) - newOp) > 0.005) {
+            f.properties.appearOpacity = newOp;
+            changed = true;
+          }
+        }
+        if (changed && map.getSource('nyc-dots')) {
+          map.getSource('nyc-dots').setData(NYC_DOTS);
+        }
+      }
+
+      // Continuous easing pulse — cosine ease-in-out, no spring
+      // overshoot. Each phase has its own period and peak amplitude;
+      // different periods mean the four groups drift in and out of
+      // sync naturally.
+      function easedScaleAt(timeMs, profile) {
+        const { period, peak } = profile;
+        const A = peak - 1;
+        const phase = (((timeMs % period) + period) % period) / period;
+        return 1 + A * 0.5 * (1 - Math.cos(2 * Math.PI * phase));
+      }
+
+      const SPRING_PROFILES = [
+        { period: 2400, peak: 1.045, offset:    0 },
+        { period: 1900, peak: 1.065, offset:  500 },
+        { period: 2700, peak: 1.035, offset: 1100 },
+        { period: 2100, peak: 1.055, offset: 1700 },
+      ];
+
+      function radiusForKind(kind, scale) {
+        switch (kind) {
+          case 'us-online':
+            return ['interpolate', ['linear'], ['get', 'pop'],
+              1.0, 5 * scale, 5.0, 8 * scale, 10.0, 12 * scale, 18.8, 16 * scale];
+          case 'us-offline':
+            return ['*', ['coalesce', ['get', 'size'], 3.5], scale];
+          case 'nyc-online':
+            return NYC_ONLINE_RADIUS * scale;
+          case 'nyc-offline':
+            return NYC_OFFLINE_RADIUS * scale;
+        }
+      }
+
+      const SHADOW_SCALE_RUNTIME = 1.6;
+      // Offline-only burst: when greenT is mid-transition the shadow
+      // radius multiplies up to SHADOW_BURST_PEAK then settles back to
+      // SHADOW_SETTLED_RUNTIME at greenT=1. Online shadows stay at
+      // SHADOW_SCALE_RUNTIME (no transition for them). Tuned for a
+      // premium / restrained feel — a soft, slow swell instead of a
+      // hard burst.
+      const SHADOW_BURST_PEAK_RUNTIME = 3.8;
+      const SHADOW_SETTLED_RUNTIME    = 1.8;
+      function shadowRadiusForKind(kind, scale) {
+        if (kind === 'us-offline' || kind === 'nyc-offline') {
+          // Burst peak gets a per-feature multiplier so the wave
+          // breathes unevenly across the field instead of every dot
+          // blooming to the same size at the same moment.
+          return ['*',
+            radiusForKind(kind, scale),
+            ['interpolate', ['linear'],
+              ['coalesce', ['get', 'greenT'], 0],
+              0,    SHADOW_SCALE_RUNTIME,
+              0.45, ['*', SHADOW_BURST_PEAK_RUNTIME,
+                          ['coalesce', ['get', 'burstScale'], 1]],
+              1,    SHADOW_SETTLED_RUNTIME]];
+        }
+        return radiusForKind(kind, scale * SHADOW_SCALE_RUNTIME);
+      }
+
+      const pulseTimers = [];
+      function startPulse() {
+        const kinds = ['us-online', 'us-offline', 'nyc-online', 'nyc-offline'];
+        pulseTimers.forEach((t) => clearInterval(t));
+        pulseTimers.length = 0;
+        const TICK_MS = 50;
+        for (const k of kinds) {
+          for (let ph = 0; ph < SPRING_PROFILES.length; ph++) {
+            for (const lid of [`${k}-${ph}`, `${k}-${ph}-shadow`]) {
+              if (!map.getLayer(lid)) continue;
+              try {
+                map.setPaintProperty(lid, 'circle-radius-transition', {
+                  duration: TICK_MS, delay: 0,
+                });
+              } catch {}
+            }
+          }
+        }
+        const start = performance.now();
+        const tick = () => {
+          const now = performance.now() - start;
+          for (let ph = 0; ph < SPRING_PROFILES.length; ph++) {
+            const cfg = SPRING_PROFILES[ph];
+            const scale = easedScaleAt(now + cfg.offset, cfg);
+            for (const k of kinds) {
+              const id = `${k}-${ph}`;
+              const sid = `${id}-shadow`;
+              if (map.getLayer(id)) {
+                map.setPaintProperty(id, 'circle-radius', radiusForKind(k, scale));
+              }
+              if (map.getLayer(sid)) {
+                map.setPaintProperty(sid, 'circle-radius', shadowRadiusForKind(k, scale));
+              }
+            }
+          }
+        };
+        tick();
+        pulseTimers.push(setInterval(tick, TICK_MS));
+      }
+
+      map.on('style.load', () => {
+        restyleToPalette();
+        addDotLayers();
+        // Pre-warm the tile cache for the mid-zoom range that the
+        // US→Manhattan flyTo passes through (5-10). Without this the
+        // fast flyTo races ahead of tile fetches and the middle of
+        // the dive renders as overzoomed lower-zoom tiles (blurry).
+        // We touch each intermediate zoom by issuing a brief
+        // `jumpTo`, then immediately return to US_VIEW. Multiple
+        // synchronous jumps coalesce into a single paint of the
+        // final state, so the user only ever sees the US view —
+        // but every intermediate camera state queues its tile
+        // fetches with MapLibre's SourceCache, populating the cache
+        // before the user triggers the actual dive.
+        preloadDiveTiles();
+      });
+
+      function preloadDiveTiles() {
+        // Sample positions along the great-circle path from US center
+        // to NYC at zoom levels 5, 7, 9, 11 — covers the gap between
+        // the start zoom (3.6) and the Manhattan-fit end zoom.
+        const stops = [
+          { center: [-92, 39.5],    zoom: 5  },
+          { center: [-85, 40   ],   zoom: 7  },
+          { center: [-78, 40.5 ],   zoom: 9  },
+          { center: PORTAL_LNGLAT,  zoom: 11 },
+        ];
+        for (const s of stops) {
+          map.jumpTo({ center: s.center, zoom: s.zoom });
+        }
+        // Return to US_VIEW so the user sees the framed-US start
+        // state. Final jumpTo of the synchronous batch wins; the
+        // intermediate zooms only get queued for tile loading.
+        map.jumpTo({ center: US_VIEW.center, zoom: US_VIEW.zoom });
+      }
+
+      // ---- Click flow --------------------------------------------
+      // State machine:
+      //   'idle'    — page loaded, US framed. First click flies in.
+      //   'zooming' — flyTo in progress. Clicks ignored.
+      //   'arrived' — camera landed in Manhattan. Next click reveals.
+      //   'done'    — reveal in progress / complete.
+      let state = 'idle';
+
+      function playZoom() {
+        const cam = map.cameraForBounds(MANHATTAN_BOUNDS, { padding: MANHATTAN_PADDING });
+        // Flatter zoom curve (0.9 instead of 1.3) keeps the camera
+        // from arcing out into a very-wide mid-zoom view, so the
+        // dive moves more directly through the sparse zoom range
+        // (5-8) where neither US nor NYC dots are dense yet.
+        map.flyTo({
+          center: cam.center,
+          zoom: cam.zoom,
+          bearing: cam.bearing || 0,
+          speed: 1.4,
+          curve: 0.9,
+          essential: true,
+        });
+        map.once('moveend', () => { state = 'arrived'; });
+      }
+
+      // A specific NYC offline (white) merchant — must match a real
+      // entry in NYC_OFFLINE so the portal lands directly on a
+      // visible dot when it pops in. Picked near the center of
+      // lower Manhattan island (around SoHo) so the camera has a
+      // clean pan target before it begins zooming.
+      const PORTAL_LNGLAT = [-74.000, 40.726];
+
+      // Two-phase camera motion so the user can follow what's
+      // happening: pan first to put the dot in the center of the
+      // frame (while expanding-shadow halos highlight it as the
+      // selected merchant), then zoom in on it. Pan is linear; the
+      // zoom phase applies a cubic ease-in so the camera ramps up
+      // gradually and the dot only expands quickly in the final
+      // moments before the recede takes over. The recede itself
+      // continues to expand the dot another ~4× while the stage
+      // fades — keeps the "explosion outward" momentum instead of
+      // freezing the dot mid-flight.
+      const PAN_DURATION_MS    = 1200;
+      const ZOOM_DURATION_MS   = 1600;
+      const RECEDE_DURATION_MS = 780;
+      const RECEDE_DOT_GROWTH  = 4;
+      // Final zoom is high enough that the dot (scaled at
+      // 2^(zoom-baseZoom) above its starting size) overflows the
+      // viewport with margin before phase 3 starts.
+      const FINAL_ZOOM = 17.2;
+
+      // Portal sizing — display diameter at dotMul = 1 (a normal
+      // offline merchant dot on the map). JS multiplies this by
+      // dotMul (=2^Δzoom) to grow the dot in lockstep with the
+      // camera zoom, animating CSS width/height directly so the
+      // border stays a pixel-perfect 1 CSS px at any size.
+      const PORTAL_DISPLAY_PX = 12;
+
+      // Selection halos — staggered soft-shadow rings that expand
+      // outward from the portal during the pan AND the dive. Each
+      // halo loops with HALO_DURATION_MS per cycle, offset by
+      // HALO_STAGGER_MS so one ring is always growing while the
+      // previous one fades, giving a continuous "ripples emanating
+      // from the dot" feel. The current ring size is driven by
+      // `haloMetrics(dotMul)`: subtle when the dot is small, much
+      // bigger during the expansion, then fading out before the
+      // dot itself dominates the viewport.
+      const HALO_DURATION_MS   = 950;
+      const HALO_STAGGER_MS    = 475;
+      const HALO_SPREAD_BASE   = 16;     // CSS px at dotMul=1 (subtle)
+      const HALO_SPREAD_PER    = 26;     // additional spread per extra dotMul
+      const HALO_SPREAD_CAP    = 900;    // hard ceiling so it doesn't fly off
+      const HALO_ALPHA_BASE    = 0.26;   // subtle at rest
+      const HALO_ALPHA_PER     = 0.014;
+      const HALO_ALPHA_CAP     = 0.48;
+      // Fade range — by dotMul = HALO_FADE_END the halos are gone,
+      // letting the expanding portal own the frame.
+      const HALO_FADE_START    = 22;
+      const HALO_FADE_END      = 50;
+
+      function haloMetrics(dotMul) {
+        const rawSpread = HALO_SPREAD_BASE + Math.max(0, dotMul - 1) * HALO_SPREAD_PER;
+        const maxSpread = Math.min(HALO_SPREAD_CAP, rawSpread);
+        const rawAlpha  = HALO_ALPHA_BASE + Math.max(0, dotMul - 1) * HALO_ALPHA_PER;
+        const baseAlpha = Math.min(HALO_ALPHA_CAP, rawAlpha);
+        const fade = Math.max(0, Math.min(1,
+          (HALO_FADE_END - dotMul) / (HALO_FADE_END - HALO_FADE_START)));
+        return { maxSpread, alpha: baseAlpha * fade, active: fade > 0 };
+      }
+
+      // Snapshot of the camera state at the moment the forward
+      // reveal began — used by the reverse outro to lerp back to
+      // the exact frame the user started from. Populated in
+      // reveal(); null until then so runReverse() can no-op.
+      let cameraSnapshot = null;
+
+      function lerp(a, b, t) { return a + (b - a) * t; }
+
+      function reveal() {
+        const portal = document.getElementById('introPortal');
+        if (!portal) return;
+        const haloEls = Array.from(intro.querySelectorAll('.intro-portal-halo'));
+
+        // Capture the camera state at the moment the dive begins —
+        // these become the lerp anchors driven by the spring `x`,
+        // and the reverse outro lerps back to them.
+        const baseZoom    = map.getZoom();
+        const startLng    = map.getCenter().lng;
+        const startLat    = map.getCenter().lat;
+        const targetLng   = PORTAL_LNGLAT[0];
+        const targetLat   = PORTAL_LNGLAT[1];
+        cameraSnapshot = { baseZoom, startLng, startLat, targetLng, targetLat };
+
+        // Hide the MapLibre-rendered dot at PORTAL_LNGLAT while the
+        // DOM portal overlays the same position — otherwise the two
+        // can drift by sub-pixel amounts during the pan and read as
+        // two separate dots. The opacity expression in nycSeqOpacity
+        // reads `diveActive` and forces opacity to 0 when it's 1.
+        const portalDiveFeature = findPortalFeature();
+        if (portalDiveFeature) {
+          portalDiveFeature.properties.diveActive = 1;
+          map.getSource('nyc-dots').setData(NYC_DOTS);
+        }
+
+        // Pre-position the portal AND the halos at the target's
+        // currently-projected pixel BEFORE flipping `.is-zooming`
+        // (which sets opacity to 1 instantly). Without this both the
+        // dot and the halos pop in at canvas (0, 0) for one frame
+        // before the first rAF moves them — reading as "the dot
+        // didn't follow the camera and jumped to center."
+        const p0 = map.project([PORTAL_LNGLAT[0], PORTAL_LNGLAT[1]]);
+        portal.style.width  = PORTAL_DISPLAY_PX + 'px';
+        portal.style.height = PORTAL_DISPLAY_PX + 'px';
+        portal.style.left   = p0.x + 'px';
+        portal.style.top    = p0.y + 'px';
+        for (const haloEl of haloEls) {
+          haloEl.style.marginLeft = '0';
+          haloEl.style.left = p0.x + 'px';
+          haloEl.style.top  = p0.y + 'px';
+        }
+
+        // Show the portal in place — opacity flips instantly but the
+        // dot + halos are already at the right pixel from the lines
+        // above, so there's no first-frame jump.
+        intro.classList.add('is-zooming');
+
+        const startT = performance.now();
+        let recedeStarted     = false;
+        let recedeStartT      = 0;    // elapsed time at the moment recede began
+        let recedeStartDotMul = 1;    // dot multiplier at that moment
+
+        function startRecede(currentElapsed, currentDotMul) {
+          if (recedeStarted) return;
+          recedeStarted     = true;
+          recedeStartT      = currentElapsed;
+          recedeStartDotMul = currentDotMul;
+          intro.classList.add('is-receding');
+          // After the recede transition completes, hide the stage,
+          // stop the dot-pulse rAF, AND release the merchant modal
+          // so its entrance animation begins on a clean slate —
+          // the modal slides up *after* the intro is gone, never
+          // overlapping with the fade.
+          setTimeout(() => {
+            intro.classList.add('is-done');
+            pulseTimers.forEach((t) => clearInterval(t));
+            pulseTimers.length = 0;
+            document.body.classList.remove('intro-active');
+            // Restore the underlying MapLibre dot so the outro can
+            // show it again (the reverse lerps its greenT 1 → 0).
+            if (portalDiveFeature) {
+              portalDiveFeature.properties.diveActive = 0;
+              map.getSource('nyc-dots').setData(NYC_DOTS);
+            }
+          }, RECEDE_DURATION_MS);
+        }
+
+        function frame(t) {
+          const elapsed = t - startT;
+
+          // Resolve the camera state for the current frame based on
+          // which phase we're in. Linear interpolation through the
+          // pan, cubic ease-in on the zoom, then a continued
+          // ease-out expansion of the dot through the recede so
+          // the white field still feels like an explosion outward
+          // while the stage fades behind it.
+          let zoom, lng, lat, dotMul;
+          if (recedeStarted) {
+            // Phase C — continue expanding. Camera is locked at
+            // FINAL_ZOOM (the map underneath stops moving) but the
+            // dot's CSS width/height keeps growing toward
+            // recedeStartDotMul × RECEDE_DOT_GROWTH. Ease-out so
+            // the burst is fast at the hand-off and decelerates as
+            // the stage fades to merchant.
+            const rc = Math.min(1, (elapsed - recedeStartT) / RECEDE_DURATION_MS);
+            const r_eased = 1 - Math.pow(1 - rc, 2);
+            const endDotMul = recedeStartDotMul * RECEDE_DOT_GROWTH;
+            dotMul = lerp(recedeStartDotMul, endDotMul, r_eased);
+            zoom = FINAL_ZOOM;
+            lng  = targetLng;
+            lat  = targetLat;
+          } else if (elapsed < PAN_DURATION_MS) {
+            // Phase A — pan. Hold zoom, slide the camera over so
+            // the target dot ends up in the center of the frame.
+            // Smoothstep (S-curve) so the camera eases in *and* out:
+            // slow at the start, fast through the middle, gentle into
+            // the target. Important for sync with the DOM portal —
+            // MapLibre's WebGL paint runs one rAF tick after our
+            // jumpTo, so any frame with large camera velocity makes
+            // the portal appear to lead the rendered map by a few px.
+            // Slow start + slow end keeps that offset small and
+            // visually negligible at the moments the eye is most
+            // likely to notice (start and end of the pan).
+            const xLin = elapsed / PAN_DURATION_MS;
+            const x = xLin * xLin * (3 - 2 * xLin);
+            zoom = baseZoom;
+            lng  = lerp(startLng, targetLng, x);
+            lat  = lerp(startLat, targetLat, x);
+            dotMul = 1;
+          } else if (elapsed < PAN_DURATION_MS + ZOOM_DURATION_MS) {
+            // Phase B — zoom. Camera is locked on the dot's lng/lat;
+            // zoom interpolates from base to final with a cubic
+            // ease-in. The slow start gives the user time to lock
+            // on to the dot before the camera commits; the steep
+            // end produces the "snap in and expand" feel. Because
+            // scale = 2^Δzoom, the eased zoom turns into a very
+            // sharp burst of dot growth right before phase C.
+            const x_linear = (elapsed - PAN_DURATION_MS) / ZOOM_DURATION_MS;
+            const x = x_linear * x_linear * x_linear;
+            zoom = lerp(baseZoom, FINAL_ZOOM, x);
+            lng  = targetLng;
+            lat  = targetLat;
+            dotMul = Math.pow(2, zoom - baseZoom);
+          } else {
+            zoom = FINAL_ZOOM;
+            lng  = targetLng;
+            lat  = targetLat;
+            dotMul = Math.pow(2, FINAL_ZOOM - baseZoom);
+          }
+
+          // Project the target BEFORE we mutate the camera so the
+          // portal's screen position lines up with what MapLibre is
+          // currently painting. MapLibre's WebGL repaint runs one
+          // animation-frame tick after a `jumpTo`, so projecting
+          // post-jumpTo puts the portal at the camera state that will
+          // be painted NEXT frame — i.e. one frame ahead of the map.
+          // During fast pans this reads as the dot "shifting right
+          // and coming back" as the map catches up. Project first,
+          // then jumpTo, and both stay in sync.
+          const p = map.project([targetLng, targetLat]);
+
+          map.jumpTo({ center: [lng, lat], zoom });
+
+          // Drive width/height/left/top directly (not transform:
+          // scale) so the browser re-renders the 1 px border at
+          // each frame — no rasterized bitmap getting stretched,
+          // no saw-tooth aliasing on the circle edge.
+          const sizePx = PORTAL_DISPLAY_PX * dotMul;
+          portal.style.width  = sizePx + 'px';
+          portal.style.height = sizePx + 'px';
+          portal.style.left   = p.x + 'px';
+          portal.style.top    = p.y + 'px';
+
+          // Selection halos — looping shadow rings that highlight
+          // the focused merchant during the pan AND the dive. Size
+          // and alpha scale with dotMul so they're subtle at rest
+          // and grow with the expansion; they fade out before the
+          // expanding portal would visually swallow them. Always
+          // hidden during the recede — the dot itself is now the
+          // visual story.
+          const halo = haloMetrics(dotMul);
+          for (let i = 0; i < haloEls.length; i++) {
+            const haloEl = haloEls[i];
+            const offset = i * HALO_STAGGER_MS;
+            if (!recedeStarted && elapsed >= offset && halo.active) {
+              const localT = ((elapsed - offset) % HALO_DURATION_MS) / HALO_DURATION_MS;
+              const spread = localT * halo.maxSpread;
+              const blur   = spread * 0.7;
+              const alpha  = halo.alpha * (1 - localT);
+              haloEl.style.marginLeft = '0';
+              haloEl.style.left = p.x + 'px';
+              haloEl.style.top  = p.y + 'px';
+              haloEl.style.boxShadow =
+                `0 0 ${blur}px ${spread}px rgba(40, 98, 113, ${alpha})`;
+            } else {
+              haloEl.style.boxShadow = 'none';
+            }
+          }
+
+          // Phase 3 trigger — once the white covers ~75% of the
+          // design canvas's largest dimension, hand off to the recede
+          // (white field fades + slight squash overshoot reveals
+          // the merchant view underneath). The recede then keeps
+          // expanding the dot for another RECEDE_DURATION_MS so
+          // the explosion outward doesn't stall.
+          const dotDiameterPx = PORTAL_DISPLAY_PX * dotMul;
+          if (!recedeStarted && dotDiameterPx >= Math.max(INTRO_DW, INTRO_DH) * 0.75) {
+            startRecede(elapsed, dotMul);
+          } else if (!recedeStarted &&
+                     elapsed >= PAN_DURATION_MS + ZOOM_DURATION_MS) {
+            // Pan+zoom completed without the dot crossing the fill
+            // threshold (shouldn't happen with FINAL_ZOOM = 17.2,
+            // but guard so the demo doesn't soft-lock).
+            startRecede(elapsed, dotMul);
+          }
+
+          // Continue the rAF — through the recede as well, so the
+          // dot keeps expanding during the fade. Stops once the
+          // recede transition completes.
+          if (recedeStarted) {
+            if (elapsed - recedeStartT < RECEDE_DURATION_MS) {
+              requestAnimationFrame(frame);
+            }
+          } else {
+            requestAnimationFrame(frame);
+          }
+        }
+
+        requestAnimationFrame(frame);
+      }
+
+      function handleClick(ev) {
+        ev.stopPropagation();
+        ev.preventDefault();
+        if (state === 'idle') {
+          state = 'zooming';
+          playZoom();
+        } else if (state === 'arrived') {
+          state = 'done';
+          reveal();
+        }
+      }
+      intro.addEventListener('click', handleClick, { capture: true });
+
+      // Constants for the outro's later phases.
+      const NYC_WAVE_MS      = 4400;   // NYC offline dots → green (premium pace)
+      const US_WAVE_MS       = 5200;   // US offline dots → green (premium pace)
+      const GREEN_FADE_MS    = 1100;   // each dot's own fade duration (premium pace)
+
+      // Find the underlying merchant feature at PORTAL_LNGLAT once so
+      // we can drive its greenT alongside the portal element.
+      function findPortalFeature() {
+        return NYC_DOTS.features.find(f => {
+          const c = f.geometry.coordinates;
+          return f.properties.kind === 'offline' &&
+                 Math.abs(c[0] - PORTAL_LNGLAT[0]) < 1e-9 &&
+                 Math.abs(c[1] - PORTAL_LNGLAT[1]) < 1e-9;
+        }) || null;
+      }
+
+      // RGB-channel lerp for portal background/border styling.
+      function lerpHex(a, b, t) {
+        const pa = [parseInt(a.slice(1,3),16), parseInt(a.slice(3,5),16), parseInt(a.slice(5,7),16)];
+        const pb = [parseInt(b.slice(1,3),16), parseInt(b.slice(3,5),16), parseInt(b.slice(5,7),16)];
+        const r = Math.round(pa[0] + (pb[0]-pa[0]) * t);
+        const g = Math.round(pa[1] + (pb[1]-pa[1]) * t);
+        const bch = Math.round(pa[2] + (pb[2]-pa[2]) * t);
+        return `rgb(${r}, ${g}, ${bch})`;
+      }
+      // "WHITE" here is legacy naming for the offline portal state —
+      // the dot used to start white; it now starts teal to match the
+      // offline merchant fill. Reverse outro lerps between these.
+      const PORTAL_WHITE_BG     = '#286271';   /* teal — offline */
+      const PORTAL_GREEN_BG     = '#6BBD64';   /* online */
+      const PORTAL_WHITE_BORDER = '#FFFFFF';   /* white — offline outline */
+      const PORTAL_GREEN_BORDER = '#FFFFFF';
+
+      /* ---------- Reverse outro ----------
+         Plays the forward reveal backwards as the demo's closing
+         animation, then takes the user back to the US view with a
+         two-stage green wave. Phase layout:
+
+           1. recede-reverse   — stage fades in, green field shrinks.
+                                 The focused merchant is GREEN from
+                                 t=0 (this is the story payoff: the
+                                 merchant signed up with Clover).
+           2. Manhattan zoom-out — camera retreats from FINAL_ZOOM to
+                                 baseZoom (Manhattan-fit). Dot stays
+                                 green throughout.
+           3. NYC green wave   — every NYC offline dot turns green
+                                 sequentially, radiating outward from
+                                 the focused merchant. Camera holds.
+           4. (click)          — user clicks anywhere.
+           5. Manhattan → US   — camera flyTo to US_VIEW, matching
+                                 the speed/curve of the forward
+                                 intro's first flyTo so it reads as
+                                 the inverse of "diving in to NYC".
+           6. US green wave    — every US offline rural dot turns
+                                 green sequentially, again radiating
+                                 outward from PORTAL_LNGLAT (which
+                                 is the NYC point on the US map).
+      */
+      function runReverse() {
+        const portal = document.getElementById('introPortal');
+        if (!portal || !cameraSnapshot) return;
+        const haloEls = Array.from(intro.querySelectorAll('.intro-portal-halo'));
+        const { baseZoom, targetLng, targetLat } = cameraSnapshot;
+        const portalFeature = findPortalFeature();
+
+        // Mirror the forward end-of-phase-C dot size. Use the design
+        // canvas dims (not the viewport) so the reverse outro lerps
+        // back to the exact frame the forward dive ended on.
+        const recedeStartDotMul = Math.max(INTRO_DW, INTRO_DH) * 0.75 / PORTAL_DISPLAY_PX;
+        const recedeEndDotMul   = recedeStartDotMul * RECEDE_DOT_GROWTH;
+
+        // Re-show the intro stage and set the initial fully-receded
+        // state via inline styles.
+        intro.classList.remove('is-done');
+        intro.classList.remove('is-receding');
+        intro.classList.remove('is-zooming');
+        intro.classList.add('is-rewinding');
+        intro.style.opacity = '0';
+        intro.style.transform = 'scale(1.06)';
+        intro.style.transformOrigin = '50% 50%';
+        document.body.classList.add('intro-active');
+
+        // Re-fit the canvas now that the intro is visible again —
+        // the resize listener will have bailed (clientWidth=0) for
+        // any window resize that happened while the intro was hidden,
+        // so the transform might still be the dive-completion value.
+        // Also call map.resize() so MapLibre re-checks its container.
+        fitIntroCanvas();
+        map.resize();
+
+        // Portal AND the underlying merchant feature are GREEN from
+        // t=0 of the outro. The merchant we focused on is now an
+        // online Clover merchant — that's the story.
+        portal.style.background  = PORTAL_GREEN_BG;
+        portal.style.borderColor = PORTAL_GREEN_BORDER;
+        if (portalFeature) {
+          portalFeature.properties.greenT = 1;
+          map.getSource('nyc-dots').setData(NYC_DOTS);
+        }
+
+        map.jumpTo({ center: [targetLng, targetLat], zoom: FINAL_ZOOM });
+        const p0 = map.project([targetLng, targetLat]);
+        portal.style.opacity = '1';
+        portal.style.width  = (recedeEndDotMul * PORTAL_DISPLAY_PX) + 'px';
+        portal.style.height = (recedeEndDotMul * PORTAL_DISPLAY_PX) + 'px';
+        portal.style.left   = p0.x + 'px';
+        portal.style.top    = p0.y + 'px';
+
+        startPulse();
+        void intro.offsetWidth;
+
+        const startT = performance.now();
+        const PHASE1_END = RECEDE_DURATION_MS;
+        const PHASE2_END = RECEDE_DURATION_MS + ZOOM_DURATION_MS;
+
+        function reverseFrame(t) {
+          const elapsed = t - startT;
+
+          let zoom, lng, lat, dotMul;
+          let inRecedeRev = false;
+          let stageOpacity = 1, stageScale = 1;
+
+          if (elapsed < PHASE1_END) {
+            // Phase 1 — recede-reverse: stage fades in, dot shrinks.
+            inRecedeRev = true;
+            const rc = elapsed / RECEDE_DURATION_MS;
+            const r_eased = rc * rc;
+            dotMul = lerp(recedeEndDotMul, recedeStartDotMul, r_eased);
+            zoom = FINAL_ZOOM;
+            lng  = targetLng;
+            lat  = targetLat;
+            stageOpacity = rc;
+            stageScale   = lerp(1.06, 1, rc);
+          } else if (elapsed < PHASE2_END) {
+            // Phase 2 — Manhattan zoom-out from FINAL_ZOOM to baseZoom.
+            // Cubic ease-out (mirror of forward cubic ease-in).
+            const phaseElapsed = elapsed - PHASE1_END;
+            const xLin = phaseElapsed / ZOOM_DURATION_MS;
+            const x = 1 - Math.pow(1 - xLin, 3);
+            zoom = lerp(FINAL_ZOOM, baseZoom, x);
+            lng  = targetLng;
+            lat  = targetLat;
+            dotMul = Math.pow(2, zoom - baseZoom);
+          } else {
+            // Settled at Manhattan view, dot at base size.
+            zoom = baseZoom;
+            lng  = targetLng;
+            lat  = targetLat;
+            dotMul = 1;
+          }
+
+          map.jumpTo({ center: [lng, lat], zoom });
+
+          if (inRecedeRev) {
+            intro.style.opacity = String(stageOpacity);
+            intro.style.transform = `scale(${stageScale})`;
+          } else {
+            intro.style.opacity = '1';
+            intro.style.transform = '';
+          }
+
+          const p = map.project([targetLng, targetLat]);
+          const sizePx = PORTAL_DISPLAY_PX * dotMul;
+          portal.style.width  = sizePx + 'px';
+          portal.style.height = sizePx + 'px';
+          portal.style.left   = p.x + 'px';
+          portal.style.top    = p.y + 'px';
+
+          // Halos appear during phase 2 only.
+          const halo = haloMetrics(dotMul);
+          const haloElapsed = elapsed - PHASE1_END;
+          for (let i = 0; i < haloEls.length; i++) {
+            const haloEl = haloEls[i];
+            const offset = i * HALO_STAGGER_MS;
+            if (!inRecedeRev && elapsed < PHASE2_END &&
+                haloElapsed >= offset && halo.active) {
+              const localT = ((haloElapsed - offset) % HALO_DURATION_MS) / HALO_DURATION_MS;
+              const spread = localT * halo.maxSpread;
+              const blur   = spread * 0.7;
+              const alpha  = halo.alpha * (1 - localT);
+              haloEl.style.marginLeft = '0';
+              haloEl.style.left = p.x + 'px';
+              haloEl.style.top  = p.y + 'px';
+              haloEl.style.boxShadow =
+                `0 0 ${blur}px ${spread}px rgba(40, 98, 113, ${alpha})`;
+            } else {
+              haloEl.style.boxShadow = 'none';
+            }
+          }
+
+          if (elapsed < PHASE2_END) {
+            requestAnimationFrame(reverseFrame);
+          } else {
+            // Phase 1+2 done. Clear stage overrides, then start the
+            // NYC green wave (automatic, no click required).
+            intro.classList.remove('is-rewinding');
+            intro.style.opacity = '';
+            intro.style.transform = '';
+            intro.style.transformOrigin = '';
+            startNycWave();
+          }
+        }
+
+        // -------- Phase 3: NYC green wave -------- //
+        function startNycWave() {
+          const features = NYC_DOTS.features.filter(
+            f => f.properties.kind === 'offline' && f !== portalFeature
+          );
+          animateGreenWave(features, 'nyc-dots', NYC_DOTS, NYC_WAVE_MS, () => {
+            armUsTransition();
+          });
+        }
+
+        // -------- Phase 4 (click-armed) → 5 (Manhattan → US flyTo) -------- //
+        function armUsTransition() {
+          function go(ev) {
+            ev.stopPropagation();
+            ev.preventDefault();
+            window.removeEventListener('click', go, true);
+            startUsFlyTo();
+          }
+          window.addEventListener('click', go, true);
+        }
+
+        function startUsFlyTo() {
+          // Portal isn't useful at US zoom — fade it out as the
+          // camera flies away. Underlying map dot takes over.
+          portal.style.transition = 'opacity 500ms ease-out';
+          portal.style.opacity = '0';
+          setTimeout(() => { portal.style.transition = ''; }, 600);
+
+          // Match the original intro's first flyTo (US → Manhattan)
+          // speed/curve, just run in the opposite direction. This is
+          // the "same camera movement" the user expects, mirrored.
+          map.flyTo({
+            center: US_VIEW.center,
+            zoom: US_VIEW.zoom,
+            speed: 1.1,
+            curve: 1.3,
+            essential: true,
+          });
+          map.once('moveend', () => {
+            // Wait a beat for the camera to settle, then start the
+            // US wave so the dots turn one by one on a clean stage.
+            setTimeout(startUsWave, 250);
+          });
+        }
+
+        // -------- Phase 6: US green wave -------- //
+        function startUsWave() {
+          const features = US_DOTS.features.filter(
+            f => f.properties.kind === 'offline'
+          );
+          animateGreenWave(features, 'us-dots', US_DOTS, US_WAVE_MS, null);
+        }
+
+        // -------- Shared green-wave engine -------- //
+        // `features` belong to a single source (passed as
+        // `sourceName` + `sourceData`). Each frame, every feature's
+        // greenT is interpolated 0→1 based on its scheduled start
+        // time; setData on the source pushes the property updates
+        // to the layer paint expressions.
+        function animateGreenWave(features, sourceName, sourceData, durationMs, onDone) {
+          if (!features.length) { if (onDone) onDone(); return; }
+          const cx = PORTAL_LNGLAT[0], cy = PORTAL_LNGLAT[1];
+          features.sort((a, b) => {
+            const ax = a.geometry.coordinates[0] - cx;
+            const ay = a.geometry.coordinates[1] - cy;
+            const bx = b.geometry.coordinates[0] - cx;
+            const by = b.geometry.coordinates[1] - cy;
+            return (ax*ax + ay*ay) - (bx*bx + by*by);
+          });
+          const N = features.length;
+          const spread = Math.max(0, durationMs - GREEN_FADE_MS);
+          features.forEach((f, i) => {
+            f.properties.greenStartT = N === 1 ? 0 : (i / (N - 1)) * spread;
+            if (typeof f.properties.greenT !== 'number') f.properties.greenT = 0;
+          });
+          const startT2 = performance.now();
+          function frame(t) {
+            const elapsed = t - startT2;
+            let stillAnimating = false;
+            for (const f of features) {
+              const tFade = Math.max(0, Math.min(1,
+                (elapsed - f.properties.greenStartT) / GREEN_FADE_MS));
+              f.properties.greenT = tFade;
+              if (tFade < 1) stillAnimating = true;
+            }
+            map.getSource(sourceName).setData(sourceData);
+            if (stillAnimating) requestAnimationFrame(frame);
+            else if (onDone) onDone();
+          }
+          requestAnimationFrame(frame);
+        }
+
+        requestAnimationFrame(reverseFrame);
+      }
+
+      window.runIntroReverse = runReverse;
+      window.__introMap = map;
+      window.__nycDots = NYC_DOTS;
+      window.__usDots = US_DOTS;
+    })();
+
+    /* ---------- iPad screen scaler ----------
+       Fixed 1366x977 design canvas scales uniformly to fit the bezel's
+       inner screen area on any viewport. Mirrors Insights-Demo. */
+    (function () {
+      // Scale every tablet's screen-inner uniformly to fit its bezel.
+      // The merchant tablet uses a slightly different design canvas
+      // (1194x810) than the gemini one (1366x954) — read it off the
+      // .screen-inner's class so each tablet stays sharp.
+      const DESIGNS = {
+        default: { w: 1366, h: 954 },
+        merchant: { w: 1194, h: 810 },
+      };
+      function pickDesign(inner) {
+        return inner.classList.contains('m-screen-inner') ? DESIGNS.merchant : DESIGNS.default;
+      }
+      const pairs = Array.from(document.querySelectorAll('.ipad')).map((ipad) => ({
+        screen: ipad.querySelector('.screen'),
+        inner:  ipad.querySelector('.screen-inner'),
+        station: ipad.classList.contains('ipad--station'),
+      })).filter(p => p.screen && p.inner);
+
+      function fitOne(p) {
+        const { w: DW, h: DH } = pickDesign(p.inner);
+        const sw = p.screen.clientWidth;
+        const sh = p.screen.clientHeight;
+        // Station screen is 16:9 while the merchant canvas is 1194x810
+        // (~1.47). We fill width and top-align so the rail/topbar stay
+        // visible; anything below the screen's bottom edge gets clipped
+        // under the device housing via .screen { overflow: hidden }.
+        const scale = p.station ? (sw / DW) : Math.min(sw / DW, sh / DH);
+        p.inner.style.transform = 'scale(' + scale + ')';
+        const offsetX = p.station ? 0 : (sw - DW * scale) / 2;
+        const offsetY = p.station ? 0 : (sh - DH * scale) / 2;
+        p.inner.style.left = offsetX + 'px';
+        p.inner.style.top  = offsetY + 'px';
+      }
+      function fitAll() { pairs.forEach(fitOne); }
+
+      const ro = new ResizeObserver(fitAll);
+      pairs.forEach(p => ro.observe(p.screen));
+      window.addEventListener('resize', fitAll);
+      fitAll();
+    })();
+
+    /* ---------- Tap-circle cursor ----------
+       Hides native cursor and follows the pointer with a circular
+       "fingertip" puck. Mouse-down shrinks/brightens the puck and
+       spawns a ripple to convey a touch interaction. Mirrors
+       Insights-Demo. */
+    (function () {
+      const cursor = document.createElement('div');
+      cursor.className = 'tap-cursor';
+      document.body.appendChild(cursor);
+
+      let firstMove = true;
+
+      function setPos(x, y) {
+        cursor.style.left = x + 'px';
+        cursor.style.top  = y + 'px';
+      }
+
+      window.addEventListener('mousemove', (e) => {
+        setPos(e.clientX, e.clientY);
+        if (firstMove) {
+          cursor.classList.add('visible');
+          firstMove = false;
+        }
+      }, { passive: true });
+
+      window.addEventListener('mouseleave', () => cursor.classList.remove('visible'));
+      window.addEventListener('mouseenter', () => cursor.classList.add('visible'));
+
+      window.addEventListener('mousedown', (e) => {
+        cursor.classList.add('tapping');
+        const ripple = document.createElement('div');
+        ripple.className = 'tap-ripple';
+        ripple.style.left = e.clientX + 'px';
+        ripple.style.top  = e.clientY + 'px';
+        document.body.appendChild(ripple);
+        ripple.addEventListener('animationend', () => ripple.remove());
+      });
+
+      window.addEventListener('mouseup', () => {
+        cursor.classList.remove('tapping');
+      });
+
+      // Subtle hover state when over interactive elements (no OS hand cursor)
+      const INTERACTIVE = '.iconbtn, .rail-btn, .chrome-iconbtn, .pill, .tools-btn, .fast-btn, .address-bar, .chrome-avatar, .main-avatar, .m-rail-btn, .m-icon-btn, .m-home-tile, .m-home-cta, .m-modal-close, .m-modal-toggle';
+      document.querySelectorAll(INTERACTIVE).forEach((el) => {
+        el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+        el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+      });
+
+      // Text-input cursor (I-beam) over the composer / Ask Gemini box.
+      // Mutually exclusive with the hover puck — strip .hover while typing.
+      document.querySelectorAll('.composer, .composer-input').forEach((el) => {
+        el.addEventListener('mouseenter', () => {
+          cursor.classList.remove('hover');
+          cursor.classList.add('typing');
+        });
+        el.addEventListener('mouseleave', () => cursor.classList.remove('typing'));
+      });
+    })();
+
+    /* ---------- Order checkout drawer: close + checkout handlers ----
+       Close X and scrim dismiss the drawer (same slide-out / fade-out
+       pattern as the merchant drawer). Complete checkout additionally
+       swaps the florist card's Order now button to a green Purchased
+       state and dispatches an 'order:checkout' event so the chat IIFE
+       can play the silent confirmation turn (route map). */
+    (function () {
+      const drawer = document.getElementById('orderDrawer');
+      const scrim  = document.getElementById('orderDrawerScrim');
+      if (!drawer) return;
+
+      function close() {
+        drawer.classList.remove('open');
+        drawer.classList.add('closing');
+        drawer.setAttribute('aria-hidden', 'true');
+        if (scrim) {
+          scrim.classList.remove('open');
+          scrim.classList.add('closing');
+          scrim.setAttribute('aria-hidden', 'true');
+        }
+      }
+
+      const closeBtn = drawer.querySelector('.g-drawer-close');
+      if (closeBtn) closeBtn.addEventListener('click', close);
+      if (scrim)    scrim.addEventListener('click', close);
+
+      // Single-select radio behavior on the payment options
+      const options = drawer.querySelectorAll('.g-pay-opt');
+      options.forEach((opt) => {
+        opt.addEventListener('click', () => {
+          options.forEach(o => o.classList.remove('is-selected'));
+          opt.classList.add('is-selected');
+        });
+      });
+
+      // Complete checkout — close drawer, mark the florist Order now
+      // button as Purchased, and ask the chat to play turn 4.
+      const checkoutBtn = drawer.querySelector('.g-checkout-btn');
+      if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', () => {
+          close();
+          // Find the florist card's Order now button and swap state.
+          // The button might exist in multiple AI bubbles if the user
+          // re-played turns — target the most recent visible one.
+          const orderBtns = document.querySelectorAll('.florist-card .order-btn');
+          const orderBtn = orderBtns[orderBtns.length - 1];
+          if (orderBtn && !orderBtn.classList.contains('is-purchased')) {
+            orderBtn.classList.add('is-purchased');
+            orderBtn.setAttribute('aria-disabled', 'true');
+            orderBtn.innerHTML =
+              '<svg class="order-check" viewBox="0 0 20 20" width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+                '<circle cx="10" cy="10" r="9" stroke="#ffffff" stroke-width="1.5"/>' +
+                '<path d="M6 10.5L8.8 13.2L14.2 7.5" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' +
+              '</svg>' +
+              '<span>Purchased</span>';
+          }
+          // Tell the chat sequence to play the next (silent) turn.
+          window.dispatchEvent(new CustomEvent('order:checkout'));
+        });
+      }
+    })();
+
+    /* ---------- Merchant drawer: Accept handler ----------
+       Wires the Accept button on page load (independent of the chat
+       handoff flow) so it works whether the merchant view was reached
+       via the scripted chat or directly. Slides the drawer + scrim out,
+       swaps Sam Lufton's first status icon to a checkmark, and pulses
+       the card green to confirm the booking. */
+    (function () {
+      const drawer    = document.getElementById('merchantDrawer');
+      const scrim     = document.getElementById('merchantDrawerScrim');
+      const acceptBtn = drawer && drawer.querySelector('.m-drawer-btn-accept');
+      if (!acceptBtn) return;
+
+      acceptBtn.addEventListener('click', () => {
+        if (drawer) {
+          drawer.classList.remove('open');
+          drawer.classList.add('closing');
+          drawer.setAttribute('aria-hidden', 'true');
+        }
+        if (scrim) {
+          scrim.classList.remove('open');
+          scrim.classList.add('closing');
+          scrim.setAttribute('aria-hidden', 'true');
+        }
+        const card = document.getElementById('apptSamLufton');
+        if (card) {
+          const statusIcon = card.querySelector('.m-icon-status');
+          if (statusIcon) statusIcon.src = 'asset/icons/status_check.svg';
+          // Restart the pulse if the user accepts again
+          card.classList.remove('confirmed');
+          void card.offsetWidth;
+          card.classList.add('confirmed');
+        }
+
+        // Once the confirmation pulse has had time to bloom, arm a
+        // click-anywhere handler that returns to the gemini view.
+        armReturnToGemini();
+      });
+
+      function armReturnToGemini() {
+        const stage = document.querySelector('.stage');
+        const tabletStage = document.querySelector('.tablet-stage');
+        if (!stage || !tabletStage) return;
+        if (stage.classList.contains('return-armed')) return;
+
+        // Wait for the confirmation pulse to bloom (~1s) so the user
+        // registers the success state before the handoff reverses.
+        setTimeout(() => {
+          stage.classList.add('return-armed');
+          function back(ev) {
+            // Swallow the click so it can't bubble to the gemini
+            // composer-input (which would auto-trigger turn 3 mid-
+            // transition and pre-fill the florist conversation before
+            // the user has had a chance to click the input).
+            ev.stopPropagation();
+            ev.preventDefault();
+            stage.classList.remove('return-armed', 'merchant-active');
+            tabletStage.classList.remove('to-merchant');
+            window.dispatchEvent(new Event('resize'));
+            window.removeEventListener('click', back, true);
+          }
+          // Capture-phase so the click is caught even when it lands on
+          // a nested button (matches the gemini→merchant arm-handoff).
+          window.addEventListener('click', back, true);
+        }, 1000);
+      }
+    })();
+
+    /* ---------- Homepage modal → toggle → checks → Gemini handoff
+       The user lands on the merchant homepage (Figma 40000835:15291)
+       with the "Get discovered on Google" modal already on (Figma
+       40000856:14798). Flow:
+         1. Modal scrim + modal animate in on load (CSS keyframes).
+         2. Only the toggle is interactive at this stage — clicks
+            elsewhere are absorbed by the scrim.
+         3. Clicking the toggle flips it to the green ON state and
+            reveals 3 success rows one-by-one (CSS staggered keyframes
+            via .is-revealing). Figma 40000856:14889.
+         4. After the last row lands (~1300ms after toggle), any click
+            anywhere closes the modal and slides to the gemini view —
+            the existing chat sequence then takes over.
+
+       Markup ships with `merchant-active` + `to-merchant` already on
+       so the merchant tablet renders in front on first paint — no
+       flash of the gemini chat before the modal opens. */
+    (function () {
+      const stage        = document.querySelector('.stage');
+      const tabletStage  = document.querySelector('.tablet-stage');
+      const homepageApp  = document.getElementById('homepageMerchantApp');
+      const barberApp    = document.querySelector('.tablet-slot-merchant .m-app--barber');
+      const modal        = document.getElementById('discoverModal');
+      const scrim        = document.getElementById('discoverScrim');
+      const toggle       = document.getElementById('discoverToggle');
+      const checks       = document.getElementById('discoverChecks');
+      const closeBtn     = modal && modal.querySelector('.m-modal-close');
+      if (!stage || !tabletStage || !homepageApp || !modal || !toggle) return;
+
+      // Stage 1 — toggle click: flip ON state and start the sequential
+      // check reveal. Idempotent so a stray double-click doesn't restart
+      // the animation mid-flight.
+      let toggleArmed = false;
+      toggle.addEventListener('click', (ev) => {
+        ev.stopPropagation();           // don't bubble to the scrim handler
+        if (toggleArmed) return;
+        toggleArmed = true;
+        toggle.classList.add('is-on');
+        toggle.setAttribute('aria-checked', 'true');
+
+        // Stage 1 (immediate) — collapse the intro (hero + description)
+        // alongside the toggle's own slide. The modal's height transitions
+        // smoothly because the intro animates max-height + margin + opacity
+        // together, and translate(-50%) keeps the modal centered as it
+        // shrinks.
+        modal.classList.add('is-revealed');
+
+        // Stage 2 (after intro settles, ~560ms) — drop the success rows
+        // into the cleared space. Each row animates in with the existing
+        // staggered keyframes (400 / 760 / 1120ms).
+        setTimeout(() => {
+          checks.classList.add('is-revealing');
+        }, 560);
+
+        // Total visible reveal: 560 + 1120 (last stagger) + 480 (anim)
+        // = 2160ms. Hold for another 1000ms so the user can read the
+        // three confirmation rows, then auto-dismiss the modal and
+        // pop the home-dot indicator green to signal "online".
+        setTimeout(activateAndAdvance, 3160);
+      });
+
+      // The X close button immediately dismisses the modal AND slides
+      // to gemini (skip out of the activation flow entirely).
+      if (closeBtn) {
+        closeBtn.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          stage.classList.add('modal-armed');  // visual hint via cursor
+          dismissModal();
+          slideToGemini();
+        });
+      }
+
+      // Auto-fires 1s after the last check settles. Closes the modal
+      // (slide-down animation, 620ms) and once the modal is fully
+      // off-screen, pops the gray indicator next to "Blooming
+      // Affairs Florist" into a pulsing green dot. Then arms a
+      // click anywhere to continue into the gemini view.
+      function activateAndAdvance() {
+        dismissModal();
+        const homeDots = document.querySelector('.m-home-dots');
+        // Wait for the modal's slide-down to fully complete before
+        // the indicator pops — the activation is the answer to the
+        // modal being gone, not a competing motion alongside it.
+        // Modal slide is 620ms; add a small buffer so it's clearly
+        // off the frame before the green pop kicks in.
+        setTimeout(() => {
+          if (homeDots) homeDots.classList.add('is-active');
+        }, 720);
+        // Arm the gemini hand-off after the indicator has had time
+        // to enter (~620ms entry) + start pulsing.
+        setTimeout(armSwitchToGemini, 1700);
+      }
+
+      function armSwitchToGemini() {
+        stage.classList.add('modal-armed');
+        function go(ev) {
+          // Don't double-fire if the user happens to click the toggle
+          // again — the toggle's own listener already stopped propagation.
+          ev.stopPropagation();
+          ev.preventDefault();
+          window.removeEventListener('click', go, true);
+          slideToGemini();
+        }
+        window.addEventListener('click', go, true);
+      }
+
+      function dismissModal() {
+        if (modal) {
+          modal.classList.add('closing');
+          modal.setAttribute('aria-hidden', 'true');
+        }
+        if (scrim) {
+          scrim.classList.add('closing');
+          scrim.setAttribute('aria-hidden', 'true');
+        }
+      }
+
+      function slideToGemini() {
+        stage.classList.remove('home-armed', 'modal-armed', 'merchant-active');
+        tabletStage.classList.remove('to-merchant');
+        window.dispatchEvent(new Event('resize'));
+
+        // Once the slide settles, swap the visible merchant app from
+        // the homepage to the barber view so the next gemini→merchant
+        // handoff (turn 2's calendar) lands on the appointments page.
+        setTimeout(() => {
+          homepageApp.hidden = true;
+          if (barberApp) barberApp.hidden = false;
+        }, 1100);
+      }
+    })();
+
+    /* ---------- Demo chat sequence ----------
+       Each click on the composer-input plays the next scripted turn:
+         turn 0 — anniversary planning prompt → bulleted reply
+         turn 1 — barber/flowers prompt → merchant card reply
+       After the final turn the input becomes a no-op. */
+    (function () {
+      const composerInput = document.querySelector('.composer-input');
+      const placeholder   = composerInput.querySelector('.placeholder');
+      const composer      = document.querySelector('.composer');
+      const hero          = document.querySelector('.hero');
+      const title         = document.querySelector('.main-topbar .title');
+
+      const TURNS = [
+        {
+          user:  "Anniversary dinner tonight. Been buried in work all week. Help me get it together for tonight.",
+          title: "Anniversary Planning Help",
+          reply: {
+            type: 'bullets',
+            source: 'thinking',
+            intro: "Let’s get you centered. A few quick things to check",
+            bullets: [
+              "The card — easy to forget, but it matters",
+              "Getting ready — haircut, shave, outfit check",
+              "A toast — just two sentences in your back pocket",
+              "The gift — flowers are almost always a safe bet",
+            ],
+          },
+        },
+        {
+          user: "A trip to the barber sounds great!",
+          reply: {
+            type: 'merchant',
+            source: 'maps',
+            intro: "There’s a barber about a five-minute walk from your home with availability this afternoon, so that’s probably your easiest win.",
+          },
+        },
+        {
+          /* Triggered by clicking Book on the merchant card — no
+             user bubble; Gemini just confirms the booking. */
+          silent: true,
+          reply: {
+            type: 'calendar',
+            source: 'calendar',
+            intro: "OK. I’ve scheduled your haircut in Jack’s Barber Shop for 2:00PM today and added in your Google calendar.",
+            booking: { title: "Hair cut - The Classic", meta: "Fri, Jun 12 • 2:00pm - 2:45pm" },
+          },
+        },
+        {
+          /* Plays after the merchant→gemini handoff. Same typewriter
+             flow as turn 0 — clicking the composer input fills it in. */
+          user: "Awesome! Now I just need some flowers and I’m good",
+          reply: {
+            type: 'florist',
+            source: 'maps',
+            intro: "There’s a florist near the barber with a bouquet available today. You can order it here and pick it up on your way back.",
+          },
+        },
+        {
+          /* Triggered by Complete checkout in the order drawer — no
+             user bubble; Gemini confirms the purchase and shows the
+             walking route on a Google Maps card. */
+          silent: true,
+          reply: {
+            type: 'route',
+            source: 'maps',
+            intro: "You’re all set. The Summer Fields Bouquet will be ready for pickup by 3 PM. I’ve mapped out your route for after work. Feel free to check it out on Google Maps.",
+          },
+        },
+      ];
+
+      const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+      // Pre-insert empty messages container + composer fade gradient
+      const messages = document.createElement('div');
+      messages.className = 'messages';
+      composer.parentNode.insertBefore(messages, composer);
+
+      const fade = document.createElement('div');
+      fade.className = 'composer-fade';
+      composer.parentNode.insertBefore(fade, composer);
+
+      let turnIndex  = 0;
+      let inProgress = false;
+      composerInput.addEventListener('click', () => playNextTurn(false));
+
+      // Order drawer fires this when Complete checkout is clicked —
+      // play the next (silent) turn so the route map appears.
+      window.addEventListener('order:checkout', () => playNextTurn(true));
+
+      /**
+       * Plays the next scripted turn.
+       * @param {boolean} forceSilent - true when the turn was triggered by a
+       *   non-input affordance (e.g. the Book button) and the user message
+       *   step should be skipped regardless of the TURN config.
+       */
+      async function playNextTurn(forceSilent) {
+        if (inProgress)                return;
+        if (turnIndex >= TURNS.length) return;
+        const turn   = TURNS[turnIndex];
+        const silent = forceSilent || !!turn.silent || !turn.user;
+        // Silent turns must be triggered by their wired affordance; clicking
+        // the input shouldn't accidentally play one.
+        if (silent && !forceSilent) return;
+        inProgress = true;
+        const isFirst = turnIndex === 0;
+        turnIndex++;
+
+        // 1. Typewriter into the composer (skipped on silent turns)
+        if (!silent) {
+          composerInput.classList.add('is-typing');
+          placeholder.textContent = '';
+          const caret = document.createElement('span');
+          caret.className = 'typing-caret';
+          placeholder.appendChild(caret);
+
+          await typewriter(placeholder, turn.user, caret, 26);
+          caret.remove();
+          await wait(420);
+
+          // 2. Send the message — first turn FLIPs the composer to bottom
+          //    and switches the chat surface to white (the gray landing
+          //    bg only shows before any message is sent).
+          let firstRect;
+          if (isFirst) firstRect = composer.getBoundingClientRect();
+          if (isFirst) hero.classList.add('is-chat');
+          if (isFirst) document.querySelector('.app').classList.add('is-chat');
+          messages.appendChild(makeUserBubble(turn.user));
+          placeholder.textContent = 'Ask Gemini';
+          composerInput.classList.remove('is-typing');
+          if (turn.title) title.textContent = turn.title;
+
+          if (isFirst) {
+            const lastRect = composer.getBoundingClientRect();
+            const dy = firstRect.top - lastRect.top;
+            if (Math.abs(dy) > 1) {
+              composer.animate(
+                [
+                  { transform: 'translateY(' + dy + 'px)' },
+                  { transform: 'translateY(0)' }
+                ],
+                { duration: 520, easing: 'cubic-bezier(0.22, 0.61, 0.36, 1)', fill: 'both' }
+              );
+            }
+          }
+
+          scrollToBottom();
+          await wait(420);
+        }
+
+        // 3. Thinking placeholder
+        const thinking = makeThinkingBubble();
+        messages.appendChild(thinking);
+        scrollToBottom();
+        await wait(silent ? 1600 : 2200);
+
+        // 4. Replace thinking with the AI reply
+        const ai = makeAiBubble(turn.reply.type, turn.reply.source);
+        thinking.replaceWith(ai);
+        scrollToBottom();
+        await wait(220);
+
+        const intro = ai.querySelector('.ai-intro');
+        intro.classList.add('streaming');
+        await streamText(intro, turn.reply.intro, 32);
+        intro.classList.remove('streaming');
+        await wait(280);
+
+        if (turn.reply.type === 'bullets') {
+          const ul = ai.querySelector('ul');
+          for (let i = 0; i < turn.reply.bullets.length; i++) {
+            const li = document.createElement('li');
+            li.classList.add('streaming');
+            ul.appendChild(li);
+            scrollToBottom();
+            await streamText(li, turn.reply.bullets[i], 22);
+            li.classList.remove('streaming');
+            await wait(140);
+          }
+        } else if (turn.reply.type === 'merchant') {
+          const card = ai.querySelector('.merchant-card');
+          card.classList.add('visible');
+          wireMerchantCard(card);
+          scrollToBottom();
+          await wait(420);
+        } else if (turn.reply.type === 'calendar') {
+          const card = ai.querySelector('.calendar-card');
+          if (card && turn.reply.booking) {
+            card.querySelector('.cal-title').textContent = turn.reply.booking.title;
+            card.querySelector('.cal-meta').textContent  = turn.reply.booking.meta;
+          }
+          card && card.classList.add('visible');
+          scrollToBottom();
+          // Arm the merchant handoff the moment the calendar card lands
+          // so any subsequent click — including on the composer input —
+          // triggers the slide rather than playing the next turn.
+          armMerchantHandoff();
+          await wait(420);
+        } else if (turn.reply.type === 'florist') {
+          const card = ai.querySelector('.florist-card');
+          card && card.classList.add('visible');
+          card && wireFloristCard(card);
+          scrollToBottom();
+          await wait(420);
+        } else if (turn.reply.type === 'route') {
+          const card = ai.querySelector('.route-card');
+          card && card.classList.add('visible');
+          scrollToBottom();
+          // Once the route map lands, arm the final-state handoff: any
+          // click anywhere flips the merchant tablet to the florist
+          // orders view and slides it back in.
+          armFloristMerchantHandoff();
+          await wait(420);
+        }
+
+        await wait(240);
+        ai.querySelector('.msg-ai-actions').classList.add('visible');
+        scrollToBottom();
+        inProgress = false;
+        // armMerchantHandoff for the calendar turn was already armed
+        // above (right when the card became visible) so the composer
+        // input can't accidentally fire the next turn during the wait.
+      }
+
+      function armMerchantHandoff() {
+        const stage = document.querySelector('.stage');
+        const tabletStage = document.querySelector('.tablet-stage');
+        if (!stage || !tabletStage || stage.classList.contains('handoff-armed')) return;
+        stage.classList.add('handoff-armed');
+
+        function go(ev) {
+          // Swallow the click so it can't also reach the gemini composer
+          // input — otherwise the user's "click anywhere" double-fires
+          // and starts turn 3 (the florist conversation) in parallel
+          // with the merchant handoff transition.
+          ev.stopPropagation();
+          ev.preventDefault();
+          stage.classList.remove('handoff-armed');
+          stage.classList.add('handoff-running');
+          // Two-stage class: 'handoff-running' kicks the slide; after
+          // the keyframes finish we mark it 'merchant-active' so the
+          // green stage bg sticks even when transition styles strip.
+          tabletStage.classList.add('to-merchant');
+          // The merchant tablet's screen-inner is sized by the JS
+          // scaler on page load, but until now its slot was off-stage
+          // so the ResizeObserver may have measured stale dimensions.
+          // Kick a resize once the slide starts to re-fit it sharp.
+          window.dispatchEvent(new Event('resize'));
+          setTimeout(() => {
+            stage.classList.add('merchant-active');
+            stage.classList.remove('handoff-running');
+            window.dispatchEvent(new Event('resize'));
+            // Once the merchant view has settled, slide the
+            // Appointment Requests drawer in from the right.
+            const drawer = document.getElementById('merchantDrawer');
+            const scrim  = document.getElementById('merchantDrawerScrim');
+            if (drawer) {
+              setTimeout(() => {
+                if (scrim) {
+                  scrim.classList.add('open');
+                  scrim.setAttribute('aria-hidden', 'false');
+                }
+                drawer.classList.add('open');
+                drawer.setAttribute('aria-hidden', 'false');
+              }, 600);
+            }
+          }, 1100);
+          window.removeEventListener('click', go, true);
+        }
+        // Use capture so the click is caught even if it lands on a
+        // nested button — but ignore clicks on browser chrome / rail.
+        window.addEventListener('click', go, true);
+      }
+
+      /* Final-state handoff — fires after turn 4 (route map). Any
+         click flips the merchant tablet's content from the barber
+         appointments view to the Blooming Affairs Florist orders
+         view, then re-runs the gemini→merchant slide. */
+      function armFloristMerchantHandoff() {
+        const stage = document.querySelector('.stage');
+        const tabletStage = document.querySelector('.tablet-stage');
+        if (!stage || !tabletStage) return;
+        if (stage.classList.contains('florist-handoff-armed')) return;
+        stage.classList.add('florist-handoff-armed');
+
+        function go(ev) {
+          ev.stopPropagation();
+          ev.preventDefault();
+          stage.classList.remove('florist-handoff-armed');
+
+          // Flip merchant tablet content: barber → florist orders
+          const barberApp  = document.querySelector('.tablet-slot-merchant .m-app--barber');
+          const floristApp = document.getElementById('floristMerchantApp');
+          if (barberApp)  barberApp.hidden = true;
+          if (floristApp) floristApp.hidden = false;
+
+          stage.classList.add('handoff-running');
+          tabletStage.classList.add('to-merchant');
+          window.dispatchEvent(new Event('resize'));
+          setTimeout(() => {
+            stage.classList.add('merchant-active');
+            stage.classList.remove('handoff-running');
+            window.dispatchEvent(new Event('resize'));
+            // Once the slide settles, kick the Sam Lufton row's intro
+            // + highlight animation. CSS @keyframes handles the full
+            // reveal arc (drop-in → bright highlight → settle).
+            if (floristApp) floristApp.classList.add('is-revealing');
+            // Row reveal is 350ms delay + 2400ms anim = 2750ms. Wait
+            // until it settles, then arm the closing intro: the next
+            // click anywhere plays the green-dot zoom-in sequence in
+            // reverse to end the story.
+            setTimeout(armOutro, 3000);
+          }, 1100);
+          window.removeEventListener('click', go, true);
+        }
+        window.addEventListener('click', go, true);
+      }
+
+      /* End-of-demo outro — plays the intro map dive in reverse
+         (recede → zoom-out → pan back) so the demo closes by
+         rewinding to the very first frame of the experience.
+         Triggered by a click anywhere after the florist orders
+         row has settled. */
+      function armOutro() {
+        const stage = document.querySelector('.stage');
+        if (!stage || stage.classList.contains('outro-armed')) return;
+        stage.classList.add('outro-armed');
+        function go(ev) {
+          ev.stopPropagation();
+          ev.preventDefault();
+          window.removeEventListener('click', go, true);
+          if (window.runIntroReverse) {
+            window.runIntroReverse();
+          }
+        }
+        window.addEventListener('click', go, true);
+      }
+
+      /* Wire the florist card's Order now button — opens the order
+         checkout drawer in the gemini tablet. */
+      function wireFloristCard(card) {
+        const orderBtn = card.querySelector('.order-btn');
+        if (!orderBtn || orderBtn.dataset.wired) return;
+        orderBtn.dataset.wired = '1';
+        attachRipple(orderBtn);
+        orderBtn.addEventListener('click', () => {
+          const drawer = document.getElementById('orderDrawer');
+          const scrim  = document.getElementById('orderDrawerScrim');
+          if (drawer) {
+            drawer.classList.remove('closing');
+            drawer.classList.add('open');
+            drawer.setAttribute('aria-hidden', 'false');
+          }
+          if (scrim) {
+            scrim.classList.remove('closing');
+            scrim.classList.add('open');
+            scrim.setAttribute('aria-hidden', 'false');
+          }
+        });
+      }
+
+      /* Wire the merchant card's slot pills (single-select) and Book
+         button (triggers the silent third turn once a slot is chosen). */
+      function wireMerchantCard(card) {
+        const slots = card.querySelectorAll('.slot-btn');
+        const book  = card.querySelector('.book-btn');
+        slots.forEach((btn) => {
+          attachRipple(btn);
+          btn.addEventListener('click', () => {
+            slots.forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+          });
+        });
+        if (book) {
+          attachRipple(book);
+          book.addEventListener('click', () => {
+            const selected = card.querySelector('.slot-btn.selected');
+            if (!selected) return;                  // require a slot pick
+            book.setAttribute('aria-disabled', 'true');
+            slots.forEach(b => b.disabled = true);
+            playNextTurn(true);
+          });
+        }
+      }
+
+      /* Material 3 ripple — appended on click, contained inside the
+         button's overflow-clip and removed once the keyframes finish. */
+      function attachRipple(btn) {
+        btn.addEventListener('pointerdown', (e) => {
+          const rect = btn.getBoundingClientRect();
+          const size = Math.max(rect.width, rect.height) * 1.2;
+          const ripple = document.createElement('span');
+          ripple.className = 'md-ripple';
+          ripple.style.width  = size + 'px';
+          ripple.style.height = size + 'px';
+          ripple.style.left   = (e.clientX - rect.left - size / 2) + 'px';
+          ripple.style.top    = (e.clientY - rect.top  - size / 2) + 'px';
+          btn.appendChild(ripple);
+          ripple.addEventListener('animationend', () => ripple.remove());
+        });
+      }
+
+      function scrollToBottom() {
+        messages.scrollTo({ top: messages.scrollHeight, behavior: 'smooth' });
+      }
+
+      async function typewriter(host, text, anchor, perChar) {
+        for (let i = 0; i < text.length; i++) {
+          const node = document.createTextNode(text[i]);
+          host.insertBefore(node, anchor);
+          const jitter = perChar + (Math.random() * 18 - 9);
+          await wait(Math.max(8, jitter));
+        }
+      }
+
+      async function streamText(el, text, perChar) {
+        // Stream by short chunks (1-3 chars) for a natural LLM cadence
+        let i = 0;
+        while (i < text.length) {
+          const chunk = Math.min(text.length - i, 1 + Math.floor(Math.random() * 3));
+          el.appendChild(document.createTextNode(text.slice(i, i + chunk)));
+          i += chunk;
+          await wait(perChar + Math.random() * 20);
+        }
+      }
+
+      function makeUserBubble(text) {
+        const wrap = document.createElement('div');
+        wrap.className = 'msg msg-user';
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.textContent = text;
+        const avatar = document.createElement('div');
+        avatar.className = 'msg-avatar';
+        const img = document.createElement('img');
+        img.src = 'asset/avatar.png';
+        img.alt = '';
+        avatar.appendChild(img);
+        wrap.appendChild(bubble);
+        wrap.appendChild(avatar);
+        return wrap;
+      }
+
+      function makeAiBubble(replyType, source) {
+        const wrap = document.createElement('div');
+        wrap.className = 'msg msg-ai';
+
+        let bodyMid = '';
+        if (replyType === 'bullets')        bodyMid = '<ul></ul>';
+        else if (replyType === 'merchant')  bodyMid = merchantCardHtml();
+        else if (replyType === 'calendar')  bodyMid = calendarCardHtml();
+        else if (replyType === 'florist')   bodyMid = floristCardHtml();
+        else if (replyType === 'route')     bodyMid = routeCardHtml();
+
+        // Source pill: 'thinking' (default) | 'maps' | 'calendar' | null.
+        // Each variant shows a label + chevron only — no leading icon.
+        let pill = '';
+        if (source) {
+          const label =
+            source === 'maps'     ? 'Google Maps'     :
+            source === 'calendar' ? 'Google Calendar' :
+                                    'Show thinking';
+          pill =
+            '<span class="show-thinking">' +
+              '<span class="show-thinking-label">' + label + '</span>' +
+              '<img class="show-thinking-chevron" src="asset/icons/keyboard_arrow_down.svg" alt="" />' +
+            '</span>';
+        }
+
+        wrap.innerHTML =
+          '<div class="msg-ai-header">' +
+            '<div class="msg-ai-header-left">' +
+              '<div class="msg-ai-sparkle">' +
+                '<img src="asset/icons/gemini_spark.svg" alt="" />' +
+              '</div>' +
+              pill +
+            '</div>' +
+            '<button class="msg-ai-volume" aria-label="Listen">' +
+              '<img src="asset/icons/volume_up.svg" alt="" />' +
+            '</button>' +
+          '</div>' +
+          '<div class="msg-ai-body">' +
+            '<p class="ai-intro"></p>' +
+            bodyMid +
+            '<div class="msg-ai-actions">' +
+              '<button class="ai-action" aria-label="Like"><img src="asset/icons/thumb_up.svg" alt="" /></button>' +
+              '<button class="ai-action" aria-label="Dislike"><img src="asset/icons/thumb_down.svg" alt="" /></button>' +
+              '<button class="ai-action" aria-label="Copy"><img src="asset/icons/content_copy.svg" alt="" /></button>' +
+              '<button class="ai-action" aria-label="More"><img src="asset/icons/more_vert.svg" alt="" /></button>' +
+            '</div>' +
+          '</div>';
+        return wrap;
+      }
+
+      function calendarCardHtml() {
+        return (
+          '<div class="calendar-card">' +
+            '<div class="cal-row cal-header">' +
+              '<img class="cal-app-icon" src="asset/icons/google_calendar.png" alt="" />' +
+              '<span class="cal-app-name">Google Calendar</span>' +
+            '</div>' +
+            '<div class="cal-row cal-body">' +
+              '<div class="cal-title"></div>' +
+              '<div class="cal-meta"></div>' +
+            '</div>' +
+          '</div>'
+        );
+      }
+
+      function makeThinkingBubble() {
+        const wrap = document.createElement('div');
+        wrap.className = 'msg msg-thinking';
+        wrap.innerHTML =
+          '<div class="msg-thinking-row">' +
+            '<div class="msg-ai-sparkle thinking-sparkle">' +
+              '<img src="asset/icons/gemini_spark.svg" alt="" />' +
+            '</div>' +
+            '<span class="thinking-shimmer">Thinking</span>' +
+          '</div>';
+        return wrap;
+      }
+
+      function merchantCardHtml() {
+        const stars =
+          '<img class="rating-star" src="asset/icons/star_full.png" alt="" />' +
+          '<img class="rating-star" src="asset/icons/star_full.png" alt="" />' +
+          '<img class="rating-star" src="asset/icons/star_full.png" alt="" />' +
+          '<img class="rating-star" src="asset/icons/star_full.png" alt="" />' +
+          '<img class="rating-star" src="asset/icons/star_half.png" alt="" />';
+        return (
+          '<div class="merchant-card">' +
+            '<div class="merchant-left">' +
+              '<div class="merchant-header">' +
+                '<img class="merchant-clover" src="asset/icons/clover.svg" alt="" />' +
+                '<span>Clover Merchant</span>' +
+              '</div>' +
+              '<div class="merchant-body">' +
+                '<div class="merchant-imgs">' +
+                  '<div class="merchant-shop"><img src="asset/icons/barbershop.png" alt="Jack’s Barber Shop" /></div>' +
+                  '<div class="merchant-map"><img src="asset/icons/map.png" alt="Map" /></div>' +
+                '</div>' +
+                '<h3 class="merchant-name">Jack’s Barber Shop</h3>' +
+                '<div class="merchant-rating">' +
+                  '<span class="rating-num">4.5</span>' +
+                  '<span class="rating-stars">' + stars + '</span>' +
+                  '<span class="rating-count">(274)</span>' +
+                '</div>' +
+                '<div class="merchant-meta">' +
+                  '<div class="merchant-cat">Barber Shop</div>' +
+                  '<div class="merchant-status"><span class="merchant-open">Open</span>    Closes at 9pm</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="merchant-right">' +
+              '<div class="service-top">' +
+                '<h3 class="service-name">The Classic</h3>' +
+                '<div class="service-desc-block">' +
+                  '<p class="service-desc">Haircut, beard trim, and massage</p>' +
+                  '<p class="service-duration">45 minutes</p>' +
+                '</div>' +
+                '<div class="service-price">$75</div>' +
+              '</div>' +
+              '<div class="slot-grid">' +
+                '<button class="slot-btn">11:30am</button>' +
+                '<button class="slot-btn">12:00pm</button>' +
+                '<button class="slot-btn">1:15pm</button>' +
+                '<button class="slot-btn">2:00pm</button>' +
+                '<button class="slot-btn">2:45pm</button>' +
+                '<button class="slot-btn">3:30pm</button>' +
+                '<button class="book-btn">Book</button>' +
+              '</div>' +
+            '</div>' +
+          '</div>'
+        );
+      }
+
+      /* Florist card (turn 3) — same Clover-merchant left card as the
+         barber, with a product card on the right (single bouquet image,
+         price, and a full-width Order now CTA) instead of slot picker. */
+      function floristCardHtml() {
+        const stars =
+          '<img class="rating-star" src="asset/icons/star_full.png" alt="" />' +
+          '<img class="rating-star" src="asset/icons/star_full.png" alt="" />' +
+          '<img class="rating-star" src="asset/icons/star_full.png" alt="" />' +
+          '<img class="rating-star" src="asset/icons/star_full.png" alt="" />' +
+          '<img class="rating-star" src="asset/icons/star_half.png" alt="" />';
+        return (
+          '<div class="florist-card">' +
+            '<div class="merchant-left">' +
+              '<div class="merchant-header">' +
+                '<img class="merchant-clover" src="asset/icons/clover.svg" alt="" />' +
+                '<span>Clover Merchant</span>' +
+              '</div>' +
+              '<div class="merchant-body">' +
+                '<div class="merchant-imgs">' +
+                  '<div class="merchant-shop florist-shop"><img src="asset/icons/florist_shop.png" alt="Blooming Affairs Florist" /></div>' +
+                  '<div class="merchant-map florist-side"><img src="asset/icons/florist_side.png" alt="Map" /></div>' +
+                '</div>' +
+                '<h3 class="merchant-name">Blooming Affairs Florist</h3>' +
+                '<div class="merchant-rating">' +
+                  '<span class="rating-num">4.5</span>' +
+                  '<span class="rating-stars">' + stars + '</span>' +
+                  '<span class="rating-count">(274)</span>' +
+                '</div>' +
+                '<div class="merchant-meta">' +
+                  '<div class="merchant-cat">Florist</div>' +
+                  '<div class="merchant-status"><span class="merchant-open">Open</span>    Closes at 7pm</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="florist-right">' +
+              '<div class="florist-product">' +
+                '<div class="florist-product-img"><img src="asset/icons/bouquet.png" alt="Summer Fields Bouquet" /></div>' +
+                '<div class="florist-product-meta">' +
+                  '<h3 class="florist-product-name">Summer Fields Bouquet</h3>' +
+                  '<p class="florist-product-sub">Ready for pickup by 3pm</p>' +
+                  '<p class="florist-product-price">$82</p>' +
+                '</div>' +
+              '</div>' +
+              '<button class="order-btn">Order now</button>' +
+            '</div>' +
+          '</div>'
+        );
+      }
+
+      /* Route card (turn 4) — Google Maps directions panel: waypoint
+         list on the left (Work → Barber → Florist → Home, connected
+         by a dotted blue route line) paired with the map screenshot
+         on the right. */
+      function routeCardHtml() {
+        return (
+          '<div class="route-card">' +
+            '<ol class="route-stops">' +
+              '<li class="route-stop">' +
+                '<span class="route-marker route-marker--start"></span>' +
+                '<span class="route-label">Work</span>' +
+              '</li>' +
+              '<li class="route-stop">' +
+                '<span class="route-marker">B</span>' +
+                '<span class="route-label">Jack’s Barber Shop</span>' +
+              '</li>' +
+              '<li class="route-stop">' +
+                '<span class="route-marker">C</span>' +
+                '<span class="route-label">Blooming Affairs Florist</span>' +
+              '</li>' +
+              '<li class="route-stop">' +
+                '<span class="route-marker route-marker--end" aria-hidden="true">' +
+                  '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+                    '<path d="M12 2C7.6 2 4 5.6 4 10c0 5.5 7.3 11.6 7.6 11.9.2.1.4.1.5 0C12.7 21.6 20 15.5 20 10c0-4.4-3.6-8-8-8z" fill="#ea4335"/>' +
+                    '<circle cx="12" cy="10" r="3" fill="#ffffff"/>' +
+                  '</svg>' +
+                '</span>' +
+                '<span class="route-label">Home</span>' +
+              '</li>' +
+            '</ol>' +
+            '<div class="route-map">' +
+              '<img src="asset/icons/route_map.png" alt="Route map from work to home via Jack\'s Barber Shop and Blooming Affairs Florist" />' +
+            '</div>' +
+          '</div>'
+        );
+      }
+    })();
+  </script>
+</body>
+</html>

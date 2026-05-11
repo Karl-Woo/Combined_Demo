@@ -1,0 +1,52 @@
+{
+  "version": 8,
+  "name": "Offline NYC + US",
+  "metadata": { "note": "Two-source style for offline demo: us-overview at low zoom, nyc-metro at high zoom. Tiles must be present at ./tiles/us-overview.pmtiles and ./tiles/nyc-metro.pmtiles." },
+  "glyphs": "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
+  "sources": {
+    "us-overview": {
+      "type": "vector",
+      "url": "pmtiles://./tiles/us-overview.pmtiles",
+      "minzoom": 0,
+      "maxzoom": 7
+    },
+    "nyc-metro": {
+      "type": "vector",
+      "url": "pmtiles://./tiles/nyc-metro.pmtiles",
+      "minzoom": 7,
+      "maxzoom": 12
+    }
+  },
+  "layers": [
+    { "id": "background", "type": "background", "paint": { "background-color": "#F9F9F9" } },
+
+    {
+      "comment": "us-overview geometry layers have NO maxzoom — they overzoom past zoom 7 to cover the mid-range of the camera dive OUTSIDE the nyc-metro bounding box. Inside nyc-metro the corresponding *-high layer paints on top (drawn later in the array) with crisp tile data; outside it the overzoomed us-overview tile is the only thing rendering, so the dive never crosses blank empty tiles."
+    },
+
+    { "id": "water-low",  "type": "fill", "source": "us-overview", "source-layer": "water", "paint": { "fill-color": "#FFFFFF" } },
+    { "id": "water-high", "type": "fill", "source": "nyc-metro", "source-layer": "water", "minzoom": 8, "paint": { "fill-color": "#FFFFFF" } },
+
+    { "id": "landcover-low",  "type": "fill", "source": "us-overview", "source-layer": "landcover", "paint": { "fill-color": "#F0F0F0", "fill-opacity": 1 } },
+    { "id": "landcover-high", "type": "fill", "source": "nyc-metro", "source-layer": "landcover", "minzoom": 8, "paint": { "fill-color": "#F0F0F0", "fill-opacity": 1 } },
+
+    { "id": "landuse-low",  "type": "fill", "source": "us-overview", "source-layer": "landuse", "paint": { "fill-color": "#F0F0F0" } },
+    { "id": "landuse-high", "type": "fill", "source": "nyc-metro", "source-layer": "landuse", "minzoom": 8, "paint": { "fill-color": "#F0F0F0" } },
+
+    { "id": "park-low",  "type": "fill", "source": "us-overview", "source-layer": "park", "paint": { "fill-color": "#F0F0F0" } },
+    { "id": "park-high", "type": "fill", "source": "nyc-metro", "source-layer": "park", "minzoom": 8, "paint": { "fill-color": "#F0F0F0" } },
+
+    { "id": "boundary-low",  "type": "line", "source": "us-overview", "source-layer": "boundary", "paint": { "line-color": "#C7C7C7", "line-width": 0.5 } },
+    { "id": "boundary-high", "type": "line", "source": "nyc-metro", "source-layer": "boundary", "minzoom": 8, "paint": { "line-color": "#C7C7C7", "line-width": 0.5 } },
+
+    { "id": "road-low",  "type": "line", "source": "us-overview", "source-layer": "transportation", "paint": { "line-color": "#C7C7C7", "line-width": 0.4 } },
+    { "id": "road-high", "type": "line", "source": "nyc-metro", "source-layer": "transportation", "minzoom": 8, "paint": { "line-color": "#C7C7C7", "line-width": 1 } },
+
+    { "id": "building-high", "type": "fill", "source": "nyc-metro", "source-layer": "building", "minzoom": 13, "paint": { "fill-color": "#F0F0F0", "fill-outline-color": "#C7C7C7" } },
+
+    { "id": "place-country", "type": "symbol", "source": "us-overview", "source-layer": "place", "maxzoom": 6, "filter": ["==", "class", "country"], "layout": { "text-field": "{name:en}", "text-size": 12, "text-font": ["Open Sans Regular"] }, "paint": { "text-color": "#888888", "text-halo-color": "#F9F9F9", "text-halo-width": 1.5 } },
+    { "id": "place-state",   "type": "symbol", "source": "us-overview", "source-layer": "place", "maxzoom": 8, "minzoom": 4, "filter": ["==", "class", "state"], "layout": { "text-field": "{name:en}", "text-size": 11, "text-font": ["Open Sans Regular"] }, "paint": { "text-color": "#888888", "text-halo-color": "#F9F9F9", "text-halo-width": 1.5 } },
+    { "id": "place-city-low",  "type": "symbol", "source": "us-overview", "source-layer": "place", "maxzoom": 8, "minzoom": 5, "filter": ["==", "class", "city"], "layout": { "text-field": "{name:en}", "text-size": 11, "text-font": ["Open Sans Regular"] }, "paint": { "text-color": "#888888", "text-halo-color": "#F9F9F9", "text-halo-width": 1.5 } },
+    { "id": "place-city-high", "type": "symbol", "source": "nyc-metro", "source-layer": "place", "minzoom": 8, "filter": ["==", "class", "city"], "layout": { "text-field": "{name:en}", "text-size": 12, "text-font": ["Open Sans Regular"] }, "paint": { "text-color": "#888888", "text-halo-color": "#F9F9F9", "text-halo-width": 1.5 } }
+  ]
+}
