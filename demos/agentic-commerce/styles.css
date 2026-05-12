@@ -218,6 +218,57 @@ button, a, input, textarea, select,
   display: none;
 }
 
+/* ---------- First-paint reveal ----------
+   Two-beat sequence on the existing white stage background:
+     Beat 1 (0 → ~1.3s) — the map fades in. The canvas starts
+       fully transparent (so the stage's #F9F9F9 shows through)
+       and eases up to full opacity with a brief soft blur for
+       the "lens-focusing" feel. No darkness anywhere.
+     Beat 2 (~1.3s → ~2.4s) — the dots cascade in. Layers are
+       grouped by `phase` (0…3) and JS reveals one phase at a
+       time so dots pop in across the country in four staggered
+       waves rather than all at once.
+   Legend slides in toward the end so the user reads
+   "map → dots → labels". */
+.intro-stage.is-revealing .intro-canvas {
+  animation: intro-canvas-settle 1400ms cubic-bezier(0.22, 1, 0.36, 1) 60ms both;
+}
+@keyframes intro-canvas-settle {
+  0%   { opacity: 0; filter: blur(8px); }
+  65%  { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; filter: none; }
+}
+
+/* Legend slides in from the right after the dot cascade so the
+   read order is map → dots → labels. Steady state is opacity 1 /
+   translate(0,0). */
+#introLegend {
+  opacity: 1;
+  transform: translateX(0);
+}
+.intro-stage.is-revealing #introLegend {
+  opacity: 0;
+  transform: translateX(28px);
+  /* Delay > map-settle + 4-phase dot cascade so the legend lands
+     after the last dot wave commits. */
+  animation: intro-legend-in 680ms cubic-bezier(0.22, 1, 0.36, 1) 2100ms forwards;
+}
+@keyframes intro-legend-in {
+  0%   { opacity: 0; transform: translateX(28px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+/* Slight extra zoom-in on the MapLibre canvas echoes the
+   intro-canvas-settle filter, so tiles and chrome share motion. */
+.intro-stage.is-revealing #introMap .maplibregl-canvas {
+  transform-origin: 50% 50%;
+  animation: intro-map-rest 1400ms cubic-bezier(0.22, 1, 0.36, 1) 60ms both;
+}
+@keyframes intro-map-rest {
+  0%   { transform: scale(1.06); }
+  100% { transform: scale(1.0); }
+}
+
 /* Fixed 1366x820 design canvas. JS scales it via transform-origin 0 0
    so the map + portal + legend keep the same proportions on any
    viewport — same pattern as the iPad screen-inner scaler. Width

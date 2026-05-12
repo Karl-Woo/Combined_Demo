@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import svgPaths from "./svg-6btw9xkm38";
 import heroVideo from "../assets/Clover-Hero-Shoot-Fine-Dining_Table-whitesleeve_16x9_1920x1080.mp4";
 import imgImg from "figma:asset/fe8bd49597a9b5227019480f399e0330b088b9f5.png";
@@ -2339,19 +2340,46 @@ function Frame8() {
   );
 }
 
+// The autoPlay attribute alone is unreliable here: when the host
+// wrapper loads this build inside a lazy iframe, some browsers
+// don't honor `<video autoPlay>` on first paint and the hero sits
+// frozen on its poster frame. Explicitly calling .play() after mount
+// (and again on `loadeddata`) recovers cleanly — and on the rare
+// browser that still rejects muted autoplay, the catch keeps it
+// silent instead of throwing into the console.
+function HeroVideo() {
+  const ref = useRef<HTMLVideoElement | null>(null);
+  useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    const tryPlay = () => {
+      const p = v.play();
+      if (p && typeof p.catch === 'function') p.catch(() => {});
+    };
+    tryPlay();
+    v.addEventListener('loadeddata', tryPlay);
+    return () => v.removeEventListener('loadeddata', tryPlay);
+  }, []);
+  return (
+    <video
+      ref={ref}
+      src={heroVideo}
+      autoPlay
+      loop
+      muted
+      playsInline
+      preload="auto"
+      className="w-full h-full object-cover"
+    />
+  );
+}
+
 export default function HomePageRestaurantsDesktop() {
   return (
     <div className="bg-[#ededed] content-stretch flex flex-col items-center relative w-full min-w-[1440px]" data-name="Home_Page_Restaurants_Desktop">
       <div className="content-stretch flex flex-col h-[calc(100vh/var(--design-scale,1))] items-center px-[80px] pt-[160px] relative shrink-0 w-full overflow-hidden" data-name="Module/LandingPageHero">
         <div className="absolute inset-0 w-full h-full">
-          <video
-            src={heroVideo}
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover"
-          />
+          <HeroVideo />
         </div>
         <div className="relative z-10">
           <Content />

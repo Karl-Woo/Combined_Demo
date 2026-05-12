@@ -3361,10 +3361,26 @@ body[data-view="capital"].insight-open .chat-bubbles--capital .chat-bubble:nth-c
   line-height: 24px;
   color: #000;
   text-align: center;
-  /* small fade-in when text swaps to "Task complete" */
-  transition: opacity 220ms ease;
+  /* Stack both slots in the same grid cell. The container row
+     auto-sizes to the wider phrase, so layout never jumps when
+     we hand off between slot-a and slot-b. */
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  justify-items: center;
+  align-items: center;
 }
-.task-loading-text.is-swapping { opacity: 0; }
+.task-loading-slot {
+  grid-column: 1;
+  grid-row: 1;
+  opacity: 0;
+  /* Plain CSS transition — JS drives the swap with setTimeout, no
+     transitionend listener (Safari fires it inconsistently when
+     the element has just been re-targeted with a class change). */
+  transition: opacity 220ms ease;
+  will-change: opacity;
+}
+.task-loading-slot.is-active { opacity: 1; }
 
 /* ===========================================================
    COMPLETED CUSTOMER CARD — applied to the rec-card after the
