@@ -1,0 +1,5 @@
+# Map data — PMTiles archives (vector tiles) and protobuf glyph ranges
+# (MapLibre symbol-rendering fonts). Both are binary; Git must not touch
+# their line endings or they'll be corrupted on Windows checkouts.
+*.pmtiles binary
+*.pbf binary

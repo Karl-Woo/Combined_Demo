@@ -1109,18 +1109,24 @@
       window.addEventListener('resize', fitIntroCanvas);
 
       // Tries local PMTiles + offline style first; falls back to
-      // OpenFreeMap if any of the three files are missing. The
-      // initial style passed to the Map constructor has to be
-      // synchronous, so we start on OpenFreeMap and swap to the
-      // offline style as soon as we know it's available.
-      async function pickStyle() {
+      // OpenFreeMap if any of the three files are missing. We probe
+      // synchronously so the Map constructor receives the final style
+      // URL on its first paint — otherwise the demo's `style.load`
+      // handler (which adds the merchant dot layers) registers after
+      // the initial fire and the dots never paint.
+      function pickStyle() {
         try {
-          const heads = await Promise.all([
-            fetch('./tiles/us-overview.pmtiles', { method: 'HEAD' }),
-            fetch('./tiles/nyc-metro.pmtiles',   { method: 'HEAD' }),
-            fetch('./offline/style.json',         { method: 'HEAD' }),
-          ]);
-          if (heads.every((r) => r.ok)) {
+          function head(url) {
+            const xhr = new XMLHttpRequest();
+            xhr.open('HEAD', url, false);  // sync — runs once at startup
+            xhr.send();
+            return xhr.status >= 200 && xhr.status < 300;
+          }
+          if (
+            head('./tiles/us-overview.pmtiles') &&
+            head('./tiles/nyc-metro.pmtiles') &&
+            head('./offline/style.json')
+          ) {
             const protocol = new pmtiles.Protocol();
             maplibregl.addProtocol('pmtiles', protocol.tile);
             return './offline/style.json';
@@ -1162,7 +1168,7 @@
 
       const map = new maplibregl.Map({
         container: 'introMap',
-        style: 'https://tiles.openfreemap.org/styles/liberty',
+        style: pickStyle(),
         center: US_VIEW.center,
         zoom: US_VIEW.zoom,
         attributionControl: false,
@@ -1171,12 +1177,6 @@
         // surface, not an interactive map.
         interactive: false,
         pixelRatio: introPixelRatio,
-      });
-
-      pickStyle().then((url) => {
-        if (url !== 'https://tiles.openfreemap.org/styles/liberty') {
-          map.setStyle(url);
-        }
       });
 
       map.addControl(new maplibregl.AttributionControl({ compact: true }));
@@ -1196,7 +1196,12 @@
           const set = (prop, val) => { try { map.setPaintProperty(id, prop, val); } catch {} };
           const setLayout = (prop, val) => { try { map.setLayoutProperty(id, prop, val); } catch {} };
           if (l.type === 'background') {
-            set('background-color', PALETTE.bg);
+            // Use the water color (white) rather than PALETTE.bg so the
+            // map "ocean" extends seamlessly across areas the local
+            // PMTiles don't cover (everything beyond the continental
+            // US bbox) — keeps PALETTE.bg available for text halos
+            // where it still reads correctly against the land color.
+            set('background-color', PALETTE.water);
           } else if (l.type === 'fill') {
             const isWater = /water|river|ocean|sea|lake|stream|pond/i.test(id) ||
                             /water/i.test(l['source-layer'] || '');
