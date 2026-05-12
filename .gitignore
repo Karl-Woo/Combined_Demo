@@ -15,3 +15,8 @@
 # directly; node_modules and the .vite cache are not.
 demos/agent-boarding/node_modules/
 demos/agent-boarding/.vite/
+
+# go-pmtiles CLI — used to (re-)extract the offline PMTiles from the
+# protomaps daily build. Output tiles live under
+# demos/agentic-commerce/tiles/; the ~60 MB Windows binary is not committed.
+tools/
