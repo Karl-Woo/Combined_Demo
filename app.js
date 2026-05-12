@@ -24,13 +24,20 @@
 
   const nextBtn = document.getElementById('nextOverlay');
 
+  // Keep in sync with the .intro.exiting animation timing in styles.css.
+  const INTRO_EXIT_MS = 420;
+
   let currentIndex = 0;
   let loaded = new Set(); // iframe src we've already injected
+  let advanceInFlight = false;
 
   function setActive(index) {
     currentIndex = Math.max(0, Math.min(SEQUENCE.length - 1, index));
     const name = SEQUENCE[currentIndex];
     const isDemo = name.startsWith('demo-');
+
+    // Clear any in-progress exit animation state from prior advances.
+    screens.forEach((el) => el.classList.remove('exiting'));
 
     // Toggle screens.
     screens.forEach((el, key) => {
@@ -68,29 +75,33 @@
   }
 
   function advance() {
-    setActive(currentIndex + 1);
+    if (advanceInFlight) return;
+    const current = SEQUENCE[currentIndex];
+    // When leaving an intro slide, play the exit animation first so
+    // the slide slides out before the demo slides in.
+    if (current.startsWith('intro-')) {
+      const slide = screens.get(current);
+      advanceInFlight = true;
+      slide.classList.add('exiting');
+      setTimeout(() => {
+        advanceInFlight = false;
+        setActive(currentIndex + 1);
+      }, INTRO_EXIT_MS);
+    } else {
+      setActive(currentIndex + 1);
+    }
   }
 
-  function restart() {
-    // Reset iframes so the demos start from a clean state.
-    screens.forEach((el, key) => {
-      if (key.startsWith('demo-')) {
-        const iframe = el.querySelector('iframe');
-        if (iframe) {
-          iframe.removeAttribute('src');
-        }
+  // Intro slides are themselves the click target — click anywhere
+  // on an intro (or press Enter/Space when it has focus) to advance
+  // into the demo that follows.
+  document.querySelectorAll('.intro[data-action="start"]').forEach((slide) => {
+    slide.addEventListener('click', advance);
+    slide.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        advance();
       }
-    });
-    loaded = new Set();
-    setActive(0);
-  }
-
-  // Wire intro-card buttons (Start / Restart).
-  document.querySelectorAll('[data-action]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const action = btn.dataset.action;
-      if (action === 'start') advance();
-      if (action === 'restart') restart();
     });
   });
 

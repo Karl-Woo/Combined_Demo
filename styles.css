@@ -1,6 +1,6 @@
 /* ─────────────────────────────────────────────────────────────
    Clover Combined Demo — host wrapper.
-   Premium-tech chrome with Clover brand accents.
+   Light intro slides matching the Investor-day-ai Figma frames.
    ───────────────────────────────────────────────────────────── */
 
 /* ─────────────── Fonts: Graphik ─────────────── */
@@ -29,22 +29,12 @@
 /* ─────────────── Design tokens ─────────────── */
 :root {
   --clover-green: #228800;
-  --clover-green-hover: #1a6a00;
-  --clover-green-glow: rgba(34, 136, 0, 0.45);
-  --ink-0: #0a0c0a;
+  --clover-green-dark: #004400;
+  --gray-background: #fbfbfb;
+  --gray-title: #5a5a5a;
+  --gray-lines: #ededed;
   --ink-1: #11140f;
-  --ink-2: #2a2f29;
-  --ink-3: #5a625a;
-  --ink-4: #8a928a;
-  --line-soft: rgba(255, 255, 255, 0.08);
-  --line-strong: rgba(255, 255, 255, 0.14);
-  --bg-base: #0a0c0a;
-  --bg-elev: #11140f;
   --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-  --radius-pill: 999px;
-  --shadow-glow: 0 24px 60px -20px rgba(34, 136, 0, 0.55);
 }
 
 * { box-sizing: border-box; }
@@ -54,8 +44,8 @@ html, body {
   padding: 0;
   height: 100%;
   width: 100%;
-  background: var(--bg-base);
-  color: #fff;
+  background: var(--gray-background);
+  color: var(--ink-1);
   font-family: 'Graphik', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   font-weight: 400;
   letter-spacing: -0.005em;
@@ -85,299 +75,178 @@ html, body {
   visibility: visible;
 }
 
-/* ─────────────── Intro card — premium dark theme ─────────────── */
-/* Backdrop is a near-black with two subtle radial gradients (green
-   glow from lower-left, cooler graphite from upper-right) and a
-   fixed dot grid for that "tech surface" feel. */
+/* ─────────────── Intro slide ─────────────── */
+/* Reference frame: 1600 x 960. Logo at (118, 118) sized 164×40,
+   title at (118, 278) sized 96px. We express everything in % of the
+   shorter axis (height) so the layout scales correctly across
+   aspect ratios while keeping the original proportions. */
 .intro {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background:
-    radial-gradient(60% 50% at 15% 105%, rgba(34, 136, 0, 0.22), transparent 70%),
-    radial-gradient(40% 35% at 95% 0%, rgba(80, 180, 120, 0.08), transparent 60%),
-    var(--bg-base);
+  background: var(--gray-background);
+  cursor: pointer;
   overflow: hidden;
 }
 
-/* Dot-grid texture sits on top of the gradients, masked to fade
-   towards the edges so it feels like a surface rather than a tile. */
-.intro::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
-  background-size: 28px 28px;
-  background-position: 0 0;
-  -webkit-mask-image: radial-gradient(ellipse 80% 75% at 50% 50%, #000 30%, transparent 100%);
-  mask-image: radial-gradient(ellipse 80% 75% at 50% 50%, #000 30%, transparent 100%);
-  pointer-events: none;
-  z-index: 0;
+.intro:focus-visible {
+  outline: 2px solid var(--clover-green);
+  outline-offset: -8px;
 }
 
-/* Thin top-edge hairline — adds the "instrument panel" feel. */
-.intro::after {
-  content: "";
+/* Decorative line graphic — sits behind the text, anchored to the
+   left edge and extending past the right and bottom of the frame
+   (matches the Figma artboard, where the vector overflows). */
+.intro-lines {
   position: absolute;
-  top: 0;
   left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(34, 136, 0, 0.45), transparent);
-  z-index: 1;
+  top: -14.48%;
+  width: 100.34%;
+  height: 186.56%;
+  pointer-events: none;
+  user-select: none;
 }
 
-/* Brandbar — top-left lockup. */
-.brandbar {
+.intro-logo {
   position: absolute;
-  top: 36px;
-  left: 44px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: #fff;
-  z-index: 2;
-}
-
-.brandbar .clover-mark {
-  width: 26px;
-  height: 26px;
-  display: block;
-  filter: brightness(0) saturate(100%) invert(60%) sepia(63%) saturate(700%) hue-rotate(60deg) brightness(95%) contrast(120%);
-  /* (filter chain turns the brand-green SVG into a slightly brighter
-     on-dark variant; original asset is dark green, we want a lit
-     emerald that reads on the near-black surface.) */
-}
-
-.brandbar .clover-wordmark {
-  font-size: 19px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  color: #fff;
-}
-
-.brandbar .brandbar-divider {
-  width: 1px;
-  height: 18px;
-  background: var(--line-strong);
-  margin: 0 6px;
-}
-
-.brandbar .brandbar-context {
-  font-size: 12px;
-  color: var(--ink-4);
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-/* Top-right meta — small "v2026.5 / Live" style label. */
-.meta-tag {
-  position: absolute;
-  top: 36px;
-  right: 44px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.10em;
-  text-transform: uppercase;
-  color: var(--ink-4);
-  z-index: 2;
-}
-
-.meta-tag::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #62d674;
-  box-shadow: 0 0 8px rgba(98, 214, 116, 0.7);
-  animation: pulse-dot 2s ease-in-out infinite;
-}
-
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%      { opacity: 0.55; transform: scale(0.85); }
-}
-
-.intro-inner {
-  position: relative;
-  z-index: 2;
-  max-width: 760px;
-  padding: 56px 48px;
-  text-align: center;
-  animation: intro-rise 700ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
-}
-
-@keyframes intro-rise {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* Step chip — minimal, glassy. */
-.step-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 7px 14px 7px 12px;
-  border-radius: var(--radius-pill);
-  border: 1px solid rgba(34, 136, 0, 0.45);
-  background: rgba(34, 136, 0, 0.10);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: #6dd64f;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  margin: 0 auto 28px;
-}
-
-.step-chip::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #6dd64f;
-  box-shadow: 0 0 8px rgba(109, 214, 79, 0.6);
+  top: 12.29%;        /* 118 / 960 */
+  left: 7.375%;       /* 118 / 1600 */
+  width: 10.25%;      /* 164 / 1600 */
+  height: auto;
+  user-select: none;
 }
 
 .intro-title {
-  font-size: clamp(40px, 4.4vw, 64px);
-  line-height: 1.04;
-  font-weight: 600;
-  margin: 0 0 22px;
-  letter-spacing: -0.03em;
-  color: #ffffff;
-  background: linear-gradient(180deg, #ffffff 0%, #cfd6cf 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.intro-sub {
-  font-size: clamp(15px, 1.15vw, 17px);
-  line-height: 1.6;
-  color: var(--ink-4);
-  margin: 0 auto 38px;
-  max-width: 580px;
-  font-weight: 400;
-}
-
-/* Clover green CTA — soft glow for the "primary action" cue. */
-.intro-cta {
-  appearance: none;
-  border: 0;
-  background: linear-gradient(180deg, #2ea008 0%, #1f7d00 100%);
-  color: #fff;
-  font: inherit;
-  font-weight: 600;
-  font-size: 15px;
-  letter-spacing: -0.005em;
-  padding: 14px 28px;
-  border-radius: var(--radius-pill);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.18) inset,
-    0 -1px 0 rgba(0, 0, 0, 0.2) inset,
-    0 12px 36px -8px var(--clover-green-glow);
-  transition: transform 160ms ease, box-shadow 220ms ease, filter 160ms ease;
-}
-
-.intro-cta::after {
-  content: "→";
-  font-weight: 500;
-  transition: transform 200ms ease;
-}
-
-.intro-cta:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.06);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.18) inset,
-    0 -1px 0 rgba(0, 0, 0, 0.2) inset,
-    0 16px 48px -8px var(--clover-green-glow);
-}
-
-.intro-cta:hover::after { transform: translateX(3px); }
-.intro-cta:active { transform: translateY(0); }
-
-.hint {
-  margin: 30px 0 0;
-  font-size: 12px;
-  color: var(--ink-3);
-  letter-spacing: 0.02em;
-}
-
-.hint em {
-  font-style: normal;
-  color: #cfd6cf;
-  font-weight: 500;
-}
-
-/* Bottom step rail — three minimal "instrument" labels. */
-.intro-steps {
   position: absolute;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 36px;
-  z-index: 2;
-}
-
-.intro-steps .istep {
-  font-size: 10px;
+  top: 28.96%;        /* 278 / 960 */
+  left: 7.375%;
+  margin: 0;
+  font-family: 'Graphik', sans-serif;
   font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-  display: inline-flex;
+  font-size: clamp(48px, 10vh, 96px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+}
+
+.intro-title-brand {
+  color: var(--clover-green-dark);
+  display: inline-block;
+}
+
+.intro-title-product {
+  color: var(--gray-title);
+  display: inline-block;
+}
+
+/* ─────────────── Intro entrance — staggered ─────────────── */
+/* When a non-end intro slide becomes .active, replay a layered
+   entrance: lines glide in from the right, logo drops in, then the
+   two title lines rise from below in sequence. Each child starts
+   hidden so there's no flash before the animation kicks off. */
+.intro:not(.end) .intro-lines,
+.intro:not(.end) .intro-logo,
+.intro:not(.end) .intro-title-brand,
+.intro:not(.end) .intro-title-product {
+  opacity: 0;
+}
+
+.intro:not(.end).active .intro-lines {
+  animation: lines-enter 900ms cubic-bezier(0.22, 0.61, 0.36, 1) 60ms both;
+}
+.intro:not(.end).active .intro-logo {
+  animation: logo-enter 620ms cubic-bezier(0.22, 0.61, 0.36, 1) 200ms both;
+}
+.intro:not(.end).active .intro-title-brand {
+  animation: title-enter 720ms cubic-bezier(0.22, 0.61, 0.36, 1) 340ms both;
+}
+.intro:not(.end).active .intro-title-product {
+  animation: title-enter 720ms cubic-bezier(0.22, 0.61, 0.36, 1) 460ms both;
+}
+
+@keyframes lines-enter {
+  from { opacity: 0; transform: translateX(48px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes logo-enter {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes title-enter {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─────────────── Intro exit — fires when transitioning to demo ───────────────
+   JS adds .exiting before swapping to the next demo. The slide slides
+   left and fades while the demo screen slides in from the right
+   (see .screen.demo entrance below). Selectors include .active so
+   their specificity beats the entrance rules above. */
+.intro:not(.end).active.exiting .intro-lines {
+  animation: lines-exit 460ms cubic-bezier(0.5, 0, 0.75, 0) both;
+}
+.intro:not(.end).active.exiting .intro-logo {
+  animation: logo-exit 320ms cubic-bezier(0.5, 0, 0.75, 0) both;
+}
+.intro:not(.end).active.exiting .intro-title-brand {
+  animation: title-exit 380ms cubic-bezier(0.5, 0, 0.75, 0) both;
+}
+.intro:not(.end).active.exiting .intro-title-product {
+  animation: title-exit 380ms cubic-bezier(0.5, 0, 0.75, 0) 50ms both;
+}
+
+@keyframes lines-exit {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(-40px); }
+}
+@keyframes logo-exit {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-8px); }
+}
+@keyframes title-exit {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-24px); }
+}
+
+/* ─────────────── End screen — centered logo only ─────────────── */
+.intro.end {
+  display: flex;
   align-items: center;
-  gap: 10px;
-  transition: color 220ms ease;
+  justify-content: center;
+  cursor: default;
 }
 
-.intro-steps .istep::before {
-  content: "";
-  width: 26px;
-  height: 1px;
-  background: var(--line-strong);
-  transition: background-color 220ms ease, height 220ms ease;
+.end-logo {
+  width: clamp(280px, 29.375%, 470px);  /* 470 / 1600 */
+  height: auto;
+  user-select: none;
+  opacity: 0;
 }
 
-.intro-steps .istep.active {
-  color: #fff;
+.intro.end.active .end-logo {
+  animation: end-logo-enter 1000ms cubic-bezier(0.22, 0.61, 0.36, 1) 140ms both;
 }
 
-.intro-steps .istep.active::before {
-  background: #6dd64f;
-  box-shadow: 0 0 8px rgba(109, 214, 79, 0.5);
-  height: 2px;
-}
-
-/* End screen variant — flip the chip to filled. */
-.intro.end .step-chip {
-  background: rgba(34, 136, 0, 0.3);
-  border-color: rgba(34, 136, 0, 0.7);
-  color: #b7f29a;
+@keyframes end-logo-enter {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 /* ─────────────── Demo iframe ─────────────── */
 .demo {
   background: #ffffff;
+}
+
+/* When a demo screen becomes .active it glides in from the right
+   while fading up — pairs with the intro's leftward slide-out for a
+   slide-deck "advance" feel. The transform animation is one-shot
+   (only on entrance) so navigating back doesn't slide the demo away. */
+.screen.demo.active {
+  animation: demo-enter 560ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@keyframes demo-enter {
+  from { transform: translateX(32px); }
+  to   { transform: translateX(0); }
 }
 
 .demo-frame {
@@ -458,15 +327,13 @@ body.is-demo .next-overlay:focus-visible {
 }
 
 .next-overlay .next-label {
-  /* Subtle glyph-rendering tweak so the button reads ultra-clean. */
   font-feature-settings: 'ss01' on;
 }
 
 /* ─────────────── Small viewports ─────────────── */
 @media (max-width: 720px) {
-  .brandbar { top: 22px; left: 20px; }
-  .meta-tag { top: 22px; right: 20px; padding: 5px 10px; font-size: 10px; }
-  .intro-inner { padding: 40px 24px; }
-  .intro-steps { bottom: 22px; gap: 20px; }
+  .intro-title { font-size: clamp(36px, 8vh, 64px); }
+  .intro-logo { width: 130px; top: 32px; left: 24px; }
+  .intro-title { top: 110px; left: 24px; }
   .next-overlay { bottom: 14px; padding: 8px 14px; font-size: 12px; }
 }
