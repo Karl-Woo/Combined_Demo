@@ -4,7 +4,7 @@
     {
       "name": "combined-demo",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["-y", "http-server", "..", "-p", "5180", "-c-1", "--silent"],
+      "runtimeArgs": ["-y", "http-server", ".", "-p", "5180", "-c-1", "--silent"],
       "port": 5180
     }
   ]
