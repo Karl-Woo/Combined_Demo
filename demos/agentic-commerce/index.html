@@ -122,7 +122,7 @@
               <div class="address-bar">
                 <div class="url">
                   <img src="asset/icons/lock.svg" alt="" />
-                  <p>gemini.google.com</p>
+                  <p>app.ai</p>
                 </div>
                 <div class="star">
                   <img src="asset/icons/star.svg" alt="" />
@@ -163,7 +163,7 @@
               <main class="main">
 
                 <header class="main-topbar">
-                  <h1 class="title">Gemini</h1>
+                  <h1 class="title">AI Assistant</h1>
                   <div class="main-avatar">
                     <img src="asset/avatar.png" alt="Profile" />
                   </div>
@@ -180,7 +180,7 @@
                     <div class="composer">
                       <div class="composer-input">
                         <img class="shield" src="asset/icons/page_info.svg" alt="" />
-                        <p class="placeholder">Ask Gemini</p>
+                        <p class="placeholder">Ask me anything</p>
                       </div>
                       <div class="composer-actions">
                         <div class="composer-left">
@@ -390,7 +390,7 @@
 
             <aside class="m-modal" id="discoverModal" role="dialog" aria-labelledby="discoverModalTitle" aria-hidden="false">
               <header class="m-modal-header">
-                <h2 class="m-modal-title" id="discoverModalTitle">Get discovered on Google</h2>
+                <h2 class="m-modal-title" id="discoverModalTitle">Get discovered by local shoppers</h2>
                 <button class="m-modal-close" aria-label="Close">
                   <img src="asset/icons/merchant/modal/x-close.svg" alt="" />
                 </button>
@@ -408,7 +408,7 @@
                     <img src="asset/icons/merchant/modal/hero.png" alt="" />
                   </div>
 
-                  <p class="m-modal-text">Connect your store to Gemini so local customers can find your products and shop directly through Search and AI.</p>
+                  <p class="m-modal-text">Connect your store to AI-powered search so customers can find and buy your products across the web.</p>
                 </div>
 
                 <div class="m-modal-controls">
@@ -903,7 +903,7 @@
                   <div class="m-col-time"><span class="m-row-pri">11:46 AM</span><span class="m-row-sec">7/10/26</span></div>
                   <div class="m-col-status"><span class="m-pill m-pill--paid">Paid</span></div>
                   <div class="m-col-total"><span class="m-row-pri">$82.00</span><span class="m-row-sec">— —</span></div>
-                  <div class="m-col-type"><span class="m-row-pri">Gemini</span></div>
+                  <div class="m-col-type"><span class="m-row-pri">AI Assistant</span></div>
                   <div class="m-col-cust"><span class="m-row-pri">Sam Lufton</span><span class="m-row-sec">Micheal</span></div>
                   <div class="m-col-id"><span class="m-row-pri">1 item</span><span class="m-row-sec">Summer Fields B…</span></div>
                 </div>
@@ -3151,7 +3151,7 @@
           if (isFirst) hero.classList.add('is-chat');
           if (isFirst) document.querySelector('.app').classList.add('is-chat');
           messages.appendChild(makeUserBubble(turn.user));
-          placeholder.textContent = 'Ask Gemini';
+          placeholder.textContent = 'Ask me anything';
           composerInput.classList.remove('is-typing');
           if (turn.title) title.textContent = turn.title;
 
@@ -3539,7 +3539,7 @@
           '<div class="msg-ai-header">' +
             '<div class="msg-ai-header-left">' +
               '<div class="msg-ai-sparkle">' +
-                '<img src="asset/icons/gemini_spark.svg" alt="" />' +
+                '<img src="asset/icons/ai.svg" alt="" />' +
               '</div>' +
               pill +
             '</div>' +
@@ -3581,7 +3581,7 @@
         wrap.innerHTML =
           '<div class="msg-thinking-row">' +
             '<div class="msg-ai-sparkle thinking-sparkle">' +
-              '<img src="asset/icons/gemini_spark.svg" alt="" />' +
+              '<img src="asset/icons/ai.svg" alt="" />' +
             '</div>' +
             '<span class="thinking-shimmer">Thinking</span>' +
           '</div>';
