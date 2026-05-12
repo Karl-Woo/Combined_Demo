@@ -295,7 +295,21 @@
                    complete event. -->
               <div class="task-loading" aria-hidden="true">
                 <div class="task-loading-anim" aria-hidden="true"></div>
-                <p class="task-loading-text">Sending messages...</p>
+                <!-- Two stacked slots so the "Sending …" → "Task
+                     complete" transition is a sequential fade
+                     across two distinct DOM nodes rather than a
+                     textContent swap on one node. Safari's
+                     transitionend timing was unreliable on a
+                     single-element fade and the old + new text
+                     briefly overlapped mid-swap; with two slots,
+                     slot A fades fully out before slot B fades
+                     in, so neither browser can paint both at once.
+                     Grid layout stacks them in the same cell so
+                     the row auto-sizes to the longer phrase. -->
+                <p class="task-loading-text">
+                  <span class="task-loading-slot task-loading-slot--a is-active"></span>
+                  <span class="task-loading-slot task-loading-slot--b"></span>
+                </p>
               </div>
               <div class="insight-left">
 
@@ -1196,6 +1210,8 @@
       const insightView  = document.querySelector('.insight-view');
       const overlay      = document.querySelector('.task-loading');
       const overlayText  = document.querySelector('.task-loading-text');
+      const slotA        = document.querySelector('.task-loading-slot--a');
+      const slotB        = document.querySelector('.task-loading-slot--b');
       const lottieHost   = document.querySelector('.task-loading-anim');
       const recCardsAll  = document.querySelectorAll('.rec-card');
       const customerCardEl   = recCardsAll[0];
@@ -1205,7 +1221,7 @@
       const navTopItemsAll   = document.querySelectorAll('.navtop .navitem');
       const recGrid      = document.querySelector('.rec-grid');
       const recSection   = document.querySelector('.rec-section');
-      if (!insightView || !overlay || !overlayText || !lottieHost || !recGrid) return;
+      if (!insightView || !overlay || !overlayText || !slotA || !slotB || !lottieHost || !recGrid) return;
 
       // Toggle the "all-completed" subtitle on the rec-section once every
       // recommended-action card has reached its completed state.
@@ -1413,9 +1429,12 @@
 
           if (window.__reviewTypewriter) window.__reviewTypewriter.cancel();
 
-          // Reset text and show loader.
-          overlayText.textContent = loadingText;
-          overlayText.classList.remove('is-swapping');
+          // Reset loader to its initial state: slot A shows the
+          // loading copy, slot B is hidden and empty.
+          slotA.textContent = loadingText;
+          slotA.classList.add('is-active');
+          slotB.classList.remove('is-active');
+          slotB.textContent = '';
           insightView.classList.add('task-loading-active');
 
           // Play the lottie from frame 0
@@ -1425,13 +1444,21 @@
             a.play();
           }
 
-          // Beat 1 — at 4s, swap text to "Task complete"
+          // Beat 1 — at 3.5s, swap text to "Task complete".
+          // Sequential fade between two stacked slots: deactivate
+          // slot A (fade 1→0 over 220ms), then activate slot B
+          // (fade 0→1 over 220ms). The 240ms gap is plain JS time,
+          // so Safari's flaky transitionend handling doesn't
+          // matter — both browsers see slot A fully transparent
+          // before slot B starts to appear. No textContent swap on
+          // a fading element, no two phrases visible at once.
+          const SLOT_GAP_MS = 240;     // a hair longer than the 220ms fade
           const swapTimer = setTimeout(() => {
-            overlayText.classList.add('is-swapping');
+            slotA.classList.remove('is-active');
             setTimeout(() => {
-              overlayText.textContent = 'Task complete';
-              overlayText.classList.remove('is-swapping');
-            }, 220);
+              slotB.textContent = 'Task complete';
+              slotB.classList.add('is-active');
+            }, SLOT_GAP_MS);
           }, TEXT_SWAP_MS);
 
           // Beat 2 — at 5s, close the insight view (fades back to home).

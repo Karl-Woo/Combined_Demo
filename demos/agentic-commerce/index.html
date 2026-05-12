@@ -16,6 +16,14 @@
        set, the merchant modal's entrance animations are paused so
        the modal slides up *after* the reveal completes. -->
   <div class="intro-stage" id="introStage" aria-hidden="true">
+    <!-- No darkening overlay — the stage background (#F9F9F9, the
+         map palette's land color) shows through while the canvas
+         fades in, so the reveal reads as white → map rather than
+         dark → light. The `is-revealing` class is added by JS once
+         the wrapper sends a `{ kind: 'show' }` postMessage (or
+         after a short fallback timer for direct-iframe access),
+         so a wrapper-preloaded but still-hidden iframe doesn't
+         burn the reveal animation before the user can see it. -->
     <!-- Fixed 1366x820 design canvas — JS scales it via transform on
          resize so the map + dots keep the same proportions on any
          viewport, mirroring the iPad screen-inner scaler. -->
@@ -1178,6 +1186,9 @@
         interactive: false,
         pixelRatio: introPixelRatio,
       });
+      // Expose for debugging hooks from the wrapper preview tools.
+      // Harmless in production; cheap reference, no side effects.
+      window.__introMap = map;
 
       map.addControl(new maplibregl.AttributionControl({ compact: true }));
       map.on('load', () => {
@@ -1436,7 +1447,14 @@
       // NYC fully populated. With SEQ_Z_START/END below the whole
       // wave now wraps up by zoom ≈ 8.7 instead of 9.4 — Manhattan
       // arrives at zoom 9.4 with the dot field already complete.
-      const SEQ_FADE_BAND = 0.35;
+      // Per-dot fade window as a fraction of the total dive
+      // progress (zoom-distance from US_VIEW to the Manhattan
+      // target). Each dot fades in over this much "progress".
+      const SEQ_FADE_BAND = 0.22;
+      // Rank progress (0 = closest to portal, 1 = farthest) is
+      // stable for the life of the page; the actual zoom
+      // thresholds get recomputed each time playZoom runs because
+      // the target zoom is viewport-dependent.
       (function () {
         const focal = [-74.000, 40.726];  // matches PORTAL_LNGLAT
         const ranked = NYC_DOTS.features.map((f) => {
@@ -1446,34 +1464,45 @@
         });
         ranked.sort((a, b) => a.d - b.d);
         const N = ranked.length;
-        // First NYC dot starts fading in right when the US fade-out
-        // completes (FADE_HIGH = 7.8), so the big New York metro dot
-        // is fully gone before any of the smaller NYC dots become
-        // visible — no overlap during the handoff. Last dot starts
-        // at 8.8 and is fully in by 9.4 (Manhattan-fit zoom) with
-        // the 0.6 fade band.
-        // Last dot starts at 8.35 → fully visible by 8.7 (= start +
-        // SEQ_FADE_BAND). Camera arrives at Manhattan (zoom 9.4)
-        // with the entire dot field already lit, so there's no
-        // sparse "low-poly gap" between US fading out and NYC
-        // filling in.
-        const SEQ_Z_START = 7.8, SEQ_Z_END = 8.35;
         ranked.forEach((entry, i) => {
-          const t = N === 1 ? 0 : i / (N - 1);
-          entry.f.properties.seqStartZoom = SEQ_Z_START + t * (SEQ_Z_END - SEQ_Z_START);
+          // 0 for the closest dot, 1 for the farthest. Drives the
+          // wave order — closest reveals first.
+          entry.f.properties.seqRank = N === 1 ? 0 : i / (N - 1);
           entry.f.properties.appearOpacity = 0;
         });
       })();
+
+      // Dive progress bookkeeping. updateNycSeqOpacity reads these
+      // every zoom tick to derive per-dot appearOpacity from the
+      // *fraction of the dive completed*, not a hard zoom value —
+      // so on every viewport (large monitor cameraForBounds zoom
+      // ~10.5, small viewport ~9.4) the NYC dots reveal in sync
+      // with the camera's final approach rather than 1+ seconds
+      // before it lands.
+      let diveStartZoom = null;   // zoom at the moment playZoom fires
+      let diveTargetZoom = null;  // computed cameraForBounds zoom
+      let dotRevealRaf = null;    // rAF handle for the dive-time NYC reveal poller
+      // Fraction of dive progress at which the first dot starts
+      // appearing / the last dot starts. With SEQ_FADE_BAND above,
+      // the very last dot finishes fading at progress = 1.0.
+      const SEQ_PROGRESS_START = 0.62;
+      const SEQ_PROGRESS_END   = 1.0 - SEQ_FADE_BAND;
       function nycSeqOpacity() {
         // Fresh array each call (MapLibre may mutate shared
         // expression arrays during layer validation).
-        // Multiplied by (1 - diveActive) so the focused merchant's
-        // underlying MapLibre dot disappears while the DOM portal
-        // overlays it during the forward dive. Without this you can
-        // see both a slightly-misaligned MapLibre circle AND the
-        // portal as two separate dots as the camera pans.
+        // appearOpacity reads from feature-state — the standard
+        // MapLibre channel for per-feature dynamic state. Safari's
+        // WebKit caches paint expressions that read mutating
+        // property data via ['get', ...] across setData calls, so
+        // the per-frame opacity ramps during the dive didn't
+        // visually commit until a later user event. feature-state
+        // is processed by a different code path on the renderer
+        // side and updates reliably across Chrome and Safari.
+        // diveActive stays on properties because it's only flipped
+        // at two discrete moments (dive start / recede end) and
+        // its setData calls don't suffer the cache issue.
         return ['*',
-          ['coalesce', ['get', 'appearOpacity'], 0],
+          ['coalesce', ['feature-state', 'appearOpacity'], 0],
           ['-', 1, ['coalesce', ['get', 'diveActive'], 0]]];
       }
 
@@ -1499,7 +1528,14 @@
       function addDotLayers() {
         if (!map.getSource('us-dots')) {
           map.addSource('us-dots',  { type: 'geojson', data: US_DOTS });
-          map.addSource('nyc-dots', { type: 'geojson', data: NYC_DOTS });
+          // generateId assigns each NYC feature a stable numeric id
+          // matching its index in the features array. Needed so
+          // setFeatureState({ source: 'nyc-dots', id }) can target
+          // individual dots for the dive's per-feature opacity
+          // ramp. Feature-state values persist across setData
+          // calls (for diveActive/greenT) because the ids are
+          // re-assigned by index, which is stable for this source.
+          map.addSource('nyc-dots', { type: 'geojson', data: NYC_DOTS, generateId: true });
         }
 
         const PHASES = Array.from({ length: PHASE_COUNT }, (_, i) => i);
@@ -1644,23 +1680,125 @@
         // the NYC dots fade in one-by-one as the camera approaches.
         map.on('zoom', updateNycSeqOpacity);
         updateNycSeqOpacity();
+        // Hide the US dots immediately so the wrapper's preload can
+        // mount the iframe in the background without the dots
+        // popping in on a hidden frame. The staggered fade-in runs
+        // later, once the wrapper signals the iframe is visible.
+        hideUsDotsForReveal();
       }
 
-      function updateNycSeqOpacity() {
-        const z = map.getZoom();
-        let changed = false;
-        for (const f of NYC_DOTS.features) {
-          const seqStart = f.properties.seqStartZoom;
-          if (seqStart === undefined) continue;
-          const newOp = Math.max(0, Math.min(1, (z - seqStart) / SEQ_FADE_BAND));
-          if (Math.abs((f.properties.appearOpacity || 0) - newOp) > 0.005) {
-            f.properties.appearOpacity = newOp;
-            changed = true;
+      // Layer IDs the cascade animates. Order matters: shadows
+      // first so the underlying glow is already drawn when the
+      // crisp dot fades up over it. NYC layers are intentionally
+      // omitted — they're driven by `nycSeqOpacity()` keyed to the
+      // dive zoom and shouldn't be touched at the US framing.
+      function getCascadeLayerIds() {
+        const ids = [];
+        for (let ph = 0; ph < PHASE_COUNT; ph++) {
+          ids.push({
+            phase: ph,
+            ids: [
+              `us-offline-${ph}-shadow`,
+              `us-online-${ph}-shadow`,
+              `us-offline-${ph}`,
+              `us-online-${ph}`,
+            ],
+          });
+        }
+        return ids;
+      }
+
+      // Snapshot of each US dot layer's original opacity expression,
+      // captured before we hide it. Used to restore the layer when
+      // the reveal fires.
+      const dotOpacityOriginals = new Map();
+
+      function hideUsDotsForReveal() {
+        const groups = getCascadeLayerIds();
+        for (const { ids } of groups) {
+          for (const id of ids) {
+            try {
+              dotOpacityOriginals.set(id, {
+                circle: map.getPaintProperty(id, 'circle-opacity'),
+                stroke: map.getPaintProperty(id, 'circle-stroke-opacity'),
+              });
+              // Instant hide — no transition on this initial set.
+              map.setPaintProperty(id, 'circle-opacity-transition', { duration: 0 });
+              map.setPaintProperty(id, 'circle-stroke-opacity-transition', { duration: 0 });
+              map.setPaintProperty(id, 'circle-opacity', 0);
+              if (dotOpacityOriginals.get(id).stroke !== undefined) {
+                map.setPaintProperty(id, 'circle-stroke-opacity', 0);
+              }
+            } catch {}
           }
         }
-        if (changed && map.getSource('nyc-dots')) {
-          map.getSource('nyc-dots').setData(NYC_DOTS);
+      }
+
+      function startDotCascade() {
+        const groups = getCascadeLayerIds();
+        // Map-settle CSS finishes ~1.4s in; start the cascade
+        // slightly before the end so the first dots appear as the
+        // map's blur is clearing, hand-off feels seamless.
+        const MAP_SETTLE_MS = 1200;
+        const PHASE_STAGGER_MS = 180;
+        const FADE_MS = 620;
+        for (const { phase, ids } of groups) {
+          const delay = MAP_SETTLE_MS + phase * PHASE_STAGGER_MS;
+          setTimeout(() => {
+            for (const id of ids) {
+              try {
+                map.setPaintProperty(id, 'circle-opacity-transition', { duration: FADE_MS });
+                map.setPaintProperty(id, 'circle-stroke-opacity-transition', { duration: FADE_MS });
+                const orig = dotOpacityOriginals.get(id);
+                if (orig) {
+                  map.setPaintProperty(id, 'circle-opacity', orig.circle);
+                  if (orig.stroke !== undefined) {
+                    map.setPaintProperty(id, 'circle-stroke-opacity', orig.stroke);
+                  }
+                }
+              } catch {}
+            }
+          }, delay);
         }
+      }
+
+      // Track each NYC dot's current rendered opacity so we can
+      // skip no-op setFeatureState calls. Keyed by the dot's
+      // generated id (= its index in NYC_DOTS.features).
+      const nycDotOpacity = new Map();
+
+      function updateNycSeqOpacity() {
+        // Until the dive starts (or in case it never does — e.g.,
+        // outro replay), every dot stays hidden. The dive's
+        // playZoom() initializes diveStartZoom/diveTargetZoom; we
+        // bail until then so the camera state from preloadDiveTiles
+        // (which jumpTos through zoom 5/7/9/11 to warm the tile
+        // cache) doesn't briefly flicker the dots in/out.
+        if (diveStartZoom === null || diveTargetZoom === null) return;
+        if (!map.getSource('nyc-dots')) return;
+        const z = map.getZoom();
+        const zRange = diveTargetZoom - diveStartZoom;
+        const progress = zRange > 0
+          ? Math.max(0, Math.min(1, (z - diveStartZoom) / zRange))
+          : 0;
+        NYC_DOTS.features.forEach((f, idx) => {
+          const rank = f.properties.seqRank;
+          if (rank === undefined) return;
+          // Each dot's reveal starts at SEQ_PROGRESS_START (for
+          // rank 0, closest to portal) and walks toward
+          // SEQ_PROGRESS_END (for rank 1, farthest), then fades in
+          // over SEQ_FADE_BAND of progress.
+          const dotStart = SEQ_PROGRESS_START + rank * (SEQ_PROGRESS_END - SEQ_PROGRESS_START);
+          const newOp = Math.max(0, Math.min(1, (progress - dotStart) / SEQ_FADE_BAND));
+          const prev = nycDotOpacity.get(idx) || 0;
+          if (Math.abs(prev - newOp) > 0.005) {
+            nycDotOpacity.set(idx, newOp);
+            map.setFeatureState(
+              { source: 'nyc-dots', id: idx },
+              { appearOpacity: newOp },
+            );
+          }
+        });
       }
 
       // Continuous easing pulse — cosine ease-in-out, no spring
@@ -1764,37 +1902,93 @@
       map.on('style.load', () => {
         restyleToPalette();
         addDotLayers();
-        // Pre-warm the tile cache for the mid-zoom range that the
-        // US→Manhattan flyTo passes through (5-10). Without this the
-        // fast flyTo races ahead of tile fetches and the middle of
-        // the dive renders as overzoomed lower-zoom tiles (blurry).
-        // We touch each intermediate zoom by issuing a brief
-        // `jumpTo`, then immediately return to US_VIEW. Multiple
-        // synchronous jumps coalesce into a single paint of the
-        // final state, so the user only ever sees the US view —
-        // but every intermediate camera state queues its tile
-        // fetches with MapLibre's SourceCache, populating the cache
-        // before the user triggers the actual dive.
-        preloadDiveTiles();
+        // Kick off the staged tile preload in the background. Each
+        // zoom stop waits for MapLibre to fully load that level's
+        // tiles before advancing, so the cache is actually warm
+        // (rather than full of cancelled in-flight requests, which
+        // is what a tight synchronous jumpTo loop produces).
+        preloadDiveTilesStaged();
       });
 
-      function preloadDiveTiles() {
-        // Sample positions along the great-circle path from US center
-        // to NYC at zoom levels 5, 7, 9, 11 — covers the gap between
-        // the start zoom (3.6) and the Manhattan-fit end zoom.
+      // Token the staged preload checks each step; flipped to true
+      // when the user advances into demo-1 so any in-flight stage
+      // abandons immediately and snaps the camera back to US_VIEW
+      // before the reveal animation paints.
+      const preloadAbort = { aborted: false };
+
+      // Wait until MapLibre has finished loading tiles for the
+      // current camera. We listen for 'idle' (fires when there are
+      // no pending tile requests for the visible viewport) with a
+      // safety timeout so an inadvertently-quiet style doesn't
+      // hang the whole sequence.
+      function waitForIdle(timeoutMs) {
+        return new Promise((resolve) => {
+          let done = false;
+          const finish = () => {
+            if (done) return;
+            done = true;
+            map.off('idle', finish);
+            resolve();
+          };
+          map.once('idle', finish);
+          setTimeout(finish, timeoutMs);
+        });
+      }
+
+      async function preloadDiveTilesStaged() {
+        // Sample positions along the great-circle path from US
+        // center to NYC. Stops cover the low-mid (5-7), high-mid
+        // (9), and Manhattan-fit (11) zoom bands so every tile
+        // the dive's flyTo passes through is warm by the time
+        // the user actually triggers it. Without this, the dive
+        // races ahead of the tile fetches and the middle of the
+        // descent renders as overzoomed lower-zoom tiles (visibly
+        // blurry); with this, the descent is crisp end-to-end.
+        // Wider viewports land cameraForBounds(MANHATTAN_BOUNDS)
+        // at ~11.5 zoom, so we go through 12 too — that's the
+        // level MapLibre actually fetches when the camera settles
+        // around zoom 11.5 (it rounds up). Without this stop the
+        // last beat of the dive briefly renders upscaled zoom 11
+        // tiles before zoom 12 catches up.
         const stops = [
           { center: [-92, 39.5],    zoom: 5  },
           { center: [-85, 40   ],   zoom: 7  },
           { center: [-78, 40.5 ],   zoom: 9  },
+          { center: PORTAL_LNGLAT,  zoom: 10 },
           { center: PORTAL_LNGLAT,  zoom: 11 },
+          { center: PORTAL_LNGLAT,  zoom: 12 },
         ];
         for (const s of stops) {
+          if (preloadAbort.aborted) return;
           map.jumpTo({ center: s.center, zoom: s.zoom });
+          // 1500 ms safety: tiles usually load in 200-500 ms over
+          // the local PMTiles file, but if the user is on a slow
+          // connection we don't want to block the whole sequence
+          // for >1.5 s on any single stop. The Promise also wakes
+          // up early as soon as MapLibre fires 'idle'.
+          await waitForIdle(1500);
         }
-        // Return to US_VIEW so the user sees the framed-US start
-        // state. Final jumpTo of the synchronous batch wins; the
-        // intermediate zooms only get queued for tile loading.
+        if (preloadAbort.aborted) return;
+        // Snap back to US_VIEW so when the user advances, the
+        // reveal animation plays over the framed-US starting
+        // position. Held briefly via one more idle wait so any
+        // last US tiles re-paint cleanly before the user can see.
         map.jumpTo({ center: US_VIEW.center, zoom: US_VIEW.zoom });
+        await waitForIdle(800);
+      }
+
+      // Called from triggerReveal — abandons the preload and snaps
+      // the camera to US_VIEW so the reveal animation always
+      // plays over the correct starting frame regardless of how
+      // far the preload has progressed.
+      function abortPreloadAndSnapToUS() {
+        if (preloadAbort.aborted) return;
+        preloadAbort.aborted = true;
+        try {
+          if (Math.abs(map.getZoom() - US_VIEW.zoom) > 0.01) {
+            map.jumpTo({ center: US_VIEW.center, zoom: US_VIEW.zoom });
+          }
+        } catch {}
       }
 
       // ---- Click flow --------------------------------------------
@@ -1807,6 +2001,78 @@
 
       function playZoom() {
         const cam = map.cameraForBounds(MANHATTAN_BOUNDS, { padding: MANHATTAN_PADDING });
+        // Record the dive endpoints so updateNycSeqOpacity can
+        // express each NYC dot's reveal as a *fraction of the dive
+        // completed* rather than a hardcoded zoom value. With this
+        // the cascade always lands with the camera regardless of
+        // viewport (large desktop targets zoom ~10.5, smaller
+        // viewports ~9.4) — the dot wave finishes as the camera
+        // settles instead of >1s earlier.
+        diveStartZoom = map.getZoom();
+        diveTargetZoom = cam.zoom;
+
+        // Re-key the US dot fade-out to dive progress as well so
+        // the big New York metro dot stays visible right up until
+        // the first NYC dot starts appearing. With the original
+        // hardcoded zoom 7.0→7.8 window, the metro dot would
+        // disappear at zoom 7.8 but on viewports where the
+        // Manhattan target zoom is ~10–11.5 the first NYC dot
+        // didn't start until well past 8, leaving a "dead" beat
+        // where Manhattan looked empty. Keeping US fade in dive-
+        // progress space puts the handoff right next to NYC's
+        // reveal start (SEQ_PROGRESS_START) on every viewport.
+        const zRange = diveTargetZoom - diveStartZoom;
+        // US fade overlaps NYC's reveal window so the big NY metro
+        // dot stays partially visible while the smaller NYC dots
+        // start populating — no "dead" beat where the city marker
+        // is gone but its replacements haven't shown yet. Fade
+        // wraps up at progress 0.78, by which point the closest
+        // NYC dots are already past 80% opacity.
+        const usFadeStartZoom = diveStartZoom + 0.45 * zRange;
+        const usFadeEndZoom   = diveStartZoom + 0.78 * zRange;
+        const usFadeExpr = ['interpolate', ['linear'], ['zoom'],
+          usFadeStartZoom, 1,
+          usFadeEndZoom,   0,
+        ];
+        for (let ph = 0; ph < PHASE_COUNT; ph++) {
+          const layerIds = [
+            `us-offline-${ph}`, `us-online-${ph}`,
+            `us-offline-${ph}-shadow`, `us-online-${ph}-shadow`,
+          ];
+          for (const id of layerIds) {
+            try {
+              map.setPaintProperty(id, 'circle-opacity', usFadeExpr);
+              // Stroke opacity follows the same fade window. Shadow
+              // layers don't have a stroke so the lookup returns
+              // undefined — skip silently in that case.
+              if (map.getPaintProperty(id, 'circle-stroke-opacity') !== undefined) {
+                map.setPaintProperty(id, 'circle-stroke-opacity', usFadeExpr);
+              }
+            } catch {}
+          }
+        }
+
+        // Push opacities into a fresh frame immediately so the
+        // first paint of the dive already reflects the new dive
+        // bookkeeping (otherwise the first zoom event might lag a
+        // frame behind the camera).
+        updateNycSeqOpacity();
+
+        // Drive the NYC dot reveal from rAF for the duration of
+        // the dive. Safari fires MapLibre's 'zoom' event at a
+        // sparser cadence than Chrome (sometimes every few frames
+        // instead of every frame), which made the staggered
+        // cascade pop in chunks instead of pulling up smoothly.
+        // Polling each animation frame guarantees uniform
+        // per-frame opacity updates regardless of how often the
+        // map dispatches zoom events.
+        if (dotRevealRaf) cancelAnimationFrame(dotRevealRaf);
+        function dotTick() {
+          updateNycSeqOpacity();
+          dotRevealRaf = requestAnimationFrame(dotTick);
+        }
+        dotRevealRaf = requestAnimationFrame(dotTick);
+
         // Flatter zoom curve (0.9 instead of 1.3) keeps the camera
         // from arcing out into a very-wide mid-zoom view, so the
         // dive moves more directly through the sparse zoom range
@@ -1819,7 +2085,17 @@
           curve: 0.9,
           essential: true,
         });
-        map.once('moveend', () => { state = 'arrived'; });
+        map.once('moveend', () => {
+          state = 'arrived';
+          if (dotRevealRaf) {
+            cancelAnimationFrame(dotRevealRaf);
+            dotRevealRaf = null;
+          }
+          // One last update so the final settled state is exactly
+          // what the dive should end at, even if the last rAF tick
+          // arrived a few ms before moveend.
+          updateNycSeqOpacity();
+        });
       }
 
       // A specific NYC offline (white) merchant — must match a real
@@ -2117,9 +2393,74 @@
         requestAnimationFrame(frame);
       }
 
+      // First-paint reveal — the .is-revealing class on .intro-stage
+      // drives the canvas fade-in and legend slide-in (CSS), plus
+      // the staggered dot cascade (JS, via startDotCascade). The
+      // reveal is gated behind `triggerReveal()` so the wrapper
+      // can preload this iframe in the background and only fire
+      // the animation once the user actually advances into the
+      // demo. After the longest animation completes (map settle
+      // ~1.4s + 4-phase dot cascade ~1.2s + legend tween ~0.7s ≈
+      // 2.8s), we drop the class so the steady-state intro takes
+      // over.
+      const REVEAL_TOTAL_MS = 2900;
+      let revealStarted = false;
+      let revealEndTimer = null;
+      function triggerReveal() {
+        if (revealStarted) return;
+        revealStarted = true;
+        // Abandon any in-flight staged tile preload and snap the
+        // camera to US_VIEW so the reveal animation plays over
+        // the framed-US starting position, not whatever
+        // intermediate zoom the preload happened to be at.
+        abortPreloadAndSnapToUS();
+        intro.classList.add('is-revealing');
+        startDotCascade();
+        revealEndTimer = setTimeout(() => {
+          intro.classList.remove('is-revealing');
+          revealEndTimer = null;
+        }, REVEAL_TOTAL_MS);
+      }
+      function endRevealEarly() {
+        if (!revealEndTimer) return;
+        clearTimeout(revealEndTimer);
+        revealEndTimer = null;
+        intro.classList.remove('is-revealing');
+      }
+
+      // Wrapper postMessage handshake: when the iframe becomes
+      // visible inside the wrapper, it sends { kind: 'show' } so
+      // we know it's safe to start the entrance animation. Until
+      // then the dots stay at opacity 0 (set in addDotLayers) so
+      // the map looks clean if the iframe paints to a hidden
+      // surface during preload.
+      window.addEventListener('message', (ev) => {
+        const data = ev && ev.data;
+        if (data && data.kind === 'show') triggerReveal();
+      });
+      // Fallback for direct access (no wrapper): if no `show`
+      // arrives within a beat of the map's first idle frame, fire
+      // the reveal anyway so the demo is usable standalone.
+      // CRITICAL: only when standalone — if we're embedded inside
+      // the wrapper, the wrapper preloads us in the background and
+      // sends `show` explicitly when the user advances. Running
+      // the fallback here would burn the reveal on a hidden frame
+      // and the user would see the steady-state map with no
+      // animation when they click in.
+      const isEmbedded = window.parent !== window;
+      if (!isEmbedded) {
+        const SHOW_FALLBACK_MS = 350;
+        map.once('idle', () => {
+          setTimeout(() => { if (!revealStarted) triggerReveal(); }, SHOW_FALLBACK_MS);
+        });
+      }
+
       function handleClick(ev) {
         ev.stopPropagation();
         ev.preventDefault();
+        // Any click during the first-paint reveal collapses it so the
+        // dive doesn't have to push through a half-lifted veil.
+        endRevealEarly();
         if (state === 'idle') {
           state = 'zooming';
           playZoom();

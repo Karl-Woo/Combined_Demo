@@ -2825,7 +2825,12 @@ function ChatPanel({
         onRecBottomReached={handleRecBottomReached}
         onBuyClick={handleBuyClick}
       />
-      <ChatMessageField value={inputValue} onChange={setInputValue} onSend={handleSend} onKeyPress={handleKeyPress} />
+      {/* Wrap handleSend so React's synthetic MouseEvent isn't passed
+          as the `forcedText` arg — the `??` nullish coalescing inside
+          handleSend treats the truthy event object as a string and
+          .trim() throws, silently killing the first-message flow when
+          users click Send instead of pressing Enter. */}
+      <ChatMessageField value={inputValue} onChange={setInputValue} onSend={() => handleSend()} onKeyPress={handleKeyPress} />
     </div>
   );
 }

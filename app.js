@@ -31,6 +31,36 @@
   let loaded = new Set(); // iframe src we've already injected
   let advanceInFlight = false;
 
+  // Helper: poke the iframe so its deferred entrance animation runs.
+  // Each demo's IIFE listens for { kind: 'show' } and ignores
+  // duplicates internally, so it's safe to call this every time the
+  // screen becomes active or the iframe finishes loading.
+  function postShow(iframe) {
+    if (!iframe || !iframe.contentWindow) return;
+    try { iframe.contentWindow.postMessage({ kind: 'show' }, '*'); } catch {}
+  }
+
+  function loadDemoIframe(name) {
+    if (loaded.has(name)) return null;
+    const screen = screens.get(name);
+    if (!screen) return null;
+    const iframe = screen.querySelector('iframe');
+    if (!iframe || !iframe.dataset.src) return null;
+    iframe.src = iframe.dataset.src;
+    loaded.add(name);
+    attachIframeMouseTracker(iframe);
+    // Once it lands, replay the show signal in case the screen is
+    // already active (or has been activated while it was still
+    // loading) — the iframe's listener wasn't registered yet on
+    // first activation, so the original postMessage is lost
+    // otherwise.
+    iframe.addEventListener('load', () => {
+      const currentName = SEQUENCE[currentIndex];
+      if (currentName === name) postShow(iframe);
+    }, { once: true });
+    return iframe;
+  }
+
   function setActive(index) {
     currentIndex = Math.max(0, Math.min(SEQUENCE.length - 1, index));
     const name = SEQUENCE[currentIndex];
@@ -51,14 +81,18 @@
     // initial page load is just the wrapper, not three demos at
     // once. Subsequent visits keep state in the already-mounted
     // iframe — important for the Onboard demo, which holds chat
-    // history mid-flow.
+    // history mid-flow. The first demo is preloaded earlier (see
+    // preloadFirstDemo below) so the map is already mounted by
+    // the time the user advances into it.
     if (isDemo) {
-      const iframe = screens.get(name).querySelector('iframe');
-      if (iframe && !loaded.has(name)) {
-        iframe.src = iframe.dataset.src;
-        loaded.add(name);
-        attachIframeMouseTracker(iframe);
-      }
+      const screen = screens.get(name);
+      const iframe = loaded.has(name)
+        ? screen.querySelector('iframe')
+        : loadDemoIframe(name);
+      // Signal the iframe that it's now visible. Demos defer their
+      // entrance animation until this arrives so the reveal doesn't
+      // get burned on a preloaded but hidden frame.
+      postShow(iframe);
     }
 
     // Leaving a demo: clear any reveal state so the next intro
@@ -180,4 +214,42 @@
 
   // Initial render.
   setActive(0);
+
+  // Preload all three demo iframes in the background so the maps,
+  // videos, fonts, and any other heavy assets are warm by the
+  // time the user advances into each one. Chained sequentially
+  // (each demo waits for the previous one's iframe `load` event)
+  // rather than fired in parallel so we don't saturate the
+  // network — the combined payload across the three demos is
+  // ~80MB (mostly the agent-boarding hero video and assets), and
+  // parallel fetches would slow down demo-1's MapLibre tile
+  // preload which is the one the user sees first.
+  //
+  // Each iframe stays visibility:hidden (per .screen rules) until
+  // the user actually advances to it, so this happens entirely
+  // off-screen. The chain self-corrects if the user advances
+  // faster than the preload progresses — when setActive() runs
+  // loadDemoIframe() for a demo that hasn't been preloaded yet,
+  // it just loads then; the chain's step for that demo no-ops
+  // because the demo is already in `loaded`.
+  function preloadDemosChain() {
+    const order = ['demo-1', 'demo-2', 'demo-3'];
+    function step(i) {
+      if (i >= order.length) return;
+      const name = order[i];
+      if (loaded.has(name)) { step(i + 1); return; }
+      const iframe = loadDemoIframe(name);
+      if (!iframe) { step(i + 1); return; }
+      iframe.addEventListener('load', () => step(i + 1), { once: true });
+    }
+    step(0);
+  }
+  // Defer slightly so the intro paint isn't competing with the
+  // iframe's network burst. requestIdleCallback when available so
+  // we yield to anything more urgent first.
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(preloadDemosChain, { timeout: 1200 });
+  } else {
+    setTimeout(preloadDemosChain, 300);
+  }
 })();
