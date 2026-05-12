@@ -1915,8 +1915,7 @@ body.intro-active .m-modal { animation-play-state: paused; }
   transform: translateY(0);
 }
 .florist-card .merchant-left  { flex: 409 1 0; min-width: 0; }
-.florist-card .merchant-left,
-.florist-right {
+.florist-card .merchant-left {
   background: #ffffff;
   border-radius: 8px;
   overflow: hidden;
@@ -1935,15 +1934,154 @@ body.intro-active .m-modal { animation-play-state: paused; }
   border-radius: inherit;
 }
 
-/* Right-side product card */
+/* Right-side product card — now a 3D flip container. The actual
+   white card chrome lives on the two .florist-right-face children;
+   the host is transparent so the perspective transform doesn't
+   chop the rotated face's shadow / border. */
 .florist-right {
   flex: 295 1 0;
   min-width: 0;
+  align-self: stretch;
+  perspective: 1200px;
+}
+
+/* The flipping element. CSS grid stacks the two faces in the same
+   cell so the layout auto-sizes to whichever face is taller and we
+   don't need a JS height measurement. preserve-3d keeps the
+   back-face's rotation in 3D space instead of flattening it. */
+.florist-right-inner {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  transform-style: preserve-3d;
+  transition: transform 720ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.florist-right.is-flipped .florist-right-inner { transform: rotateY(180deg); }
+
+.florist-right-face {
+  grid-column: 1;
+  grid-row: 1;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  background: #ffffff;
+  border: 1px solid #e3e3e3;
+  border-radius: 8px;
   padding: 10px;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 9px;
+  /* GPU promote so the rotation runs on the compositor */
+  will-change: transform;
 }
+.florist-right-face--back {
+  transform: rotateY(180deg);
+  gap: 14px;
+  padding: 14px;
+}
+
+/* ---------- Pickup back-face content ---------- */
+.pickup-title {
+  margin: 0;
+  font-family: 'Graphik', 'Roboto', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 20px;
+  color: #333333;
+  outline: none;          /* JS focuses this on flip; suppress the ring */
+}
+.pickup-product {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+}
+.pickup-product-name {
+  margin: 0;
+  font-family: 'Graphik', 'Roboto', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: #333333;
+}
+.pickup-product-sub {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  font-style: italic;
+  font-size: 12px;
+  line-height: 20px;
+  color: #5f6368;
+}
+.pickup-product-price {
+  margin: 2px 0 0;
+  font-family: 'Graphik', 'Roboto', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 22px;
+  color: #333333;
+}
+
+/* Two-column chip grid; the 5th (last) chip is half-width on its
+   own row so the layout matches the Figma reference. */
+.pickup-slots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 2px;
+}
+.pickup-slot--half {
+  /* Half-width on its own row — sit in the first column only. */
+  grid-column: 1 / 2;
+}
+
+/* Reserve CTA — same filled blue as .book-btn but a touch deeper
+   to match the Figma reference. */
+.reserve-btn {
+  width: 100%;
+  height: 39px;
+  border: none;
+  border-radius: 100px;
+  background: #0a50d1;
+  color: #ffffff;
+  font-family: 'Google Sans Flex', 'Roboto', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  margin-top: auto;       /* push the button to the bottom of the face */
+  box-shadow: 0 1px 2px rgba(60, 64, 67, 0.10);
+  transition: background-color 200ms cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 200ms cubic-bezier(0.2, 0, 0, 1),
+              opacity 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+.reserve-btn:hover  { background: #0944b5; box-shadow: 0 1px 3px rgba(60, 64, 67, 0.18), 0 2px 4px rgba(60, 64, 67, 0.10); }
+.reserve-btn:active { background: #08379a; }
+.reserve-btn:disabled,
+.reserve-btn[aria-disabled="true"] {
+  background: rgba(60, 64, 67, 0.12);
+  color: rgba(60, 64, 67, 0.38);
+  box-shadow: none;
+  cursor: default;
+}
+.reserve-btn.is-reserved,
+.reserve-btn.is-reserved:disabled,
+.reserve-btn.is-reserved[aria-disabled="true"] {
+  background: #228800;
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(60, 64, 67, 0.10);
+  opacity: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.reserve-btn.is-reserved:hover { background: #228800; box-shadow: 0 1px 2px rgba(60, 64, 67, 0.10); }
+.reserve-btn .reserve-check { display: block; }
 .florist-product {
   display: flex;
   flex-direction: column;

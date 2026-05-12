@@ -216,80 +216,11 @@
 
               </main>
 
-              <!-- Order checkout drawer + scrim (Figma 40000731:12189).
-                   Triggered by the Order now button on the florist card —
-                   same slide-in / fade-in pattern as the merchant drawer.
-                   Nested inside .page so the dim overlay and drawer sit
-                   below the chrome bar instead of covering it. -->
-              <div class="g-drawer-scrim" id="orderDrawerScrim" aria-hidden="true"></div>
-              <aside class="g-drawer" id="orderDrawer" aria-hidden="true">
-                <header class="g-drawer-header">
-                  <button class="g-drawer-close" aria-label="Close">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                      <path d="M6 6L18 18M18 6L6 18" stroke="#1f1f1f" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                  </button>
-                </header>
-
-                <div class="g-drawer-body">
-                  <!-- Product header card -->
-                  <div class="g-order-product">
-                    <div class="g-order-product-img"><img src="asset/icons/bouquet.png" alt="Summer Fields Bouquet" /></div>
-                    <div class="g-order-product-meta">
-                      <div class="g-order-product-name">Summer Fields Bouquet</div>
-                      <div class="g-order-product-price">$82</div>
-                    </div>
-                  </div>
-
-                  <h3 class="g-order-section-title">Payment Information</h3>
-
-                  <div class="g-pay-options">
-                    <label class="g-pay-opt is-selected">
-                      <span class="g-pay-radio"></span>
-                      <span class="g-pay-logo" aria-hidden="true">
-                        <img src="asset/amex.png" alt="" />
-                      </span>
-                      <span class="g-pay-label">Credit Card ending <strong>7428</strong></span>
-                    </label>
-
-                    <label class="g-pay-opt">
-                      <span class="g-pay-radio"></span>
-                      <span class="g-pay-logo" aria-hidden="true">
-                        <img src="asset/applepay.png" alt="" />
-                      </span>
-                      <span class="g-pay-label">Apple Pay</span>
-                    </label>
-
-                    <label class="g-pay-opt">
-                      <span class="g-pay-radio"></span>
-                      <span class="g-pay-logo" aria-hidden="true">
-                        <img src="asset/paypal.png" alt="" />
-                      </span>
-                      <span class="g-pay-label">Pay Now or Pay Later with PayPal</span>
-                    </label>
-
-                    <label class="g-pay-opt">
-                      <span class="g-pay-radio"></span>
-                      <span class="g-pay-logo" aria-hidden="true">
-                        <img src="asset/card.png" alt="" />
-                      </span>
-                      <span class="g-pay-label">Credit Card</span>
-                    </label>
-                  </div>
-
-                  <button class="g-checkout-btn">Complete checkout</button>
-
-                  <div class="g-checkout-footer">
-                    <div class="g-powered-by">
-                      <span>Powered by</span>
-                      <img class="g-fiserv-logo" src="asset/icons/fiserv.png" alt="fiserv" />
-                    </div>
-                    <span class="g-checkout-divider" aria-hidden="true"></span>
-                    <a class="g-checkout-link" href="#">Terms</a>
-                    <a class="g-checkout-link" href="#">Privacy</a>
-                  </div>
-                </div>
-              </aside>
+              <!-- Order flow is now inline on the florist card itself:
+                   "Order now" flips the right side over to a pickup-
+                   time selector. Removed the legacy payment drawer
+                   markup (g-drawer + g-drawer-scrim) — the payment
+                   modal it rendered isn't part of the live demo. -->
 
             </div>
 
@@ -2028,27 +1959,36 @@
         // is gone but its replacements haven't shown yet. Fade
         // wraps up at progress 0.78, by which point the closest
         // NYC dots are already past 80% opacity.
-        const usFadeStartZoom = diveStartZoom + 0.45 * zRange;
-        const usFadeEndZoom   = diveStartZoom + 0.78 * zRange;
-        const usFadeExpr = ['interpolate', ['linear'], ['zoom'],
-          usFadeStartZoom, 1,
-          usFadeEndZoom,   0,
-        ];
-        for (let ph = 0; ph < PHASE_COUNT; ph++) {
-          const layerIds = [
-            `us-offline-${ph}`, `us-online-${ph}`,
-            `us-offline-${ph}-shadow`, `us-online-${ph}-shadow`,
+        // Guard: only re-key when the dive actually zooms IN
+        // (zRange > 0). If the camera somehow starts above the
+        // Manhattan target (e.g., preload hasn't snapped back to
+        // US_VIEW yet) the interpolate stops would be descending
+        // and MapLibre would reject the whole paint property,
+        // leaving the dots stuck at zero. In that edge case we
+        // keep the original FADE_LOW/FADE_HIGH expression intact.
+        if (zRange > 0.05) {
+          const usFadeStartZoom = diveStartZoom + 0.45 * zRange;
+          const usFadeEndZoom   = diveStartZoom + 0.78 * zRange;
+          const usFadeExpr = ['interpolate', ['linear'], ['zoom'],
+            usFadeStartZoom, 1,
+            usFadeEndZoom,   0,
           ];
-          for (const id of layerIds) {
-            try {
-              map.setPaintProperty(id, 'circle-opacity', usFadeExpr);
-              // Stroke opacity follows the same fade window. Shadow
-              // layers don't have a stroke so the lookup returns
-              // undefined — skip silently in that case.
-              if (map.getPaintProperty(id, 'circle-stroke-opacity') !== undefined) {
-                map.setPaintProperty(id, 'circle-stroke-opacity', usFadeExpr);
-              }
-            } catch {}
+          for (let ph = 0; ph < PHASE_COUNT; ph++) {
+            const layerIds = [
+              `us-offline-${ph}`, `us-online-${ph}`,
+              `us-offline-${ph}-shadow`, `us-online-${ph}-shadow`,
+            ];
+            for (const id of layerIds) {
+              try {
+                map.setPaintProperty(id, 'circle-opacity', usFadeExpr);
+                // Stroke opacity follows the same fade window. Shadow
+                // layers don't have a stroke so the lookup returns
+                // undefined — skip silently in that case.
+                if (map.getPaintProperty(id, 'circle-stroke-opacity') !== undefined) {
+                  map.setPaintProperty(id, 'circle-stroke-opacity', usFadeExpr);
+                }
+              } catch {}
+            }
           }
         }
 
@@ -2879,67 +2819,11 @@
       });
     })();
 
-    /* ---------- Order checkout drawer: close + checkout handlers ----
-       Close X and scrim dismiss the drawer (same slide-out / fade-out
-       pattern as the merchant drawer). Complete checkout additionally
-       swaps the florist card's Order now button to a green Purchased
-       state and dispatches an 'order:checkout' event so the chat IIFE
-       can play the silent confirmation turn (route map). */
-    (function () {
-      const drawer = document.getElementById('orderDrawer');
-      const scrim  = document.getElementById('orderDrawerScrim');
-      if (!drawer) return;
-
-      function close() {
-        drawer.classList.remove('open');
-        drawer.classList.add('closing');
-        drawer.setAttribute('aria-hidden', 'true');
-        if (scrim) {
-          scrim.classList.remove('open');
-          scrim.classList.add('closing');
-          scrim.setAttribute('aria-hidden', 'true');
-        }
-      }
-
-      const closeBtn = drawer.querySelector('.g-drawer-close');
-      if (closeBtn) closeBtn.addEventListener('click', close);
-      if (scrim)    scrim.addEventListener('click', close);
-
-      // Single-select radio behavior on the payment options
-      const options = drawer.querySelectorAll('.g-pay-opt');
-      options.forEach((opt) => {
-        opt.addEventListener('click', () => {
-          options.forEach(o => o.classList.remove('is-selected'));
-          opt.classList.add('is-selected');
-        });
-      });
-
-      // Complete checkout — close drawer, mark the florist Order now
-      // button as Purchased, and ask the chat to play turn 4.
-      const checkoutBtn = drawer.querySelector('.g-checkout-btn');
-      if (checkoutBtn) {
-        checkoutBtn.addEventListener('click', () => {
-          close();
-          // Find the florist card's Order now button and swap state.
-          // The button might exist in multiple AI bubbles if the user
-          // re-played turns — target the most recent visible one.
-          const orderBtns = document.querySelectorAll('.florist-card .order-btn');
-          const orderBtn = orderBtns[orderBtns.length - 1];
-          if (orderBtn && !orderBtn.classList.contains('is-purchased')) {
-            orderBtn.classList.add('is-purchased');
-            orderBtn.setAttribute('aria-disabled', 'true');
-            orderBtn.innerHTML =
-              '<svg class="order-check" viewBox="0 0 20 20" width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
-                '<circle cx="10" cy="10" r="9" stroke="#ffffff" stroke-width="1.5"/>' +
-                '<path d="M6 10.5L8.8 13.2L14.2 7.5" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' +
-              '</svg>' +
-              '<span>Purchased</span>';
-          }
-          // Tell the chat sequence to play the next (silent) turn.
-          window.dispatchEvent(new CustomEvent('order:checkout'));
-        });
-      }
-    })();
+    /* The legacy order checkout drawer is gone — the florist card's
+       Order now button now flips the right side over to an inline
+       pickup-time selector. See wireFloristCard() below for the flip
+       trigger and the Reserve button handler that dispatches
+       `order:checkout` to advance the conversation. */
 
     /* ---------- Merchant drawer: Accept handler ----------
        Wires the Accept button on page load (independent of the chat
@@ -3477,27 +3361,70 @@
         window.addEventListener('click', go, true);
       }
 
-      /* Wire the florist card's Order now button — opens the order
-         checkout drawer in the gemini tablet. */
+      /* Wire the florist card's interactions.
+         - Order now flips the right side over to a "Select pickup
+           time" panel (.florist-right.is-flipped).
+         - The pickup slots are single-select; Reserve stays disabled
+           until a slot is chosen.
+         - Reserve marks the back face as reserved (green check),
+           disables further input, and dispatches `order:checkout`
+           so the chat IIFE plays the silent "you're all set" turn. */
       function wireFloristCard(card) {
-        const orderBtn = card.querySelector('.order-btn');
-        if (!orderBtn || orderBtn.dataset.wired) return;
-        orderBtn.dataset.wired = '1';
-        attachRipple(orderBtn);
-        orderBtn.addEventListener('click', () => {
-          const drawer = document.getElementById('orderDrawer');
-          const scrim  = document.getElementById('orderDrawerScrim');
-          if (drawer) {
-            drawer.classList.remove('closing');
-            drawer.classList.add('open');
-            drawer.setAttribute('aria-hidden', 'false');
-          }
-          if (scrim) {
-            scrim.classList.remove('closing');
-            scrim.classList.add('open');
-            scrim.setAttribute('aria-hidden', 'false');
-          }
+        if (card.dataset.wired === '1') return;
+        card.dataset.wired = '1';
+
+        const flipHost  = card.querySelector('.florist-right');
+        const orderBtn  = card.querySelector('.order-btn');
+        const slots     = card.querySelectorAll('.pickup-slot');
+        const reserve   = card.querySelector('.reserve-btn');
+
+        if (orderBtn) {
+          attachRipple(orderBtn);
+          orderBtn.addEventListener('click', () => {
+            if (!flipHost) return;
+            flipHost.classList.add('is-flipped');
+            // Move keyboard focus to the back-face title so SR users
+            // hear the panel change. Delayed until past the flip's
+            // backface-visibility crossover so the focused element
+            // is actually rendered when assistive tech queries it.
+            setTimeout(() => {
+              const title = card.querySelector('.pickup-title');
+              if (title) title.setAttribute('tabindex', '-1'), title.focus();
+            }, 380);
+          });
+        }
+
+        slots.forEach((btn) => {
+          attachRipple(btn);
+          btn.addEventListener('click', () => {
+            slots.forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            if (reserve) {
+              reserve.removeAttribute('disabled');
+              reserve.removeAttribute('aria-disabled');
+            }
+          });
         });
+
+        if (reserve) {
+          attachRipple(reserve);
+          reserve.addEventListener('click', () => {
+            if (reserve.classList.contains('is-reserved')) return;
+            const selected = card.querySelector('.pickup-slot.selected');
+            if (!selected) return;
+            slots.forEach(b => { b.disabled = true; });
+            reserve.classList.add('is-reserved');
+            reserve.setAttribute('aria-disabled', 'true');
+            reserve.disabled = true;
+            reserve.innerHTML =
+              '<svg class="reserve-check" viewBox="0 0 20 20" width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+                '<circle cx="10" cy="10" r="9" stroke="#ffffff" stroke-width="1.5"/>' +
+                '<path d="M6 10.5L8.8 13.2L14.2 7.5" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' +
+              '</svg>' +
+              '<span>Reserved</span>';
+            window.dispatchEvent(new CustomEvent('order:checkout'));
+          });
+        }
       }
 
       /* Wire the merchant card's slot pills (single-select) and Book
@@ -3716,8 +3643,12 @@
       }
 
       /* Florist card (turn 3) — same Clover-merchant left card as the
-         barber, with a product card on the right (single bouquet image,
-         price, and a full-width Order now CTA) instead of slot picker. */
+         barber, with a product card on the right that *flips* over to
+         a "Select pickup time" panel when Order now is pressed.
+         The pickup back-face replaces what was a non-interactive
+         payment drawer in earlier revisions — Reserve dispatches the
+         same `order:checkout` event so the silent next-turn "you're
+         all set" flow stays unchanged. */
       function floristCardHtml() {
         const stars =
           '<img class="rating-star" src="asset/icons/star_full.png" alt="" />' +
@@ -3750,15 +3681,35 @@
               '</div>' +
             '</div>' +
             '<div class="florist-right">' +
-              '<div class="florist-product">' +
-                '<div class="florist-product-img"><img src="asset/icons/bouquet.png" alt="Summer Fields Bouquet" /></div>' +
-                '<div class="florist-product-meta">' +
-                  '<h3 class="florist-product-name">Summer Fields Bouquet</h3>' +
-                  '<p class="florist-product-sub">Ready for pickup by 3pm</p>' +
-                  '<p class="florist-product-price">$82</p>' +
+              '<div class="florist-right-inner">' +
+                '<div class="florist-right-face florist-right-face--front">' +
+                  '<div class="florist-product">' +
+                    '<div class="florist-product-img"><img src="asset/icons/bouquet.png" alt="Summer Fields Bouquet" /></div>' +
+                    '<div class="florist-product-meta">' +
+                      '<h3 class="florist-product-name">Summer Fields Bouquet</h3>' +
+                      '<p class="florist-product-sub">Ready for pickup by 3pm</p>' +
+                      '<p class="florist-product-price">$82</p>' +
+                    '</div>' +
+                  '</div>' +
+                  '<button class="order-btn">Order now</button>' +
+                '</div>' +
+                '<div class="florist-right-face florist-right-face--back">' +
+                  '<h3 class="pickup-title">Select pickup time</h3>' +
+                  '<div class="pickup-product">' +
+                    '<p class="pickup-product-name">Summer Fields Bouquet</p>' +
+                    '<p class="pickup-product-sub">Pay in-store</p>' +
+                    '<p class="pickup-product-price">$82</p>' +
+                  '</div>' +
+                  '<div class="pickup-slots">' +
+                    '<button class="slot-btn pickup-slot">3:00pm</button>' +
+                    '<button class="slot-btn pickup-slot">3:15pm</button>' +
+                    '<button class="slot-btn pickup-slot">3:30pm</button>' +
+                    '<button class="slot-btn pickup-slot">3:45pm</button>' +
+                    '<button class="slot-btn pickup-slot pickup-slot--half">4:00pm</button>' +
+                  '</div>' +
+                  '<button class="reserve-btn" aria-disabled="true" disabled>Reserve</button>' +
                 '</div>' +
               '</div>' +
-              '<button class="order-btn">Order now</button>' +
             '</div>' +
           '</div>'
         );
