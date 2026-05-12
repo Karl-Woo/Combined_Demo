@@ -2951,6 +2951,7 @@ function ChatbotAnimations() {
 export function ChatbotWidget({
   onBuySetup,
   collapseOnly = false,
+  shown = true,
 }: {
   // Fired when the user clicks "Looks good. Buy this setup." inside the
   // chat. The parent (App.tsx) uses this to navigate to the checkout
@@ -2960,17 +2961,25 @@ export function ChatbotWidget({
   // and the chat panel starts closed — used on the checkout page where
   // the widget should match Figma node 40000383:6971.
   collapseOnly?: boolean;
+  // Flipped to true by App once the wrapper signals visibility (or
+  // immediately when running standalone). The intro auto-open timer
+  // is gated on this so a preloaded but still-hidden iframe doesn't
+  // burn the chat-open animation before the user advances in.
+  shown?: boolean;
 } = {}) {
   const [isOpen, setIsOpen] = useState(false);
 
   // Intro: on first mount (home page only), hold the 80×80 button for
   // 1 s then auto-open the chat panel. On checkout (`collapseOnly`) the
-  // button stays closed and only opens on click.
+  // button stays closed and only opens on click. The `shown` gate
+  // prevents the timer from firing while the wrapper preloads this
+  // iframe in the background.
   useEffect(() => {
     if (collapseOnly) return;
+    if (!shown) return;
     const timer = setTimeout(() => setIsOpen(true), 1000);
     return () => clearTimeout(timer);
-  }, [collapseOnly]);
+  }, [collapseOnly, shown]);
 
   // When the user clicks "Buy this setup," immediately close the chat so
   // the ChatButton slides back to its small state as the page swaps.

@@ -8,7 +8,7 @@
 <!-- Lottie player for the customer-review send flow loader (vendored locally) -->
 <script src="asset/vendor/lottie.min.js"></script>
 </head>
-<body class="intro" data-view="art-walk">
+<body data-view="art-walk">
   <div class="stage">
     <div class="ipad">
       <img class="bezel" src="asset/Bezel.png" alt="" />
@@ -890,10 +890,14 @@
       fit();
     })();
 
-    /* ---------- Intro number count-up ----------
-       For each .metric-value, animate from 0 to its target value during
-       the KPI card's reveal. Honors prefers-reduced-motion.
-    */
+    /* ---------- Intro number count-up + intro CSS gate ----------
+       The intro CSS animations (kpis fade-up, navtop fade-down, etc.)
+       are keyed off `body.intro`. We hold the class off the body
+       until the wrapper signals visibility via postMessage so a
+       preloaded but still-hidden iframe doesn't burn its entrance
+       animations before the user can see them. Counters work the
+       same way — they sit at 0 until startIntro() actually kicks
+       off the requestAnimationFrame loops. */
     (function () {
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       const els = document.querySelectorAll('.metric-value');
@@ -901,6 +905,10 @@
       const COUNT_DURATION = 1100;
       const ease = (t) => 1 - Math.pow(1 - t, 3); // easeOutCubic
 
+      // Per-element starters: parsed eagerly so the metric labels show
+      // 0 immediately, but the actual rAF loop is queued in a closure
+      // that startIntro() fires when the iframe becomes visible.
+      const counterStarters = [];
       els.forEach((el) => {
         const original = el.textContent.trim();
         const match = original.match(/^([^\d-]*)(-?\d[\d,]*\.?\d*)(.*)$/);
@@ -919,20 +927,48 @@
         if (reduce) { el.textContent = fmt(target); return; }
 
         el.textContent = fmt(0);
-        const start = performance.now() + COUNT_DELAY;
-        function tick(now) {
-          if (now < start) { requestAnimationFrame(tick); return; }
-          const t = Math.min(1, (now - start) / COUNT_DURATION);
-          el.textContent = fmt(target * ease(t));
-          if (t < 1) requestAnimationFrame(tick);
-        }
-        requestAnimationFrame(tick);
+        counterStarters.push(() => {
+          const start = performance.now() + COUNT_DELAY;
+          function tick(now) {
+            if (now < start) { requestAnimationFrame(tick); return; }
+            const t = Math.min(1, (now - start) / COUNT_DURATION);
+            el.textContent = fmt(target * ease(t));
+            if (t < 1) requestAnimationFrame(tick);
+          }
+          requestAnimationFrame(tick);
+        });
       });
 
-      // Remove the intro class once the longest animation has finished,
-      // so re-renders / hover states don't replay or get throttled.
+      // Removed once `intro` is on so hover states / re-renders don't
+      // throttle or replay the entrance animations.
       const TOTAL_INTRO = 4500;
-      setTimeout(() => document.body.classList.remove('intro'), TOTAL_INTRO);
+
+      let started = false;
+      function startIntro() {
+        if (started) return;
+        started = true;
+        document.body.classList.add('intro');
+        counterStarters.forEach((fn) => fn());
+        setTimeout(() => document.body.classList.remove('intro'), TOTAL_INTRO);
+      }
+
+      // Wrapper handshake — same pattern as the agentic-commerce
+      // demo: the parent posts `{ kind: 'show' }` when the user
+      // advances into this demo. Until then the entrance stays
+      // armed but unplayed so a preloaded iframe doesn't burn its
+      // intro animations on a hidden surface.
+      window.addEventListener('message', (ev) => {
+        if (ev && ev.data && ev.data.kind === 'show') startIntro();
+      });
+
+      // Standalone fallback for direct-iframe access (no parent
+      // wrapper): kick the intro off shortly after first paint so
+      // the demo is still usable on its own.
+      if (window.parent === window) {
+        // Defer one frame so layout settles before the keyframes
+        // start measuring positions for translate-from offsets.
+        requestAnimationFrame(() => startIntro());
+      }
     })();
 
     /* ---------- Open / close the Insight view ----------

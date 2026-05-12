@@ -18,6 +18,22 @@ export default function App() {
   const [scale, setScale] = useState(1);
   const [scaledHeight, setScaledHeight] = useState<number | null>(null);
   const [page, setPage] = useState<Page>('home');
+  // Set to true once the wrapper signals this demo is visible (or
+  // immediately when running standalone). The ChatbotWidget gates
+  // its 1-second auto-open intro on this so a preloaded but still-
+  // hidden iframe doesn't burn the entrance animation before the
+  // user advances into demo-3.
+  const [shown, setShown] = useState(() => window.parent === window);
+  useEffect(() => {
+    if (shown) return;
+    function onMessage(ev: MessageEvent) {
+      if (ev && ev.data && (ev.data as { kind?: string }).kind === 'show') {
+        setShown(true);
+      }
+    }
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [shown]);
 
   // Compute scale factor from viewport width
   useLayoutEffect(() => {
@@ -108,6 +124,7 @@ export default function App() {
       */}
       <ChatbotWidget
         collapseOnly={page !== 'home'}
+        shown={shown}
         onBuySetup={() => setPage('checkout')}
       />
     </div>
